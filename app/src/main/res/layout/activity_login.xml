@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white"
+    android:id="@+id/login_page_layout"
+    android:orientation="vertical"
+    tools:context=".Activity.LoginActivity">
+
+
+    <LinearLayout
+        android:layout_above="@+id/l1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_gravity="top|center"
+                    android:background="@drawable/app_icon"
+                    android:layout_marginBottom="10dp"
+                    android:contentDescription="@string/todo" />
+
+                <EditText
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/edtUsername"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/editTextHeight"
+                    android:background="@drawable/bg_edittext"
+                    android:drawableStart="@drawable/ic_user"
+                    android:drawablePadding="@dimen/margin_10"
+                    android:drawableTint="@color/seaColorMid"
+                    android:hint="@string/type_your_username"
+                    android:imeOptions="actionNext"
+                    android:inputType="textEmailAddress"
+                    android:padding="@dimen/margin_11"
+                    android:singleLine="true"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/colorDarkGery" />
+
+
+                <EditText
+                    android:id="@+id/edtPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/editTextHeight"
+                    android:layout_marginTop="@dimen/margin_15"
+                    android:background="@drawable/bg_edittext"
+                    android:drawablePadding="@dimen/margin_10"
+                    android:drawableStart="@drawable/ic_lock"
+                    android:drawableEnd="@drawable/ic_password_not_visible"
+                    android:hint="@string/type_your_password"
+                    android:inputType="textPassword"
+                    android:padding="@dimen/margin_11"
+                    android:longClickable="false"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/colorDarkGery" />
+
+                <!-- Registration layout -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="visible"
+                    android:layout_marginTop="@dimen/margin_10">
+
+                    <TextView
+                        android:id="@+id/tvRegistration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:text="@string/registration"
+                        android:textColor="@color/logo_color"
+                        android:visibility="gone"
+                        />
+
+                    <TextView
+                        android:id="@+id/tvForgotPassword"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="@string/forgot_password"
+                        android:textColor="@color/seaColorMid"
+                        android:visibility="gone"
+                        />
+
+                </RelativeLayout>
+
+                <Button
+                    android:id="@+id/btnLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_15"
+                    android:background="@drawable/bg_button"
+                    android:text="@string/login"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white" />
+
+
+            </LinearLayout>
+        </ScrollView>
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:id="@+id/l1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center">
+
+        <!-- App Version text -->
+        <TextView
+            android:id="@+id/txtAppVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="13dp"
+            android:text="@string/app_version"
+            android:textColor="@color/logo_color"
+            android:textSize="15sp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

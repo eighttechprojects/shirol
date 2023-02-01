@@ -1,0 +1,142 @@
+<resources>
+    <string name="app_name">Property Tax Shirol</string>
+
+
+    <string name="location_permission">Location Permission</string>
+    <string name="camera_permission">Camera Permission</string>
+    <string name="storage_permission">Storage Permission</string>
+    <string name="cameraPermissionDescription">Allows apps to use your camera to take photos and record videos. Apps need this permission so you can take pictures.</string>
+    <string name="storagePermissionDescription">Allows apps to read and write to your internal or external storage. Apps need this permission so you can pick image or file form your device and you can upload it to server</string>
+    <string name="locationPermissionDescription">Allows apps to access your approximate Location.</string>
+    <string name="permissionHeaderDescription">For the purpose of PropertyTax Shirol, we need the following Permission form you:</string>
+    <string name="permission_storage_title">Storage Permission</string>
+    <string name="permission_storage_description">Grant storage permission to enable load or store image from/to storage</string>
+    <string name="permission_camera_title">Camera Permission</string>
+    <string name="permission_camera_description">Grant Camera permission to enable Camera capture feature</string>
+    <string name="permission_fine_location_title">Location</string>
+    <string name="permission_location_description" translatable="false">Grant Location permission to enable get location</string>
+
+    <string name="select">Select</string>
+    <string name="select_image">Select Image</string>
+    <string name="todo">TODO</string>
+    <string name="approve">APPROVE</string>
+
+
+    <string name="type_your_description">Type your description</string>
+    <string name="type_your_username">Username</string>
+    <string name="type_your_password">Password</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+
+    <string name="Please_enter_emailid">Please enter emailid</string>
+    <string name="Please_enter_firstname">Please enter firstname</string>
+    <string name="Please_enter_lastname">Please enter lastname</string>
+    <string name="Please_enter_valid_emailid">Please enter valid emailid</string>
+
+    <string name="Please_enter_username">Please enter username</string>
+    <string name="Please_enter_password">Please enter password</string>
+    <string name="No_Innter_Connection">No Internet Connection</string>
+    <string name="type_your_emailid">Type your EmailID</string>
+    <string name="type_your_firstname">Type your Firstname</string>
+    <string name="type_your_lastname">Type your Lastname</string>
+    <string name="login">Login</string>
+    <string name="forgot_password">Forgot Password</string>
+    <string name="registration">Registration</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="submit">Submit</string>
+    <string name="close">Close</string>
+    <string name="password_change">Password Change</string>
+    <string name="email_id">Email ID</string>
+    <string name="old_password">Old Password</string>
+    <string name="new_password">New Password</string>
+    <string name="sync">Sync</string>
+    <string name="exit">Exit</string>
+    <string name="add">Add</string>
+    <string name="remove">Remove</string>
+    <string name="show_all_resurvey">Show All Resurvey</string>
+    <string name="logout">Logout</string>
+    <string name="resurvey">Resurvey</string>
+    <string name="app_version">App version:</string>
+
+
+    <!-- Form Spinner -->
+    <!-- 6 -->
+    <string-array name="sp_property_user_type">
+        <item>स्वत</item>
+        <item>भाडेकरू</item>
+        <item>भोगवटदर</item>
+    </string-array>
+    <!-- 17 -->
+    <string-array name="sp_property_type">
+        <item>G.F</item>
+        <item>G.F + 1</item>
+        <item>G.F + 2</item>
+        <item>इतर</item>
+    </string-array>
+
+    <!-- 19,20,22,25,26,29,31 -->
+    <string-array name="sp_yes_no">
+        <item>होय</item>
+        <item>नाही</item>
+    </string-array>
+
+    <!-- 21 -->
+    <string-array name="sp_metal_road">
+        <item>कच्चा रस्ता</item>
+        <item>६ मी. पेक्षा कमी पक्का रस्ता</item>
+        <item>६ मी.ते १२ मी. पक्का रस्ता</item>
+        <item>१२ मी.ते ३० मी. पक्का रस्ता</item>
+    </string-array>
+
+    <!-- 24 -->
+    <string-array name="sp_toilet_type">
+        <item>सेप्टिक</item>
+        <item>लीचिपट</item>
+    </string-array>
+
+    <!-- 27 -->
+    <string-array name="sp_total_water_line">
+        <item>१/२”</item>
+        <item>१”</item>
+    </string-array>
+
+    <!-- 28 -->
+    <string-array name="sp_water_use_type">
+        <item>रहिवास</item>
+        <item>व्यवसायिक</item>
+        <item>औद्योगिक</item>
+    </string-array>
+
+    <!-- 30 -->
+    <string-array name="sp_solar_panel_type">
+        <item>गरम पाण्यासाठी</item>
+        <item>विजेसाठी</item>
+        <item>दोन्हीसाठी</item>
+    </string-array>
+
+
+    <!-- Form table -->
+    <string-array name="sp_building_type">
+        <item>आर.सी.सी. पद्धतीची इमारत</item>
+        <item>लोडबेरिंग</item>
+        <item>दगड विटांचे चनुा किंवा सिमेंट वापरून उभारलेली इमारत</item>
+        <item>दगड विटांचे मातीची इमारत</item>
+        <item>झोपडी किंवा मातीची इमारत</item>
+        <item>खुली जागा</item>
+        <item>मनोरा तळ</item>
+    </string-array>
+
+    <string-array name="sp_building_use_type">
+        <item>नवासी</item>
+        <item>वाणिज्य</item>
+        <item>औद्योगिक</item>
+        <item>शैक्षणिक</item>
+        <item>शासकीय इमारत</item>
+        <item>नगरपरिषद इमारत</item>
+        <item>मिश्र इमारत</item>
+        <item>धार्मिक</item>
+        <item>पार्किंग </item>
+
+    </string-array>
+
+</resources>

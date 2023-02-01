@@ -1,0 +1,151 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="nav_header_vertical_spacing">8dp</dimen>
+    <dimen name="nav_header_height">176dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <dimen name="small_logo_width">90dp</dimen>
+    <dimen name="small_logo_height">65dp</dimen>
+
+    <dimen name="nav_text_size">16dp</dimen>
+    <dimen name="margin_5">5dp</dimen>
+    <dimen name="margin_10">10dp</dimen>
+    <dimen name="margin_15">15dp</dimen>
+    <dimen name="margin_25">25dp</dimen>
+    <dimen name="margin_50">50dp</dimen>
+    <dimen name="slider_pennding">10dp</dimen>
+    <dimen name="nav_logo_width">130dp</dimen>
+    <dimen name="nav_logo_height">100dp</dimen>
+
+    <dimen name="nav_logo_width_slider">33dp</dimen>
+    <dimen name="nav_logo_height_slider">45dp</dimen>
+
+    <dimen name="nav_panel_width_grid">35dp</dimen>
+    <dimen name="nav_panel_height_grid">35dp</dimen>
+    <dimen name="nav_panel_text_size_big_grid">13dp</dimen>
+
+    <dimen name="nav_panel_width_logo">19dp</dimen>
+    <dimen name="nav_panel_height_logo">19dp</dimen>
+
+    <dimen name="nav_panel_width">25dp</dimen>
+    <dimen name="nav_panel_height">25dp</dimen>
+
+    <dimen name="nav_panel_width_down">12dp</dimen>
+    <dimen name="nav_panel_height_down">12dp</dimen>
+
+    <dimen name="nav_panel_text_size_big">13dp</dimen>
+    <dimen name="nav_panel_text_size">13dp</dimen>
+
+    <dimen name="title_text_size">15dp</dimen>
+
+
+    <dimen name="margin_1">1dp</dimen>
+    <dimen name="margin_2">2dp</dimen>
+    <dimen name="margin_3">3dp</dimen>
+    <dimen name="margin_4">4dp</dimen>
+    <dimen name="margin_7">7dp</dimen>
+    <dimen name="margin_8">8dp</dimen>
+    <dimen name="margin_9">9dp</dimen>
+    <dimen name="margin_11">11dp</dimen>
+    <dimen name="margin_11_5">11.5dp</dimen>
+    <dimen name="margin_12">12dp</dimen>
+    <dimen name="margin_13">13dp</dimen>
+    <dimen name="margin_14">14dp</dimen>
+    <dimen name="margin_16">16dp</dimen>
+    <dimen name="margin_17">17dp</dimen>
+    <dimen name="margin_18">18dp</dimen>
+    <dimen name="margin_19">19dp</dimen>
+    <dimen name="margin_21">21dp</dimen>
+    <dimen name="margin_22">22dp</dimen>
+    <dimen name="margin_20">20dp</dimen>
+    <dimen name="margin_26">26dp</dimen>
+    <dimen name="margin_27">27dp</dimen>
+    <dimen name="margin_28">28dp</dimen>
+    <dimen name="margin_29">29dp</dimen>
+    <dimen name="margin_30">30dp</dimen>
+    <dimen name="margin_31">31dp</dimen>
+    <dimen name="margin_32">32dp</dimen>
+    <dimen name="margin_33">33dp</dimen>
+    <dimen name="margin_45">45dp</dimen>
+    <dimen name="margin_100">100dp</dimen>
+
+    <dimen name="mandetory_left_margin">5dp</dimen>
+    <dimen name="review_border_margin">8dp</dimen>
+    <dimen name="list_retailer">60dp</dimen>
+    <dimen name="text_font_size">16dp</dimen>
+    <dimen name="text_font_size_bold">18dp</dimen>
+    <dimen name="ic_action_width_map">37dp</dimen>
+    <dimen name="ic_action_height_map">37dp</dimen>
+
+    <dimen name="edit_style_height">40dp</dimen>
+    <dimen name="larger_edit_style_height">80dp</dimen>
+
+    <dimen name="edit_style_padding_left">5dp</dimen>
+    <dimen name="edit_style_padding_right">5dp</dimen>
+    <dimen name="spinner_height">50dp</dimen>
+
+    <dimen name="btn_info_width">85dp</dimen>
+    <dimen name="btn_info_height">35dp</dimen>
+
+    <dimen name="standard_12">10dp</dimen>
+    <dimen name="standard_23">15dp</dimen>
+    <dimen name="standard_55">55dp</dimen>
+    <dimen name="standard_100">100dp</dimen>
+    <dimen name="standard_145">145dp</dimen>
+    <dimen name="standard_190">190dp</dimen>
+
+    <!-- Changes by Rahul Suthar -->
+    <!-- Home Card View  -->
+    <dimen name="card_view_width">120dp</dimen>
+    <dimen name="card_view_height">120dp</dimen>
+
+    <dimen name="card_view_image_width">60dp</dimen>
+    <dimen name="card_view_image_height">60dp</dimen>
+    <dimen name="dashBoardImageWidth">50dp</dimen>
+    <dimen name="dashBoardImageHeight">50dp</dimen>
+
+    <dimen name="card_view_corner_radius">0dp</dimen>
+    <dimen name="card_view_elevation">8dp</dimen>
+
+    <dimen name="layout_row_height">140dp</dimen>
+    <dimen name="card_layout_height">130dp</dimen>
+    <dimen name="card_margin">2dp</dimen>
+    <dimen name="login_icon_image_height">60dp</dimen>
+    <dimen name="login_icon_image_width">60dp</dimen>
+    <!-- smiley_emoji size -->
+    <dimen name="smiley_emoji_size">40dp</dimen>
+    <dimen name="thumps_size">40dp</dimen>
+    <dimen name="score_ratings_size">30dp</dimen>
+
+    <!-- Common Margin -->
+    <dimen name="commonTopMargin">5dp</dimen>
+    <dimen name="commonBottomMargin">5dp</dimen>
+    <dimen name="commonStartMargin">5dp</dimen>
+    <dimen name="commonEndMargin">5dp</dimen>
+    <dimen name="commonLeftMargin">5dp</dimen>
+    <dimen name="commonRightMargin">5dp</dimen>
+    <dimen name="commonMargin">5dp</dimen>
+
+    <dimen name="buttonHeight">48dp</dimen>
+    <dimen name="editTextHeight">48dp</dimen>
+    <!-- Product Circle View  -->
+    <dimen name="standardSmallProductSize">60dp</dimen>
+    <dimen name="standardSmallProductImageSize">40dp</dimen>
+    <dimen name="standardSmallProductTextSize">12sp</dimen>
+
+    <!-- Form View -->
+    <dimen name="formValueSize">14sp</dimen>
+    <dimen name="formLabelSize">16sp</dimen>
+    <dimen name="formHeaderSize">16sp</dimen>
+    <dimen name="formSpinnerSize">40sp</dimen>
+    <dimen name="formPadding">5dp</dimen>
+
+    <!-- Zoom Map Layout -->
+    <dimen name="zoom_map_size">140dp</dimen>
+    <dimen name="zoom_map_marker_image_size">135dp</dimen>
+
+
+
+</resources>

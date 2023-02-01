@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- ############################## Form Layout ###################################### -->
+    <!--  Form Layout -->
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="10dp"
+        app:cardCornerRadius="5dp">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Main Layout -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!--  -->
+                <LinearLayout
+                    android:visibility="gone"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="end"
+                    android:padding="5dp"
+                    android:orientation="vertical">
+                    <ImageView
+                        android:id="@+id/imgRemoveItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_close"
+                        android:contentDescription="@string/todo" />
+
+                </LinearLayout>
+                <!-- 1- header -->
+                <LinearLayout
+                    android:id="@+id/ll_table_header1"
+                    android:visibility="visible"
+                    android:background="@color/formHeaderColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="इमारतीचे वर्णन"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textSize="@dimen/formHeaderSize"
+                        android:textColor="@color/formTextColor" />
+
+                    <TextView
+                        android:id="@+id/tvHeader"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textSize="@dimen/formHeaderSize"
+                        android:textColor="@color/formTextColor" />
+                </LinearLayout>
+                <!-- 1 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:gravity="center"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="1. अ.क्र."
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_sr_no"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 2 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginEnd="5dp"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="2. इमारत मजला"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_floor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 3 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:gravity="center"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="3. इमारत प्रकार"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_building_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 4 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/formColor"
+                        android:gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="4. इमारत वापर"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_building_use_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 2- header -->
+                <LinearLayout
+                    android:background="@color/formHeaderColor"
+                    android:layout_marginTop="5dp"
+                    android:layout_margin="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:visibility="gone"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="top"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_star"
+                        android:contentDescription="@string/todo" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="मोजमाप (फुटात)"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:textSize="@dimen/formHeaderSize"
+                        android:textColor="@color/formTextColor" />
+                </LinearLayout>
+                <!-- 5.1 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:gravity="center"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="5.1. लांबी"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_length"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 5.2 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:gravity="center"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="5.2. रुंदी"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_height"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 5.3 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:gravity="center"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="5.3. क्षेत्रफल"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_area"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 6 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:gravity="center"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="6. इमारतीचे वय"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_building_age"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 7 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:gravity="center"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="7. वार्षिक भाडे रक्कम"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_annual_rent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- 8 -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_weight="1"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:gravity="center"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="8. शेरा"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:layout_weight="1"
+                        android:id="@+id/form_table_tag_no"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- Remove -->
+                <LinearLayout
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <Button
+                        android:id="@+id/btRemoveItem"
+                        android:text="@string/remove"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        android:textSize="15sp"
+                        android:background="@color/seaColorMid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+    </androidx.cardview.widget.CardView>
+
+
+</RelativeLayout>

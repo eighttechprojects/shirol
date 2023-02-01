@@ -1,0 +1,24 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=B1:0D:0A:AE:5F:70:FF:BB:54:9F:CE:1E:01:13:00:8E:EB:02:D6:E7%3Bcom.surveybaba
+
+    You can also add your credentials to an existing key, using these values:
+
+    Package name:
+    com.surveybaba
+
+    SHA-1 certificate fingerprint:
+    B1:0D:0A:AE:5F:70:FF:BB:54:9F:CE:1E:01:13:00:8E:EB:02:D6:E7
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyBCFy2eUR0bjgeiODUnvvkNs0m-IfmV8hY</string>
+</resources>
