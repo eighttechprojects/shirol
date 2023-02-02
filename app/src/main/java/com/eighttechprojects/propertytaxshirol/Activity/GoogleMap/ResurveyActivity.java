@@ -92,6 +92,8 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
     // Logout ----------------------------------------------------------------
     // ArrayList
     private ArrayList<FormDBModel> formDBModelList = new ArrayList<>();
+    private ArrayList<FormDBModel> formSyncList = new ArrayList<>();
+
     private FormDBModel formDBModel;
 
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
@@ -198,6 +200,7 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
             case R.id.menuSync:
                 if(SystemPermission.isInternetConnected(mActivity)){
                     Sync();
+
                 }
                 else{
                     Utility.showOKDialogBox(mActivity, "Sync Alert", "Need Internet Connection To Sync Data", DialogInterface::dismiss);
@@ -252,20 +255,20 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
 //------------------------------------------------------- Sync ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    private void Sync(){
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
-        if(formDBModels.size() == 0){
-            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
-        }
-        else
-        {
-            if(SystemPermission.isInternetConnected(mActivity)){
-                baseApplication.startSyncService();
-            }
-
-        }
-    }
+//
+//    private void Sync(){
+//        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
+//        if(formDBModels.size() == 0){
+//            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
+//        }
+//        else
+//        {
+//            if(SystemPermission.isInternetConnected(mActivity)){
+//                baseApplication.startSyncService();
+//            }
+//
+//        }
+//    }
 
 //------------------------------------------------------- Form ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -599,6 +602,42 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
                 dismissProgressBar();
             }
         }
+        // Sync Form
+        if(responseCode == URL_Utility.ResponseCode.WS_FORM_SYNC){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "Sync Form Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+                        if (formDBModel != null && formDBModel.getId() != null) {
+                            // then
+                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
+                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                dataBaseHelper.updateMapData(formDBModel.getToken(),"f");
+                            }
+                            SyncFormDetails();
+                        }
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    dismissProgressBar();
+                    Log.e(TAG,"Sync Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                dismissProgressBar();
+                Log.e(TAG, "Sync Response Empty");
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
 
     }
 
@@ -611,6 +650,55 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
         Log.e(TAG, "Logout Error Response Code: "+responseCode);
         Log.e(TAG, "Logout Error Message: "+error.getMessage());
     }
+
+
+//------------------------------------------------------- Sync ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    private void Sync(){
+        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
+        if(formDBModels.size() == 0){
+            dismissProgressBar();
+            Log.e(TAG, "Sync Local Database Contain no Data");
+            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
+        }
+        else{
+            if(SystemPermission.isInternetConnected(mActivity)){
+                //baseApplication.startSyncService();
+                showProgressBar("Sync...");
+                Log.e(TAG, "Sync Database Contain some Data");
+                if(formDBModels.size() > 0){
+                    Log.e(TAG, "Sync Service Form On");
+                    formSyncList = dataBaseHelper.getMapFormLocalDataList();
+                    Log.e(TAG, "Sync Form Size: "+ formSyncList.size());
+                    SyncFormDetails();
+                }
+            }
+
+        }
+    }
+
+
+    private void SyncFormDetails(){
+        if(formSyncList != null && formSyncList.size() > 0){
+            formDBModel = formSyncList.get(0);
+            formSyncList.remove(0);
+            SyncFormDataToServer(formDBModel);
+        }
+        else{
+            Log.e(TAG, "Sync Service Form Off");
+            Log.e(TAG,  "Data Sync Successfully");
+            dismissProgressBar();
+            Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
+        }
+    }
+
+    private void SyncFormDataToServer(FormDBModel formDBModel){
+        Log.e(TAG, "Upload to Server.........!");
+        Map<String, String> params = new HashMap<>();
+        params.put("data", formDBModel.getFormData());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
+    }
+
 
 //------------------------------------------------------- ProgressBar Show/ Dismiss ------------------------------------------------------------------------------------------------------
 
@@ -629,8 +717,18 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
             progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progressDialog.show();
         }
-
     }
+
+    private void showProgressBar(String msg) {
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setCancelable(false);
+            progressDialog.setMessage(msg);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.show();
+        }
+    }
+
 
 //---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
 

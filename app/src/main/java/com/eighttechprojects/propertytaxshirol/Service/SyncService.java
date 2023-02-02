@@ -41,10 +41,10 @@ public class SyncService extends Service implements WSResponseInterface {
     // TAG
     private static final String TAG  = SyncService.class.getSimpleName();
     // Static
-    public static final String START_SYNC = "provider.startSync";
-    public static final String STOP_SYNC  = "provider.stopSync";
-    public  static final int SYNC_NOTIFICATION_ID              = 1;
-    public  static final int SYNC_SUCCESSFULLY_NOTIFICATION_ID = 2;
+    public static final String START_SYNC = "provider" + ".startforegroundsync";
+    public static final String STOP_SYNC  = "provider" + ".stopforegroundsync";
+    public  static final int SYNC_NOTIFICATION_ID              = 5;
+    public  static final int SYNC_SUCCESSFULLY_NOTIFICATION_ID = 6;
     public  static final String CHANNEL_ID1 = "channel_01";
     public  static final String CHANNEL_ID2 = "channel_02";
     // Database
@@ -70,12 +70,12 @@ public class SyncService extends Service implements WSResponseInterface {
                     ArrayList<FormDBModel> formDataList = dataBaseHelper.getMapFormLocalDataList();
                     if(formDataList.size() == 0){
                         Toast.makeText(SyncService.this, "No Internet Connection", Toast.LENGTH_SHORT).show();
-                        //syncNotify();
+                        syncNotify();
                         stopSyncService();
                         Log.e(TAG, "Sync Service No Data Found in Local DataBase");
                     }
                     else{
-                        //syncNotify();
+                        syncNotify();
                         Toast.makeText(SyncService.this, "Sync Fail", Toast.LENGTH_SHORT).show();
                         stopService();
                     }
@@ -99,7 +99,7 @@ public class SyncService extends Service implements WSResponseInterface {
             }
             else if (intent.getAction().equals(STOP_SYNC)) {
                 Log.e(TAG, "Stop Foreground Sync Service");
-                //syncNotify();
+                syncNotify();
                 stopForeground(true);
                 stopSelf();
             }
@@ -288,7 +288,7 @@ public class SyncService extends Service implements WSResponseInterface {
     private void Sync() {
         ArrayList<FormDBModel> formDataList = dataBaseHelper.getMapFormLocalDataList();
         if(formDataList.size() == 0){
-         //   syncNotify();
+            syncNotify();
             stopSyncService();
         }
         else{
@@ -298,6 +298,7 @@ public class SyncService extends Service implements WSResponseInterface {
             if(formDataList.size() > 0){
                 Log.e(TAG, "Sync Service Form On");
                 formDBModelList = dataBaseHelper.getMapFormLocalDataList();
+                Log.e(TAG, "Sync Form Size: "+ formDBModelList.size());
                 SyncFormDetails();
             }
         }
@@ -312,12 +313,13 @@ public class SyncService extends Service implements WSResponseInterface {
         else{
             Log.e(TAG, "Sync Service Form Off");
             Log.e(TAG,  "Data Sync Successfully");
-          //  syncNotify();
+            syncNotify();
             stopSyncService();
         }
     }
 
     private void SyncFormDataToServer(FormDBModel formDBModel){
+        Log.e(TAG, "Upload to Server.........!");
         Map<String, String> params = new HashMap<>();
         params.put("data", formDBModel.getFormData());
         BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM, URL_Utility.WS_FORM, params, false, false);
@@ -340,26 +342,27 @@ public class SyncService extends Service implements WSResponseInterface {
                             // then
                             if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
                                 dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                dataBaseHelper.updateMapData(formDBModel.getToken(),"f");
                             }
                             SyncFormDetails();
                         }
                     }
                     // Status -> Fail
                     else{
-                      //  syncNotify();
+                        syncNotify();
                         Utility.showToast(this,Utility.ERROR_MESSAGE);
                         stopService();
                     }
                 }
                 catch (JSONException e){
-                   // syncNotify();
+                    syncNotify();
                     Log.e(TAG,"Sync Json Error: "+ e.getMessage());
                     Utility.showToast(this,Utility.ERROR_MESSAGE);
                     stopService();
                 }
             }
             else{
-               // syncNotify();
+                syncNotify();
                 Utility.showToast(this,Utility.ERROR_MESSAGE);
                 stopService();
                 Log.e(TAG, "Sync Response Empty");
@@ -372,10 +375,9 @@ public class SyncService extends Service implements WSResponseInterface {
     @Override
     public void onErrorResponse(URL_Utility.ResponseCode responseCode, VolleyError error) {
         Log.e(TAG, "Error Response Code: "+responseCode+" Error Message: "+error.getMessage());
-       // syncNotify();
+        syncNotify();
         Utility.showToast(this,Utility.ERROR_MESSAGE);
         stopService();
-
     }
 
 

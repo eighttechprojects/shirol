@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.multidex.MultiDexApplication;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -23,6 +24,8 @@ import java.util.Map;
 
 public class BaseApplication extends MultiDexApplication {
 
+	public AppLifecycleObserver appLifecycleObserver;
+
 	private static BaseApplication sInstance;
 	private static RequestQueue mVolleyQueue;
 	private static final int SOCKET_TIME_OUT = 600000; // 10 minutes
@@ -33,6 +36,9 @@ public class BaseApplication extends MultiDexApplication {
 	public void onCreate() {
 		super.onCreate();
 		initVolley(getApplicationContext());
+		appLifecycleObserver = new AppLifecycleObserver();
+		ProcessLifecycleOwner.get().getLifecycle().addObserver(appLifecycleObserver);
+
 	}
 
 //------------------------------------------------- initVolley ------------------------------------------------------------------------------------------------------------------------

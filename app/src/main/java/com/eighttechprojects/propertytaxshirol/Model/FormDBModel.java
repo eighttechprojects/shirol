@@ -10,6 +10,7 @@ public class FormDBModel {
 
     private String isOnlineSave = "f";
 
+    private String token;
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
@@ -36,6 +37,11 @@ public class FormDBModel {
     public String getIsOnlineSave() {
         return isOnlineSave;
     }
+
+    public String getToken() {
+        return token;
+    }
+
 //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
 
@@ -62,4 +68,9 @@ public class FormDBModel {
     public void setIsOnlineSave(String isOnlineSave) {
         this.isOnlineSave = isOnlineSave;
     }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
 }

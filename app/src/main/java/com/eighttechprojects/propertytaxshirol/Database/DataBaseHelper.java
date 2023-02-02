@@ -16,17 +16,18 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	// Context
 	Context ctx;
 	// DataBase Name
-	public static final String DATABASE_NAME = "PropertyTaxShirol1.db";
+	public static final String DATABASE_NAME = "PropertyTaxShirol2.db";
 	// DataBase Version
-	public static final int DATABASE_VERSION = 3;
+	public static final int DATABASE_VERSION = 5;
 
 	// param
-	public static final String keyParamID         = "id";
-	public static final String keyParamUserID     = "user_id";
-	public static final String keyParamData       = "data";
-	public static final String keyParamLat        = "latitude";
-	public static final String keyParamLon        = "longitude";
+	public static final String keyParamID           = "id";
+	public static final String keyParamUserID       = "user_id";
+	public static final String keyParamData         = "data";
+	public static final String keyParamLat          = "latitude";
+	public static final String keyParamLon          = "longitude";
 	public static final String keyParamIsOnlineSave = "isOnlineSave";
+	public static final String keyParamToken        = "token";
 	// Table Names
 	private static final String TABLE_MAP_FORM_LOCAL = "FormLocal";
 	private static final String TABLE_MAP_FORM       = "Form";
@@ -42,13 +43,13 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	public static final String GET_RESURVEY_MAP_FORM          = "SELECT * FROM "+ TABLE_RESURVEY_MAP_FORM;
 
 	// Local as well as Server Data store into it! -------------------------------------------------
-	public static final String CREATE_TABLE_MAP_FORM = "CREATE TABLE " + TABLE_MAP_FORM +"(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id VARCHAR(100), latitude VARCHAR(100), longitude VARCHAR(100), data TEXT, isOnlineSave VARCHAR(10))";
+	public static final String CREATE_TABLE_MAP_FORM = "CREATE TABLE " + TABLE_MAP_FORM +"(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id VARCHAR(100), latitude VARCHAR(100), longitude VARCHAR(100), data TEXT, isOnlineSave VARCHAR(10), token VARCHAR(500))";
 	public static final String DROP_TABLE_MAP_FORM   = "DROP TABLE "   + TABLE_MAP_FORM;
 	public static final String DELETE_TABLE_MAP_FORM = "DELETE FROM "  + TABLE_MAP_FORM;
 	public static final String GET_MAP_FORM          = "SELECT * FROM "+ TABLE_MAP_FORM;
 
 	// Local Data store ----------------------------------------------------------------------------
-	public static final String CREATE_TABLE_MAP_FORM_LOCAL = "CREATE TABLE " + TABLE_MAP_FORM_LOCAL +"(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id VARCHAR(100), latitude VARCHAR(100), longitude VARCHAR(100), data TEXT)";
+	public static final String CREATE_TABLE_MAP_FORM_LOCAL = "CREATE TABLE " + TABLE_MAP_FORM_LOCAL +"(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id VARCHAR(100), latitude VARCHAR(100), longitude VARCHAR(100), data TEXT, token VARCHAR(500))";
 	public static final String DROP_TABLE_MAP_FORM_LOCAL   = "DROP TABLE "   + TABLE_MAP_FORM_LOCAL;
 	public static final String DELETE_TABLE_MAP_FORM_LOCAL = "DELETE FROM "  + TABLE_MAP_FORM_LOCAL;
 	public static final String GET_MAP_FORM_LOCAL          = "SELECT * FROM "+ TABLE_MAP_FORM_LOCAL;
@@ -125,7 +126,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	}
 
 	//---------------------------------------------------------- Insert Map Form ------------------------------------------------------------
-	public void insertMapForm(String user_id,String lat, String lon,String data,String isOnlineSave){
+	public void insertMapForm(String user_id,String lat, String lon,String data,String isOnlineSave, String token){
 		open();
 		ContentValues cv = new ContentValues();
 		cv.put(keyParamUserID, user_id);
@@ -133,19 +134,33 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		cv.put(keyParamLon, lon);
 		cv.put(keyParamData,data);
 		cv.put(keyParamIsOnlineSave,isOnlineSave);
+		cv.put(keyParamToken,token);
 		db.insert(TABLE_MAP_FORM, null, cv);
 		close();
 	}
 
 	//---------------------------------------------------------- Insert Map Form Local -------------------------------------------------------
-	public void insertMapFormLocal(String user_id,String lat, String lon,String data) {
+	public void insertMapFormLocal(String user_id,String lat, String lon,String data,String token) {
 		open();
 		ContentValues cv = new ContentValues();
 		cv.put(keyParamUserID, user_id);
 		cv.put(keyParamLat, lat);
 		cv.put(keyParamLon, lon);
 		cv.put(keyParamData,data);
+		cv.put(keyParamToken,token);
 		db.insert(TABLE_MAP_FORM_LOCAL, null, cv);
+		close();
+	}
+
+// ######################################################### Update Query ####################################################################################################
+
+	public void updateMapData(String token, String isOnlineSave){
+		open();
+		ContentValues cv = new ContentValues();
+		String where = "token = ?";
+		String[] whereArgs = { token };
+		cv.put(keyParamIsOnlineSave,isOnlineSave);
+		db.update(TABLE_MAP_FORM, cv,where, whereArgs);
 		close();
 	}
 
@@ -160,7 +175,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		db.delete(TABLE_MAP_FORM, whereClause, whereArgs);
 		close();
 	}
-
 
 	//---------------------------------------------------------- Delete Resurvey Map Form ------------------------------------------------------------
 	public void deleteResurveyMapFormData(String id)
@@ -200,6 +214,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 				bin.setLongitude(cv.getString(cv.getColumnIndex(keyParamLon)));
 				bin.setFormData(cv.getString(cv.getColumnIndex(keyParamData)));
 				bin.setIsOnlineSave(cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)));
+				bin.setToken(cv.getString(cv.getColumnIndex(keyParamToken)));
 				list.add(bin);
 				cv.moveToNext();
 			}
@@ -223,6 +238,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 				bin.setLatitude(cv.getString(cv.getColumnIndex(keyParamLat)));
 				bin.setLongitude(cv.getString(cv.getColumnIndex(keyParamLon)));
 				bin.setFormData(cv.getString(cv.getColumnIndex(keyParamData)));
+				bin.setToken(cv.getString(cv.getColumnIndex(keyParamToken)));
 				list.add(bin);
 				cv.moveToNext();
 			}

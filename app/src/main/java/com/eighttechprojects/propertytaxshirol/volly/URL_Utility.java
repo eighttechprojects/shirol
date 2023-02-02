@@ -40,6 +40,8 @@ public class URL_Utility {
 	public static final String WS_FORGOT_PASSWORD = COMMON_API + "forgot-password";
 	// Form Upload
 	public static final String WS_FORM            = COMMON_API + "save-form";
+	public static final String WS_FORM_SYNC       = COMMON_API + "save-form";
+
 	// Resurvey
 	public static final String WS_RESURVEY_FORM   = COMMON_API + "login";
 
@@ -50,7 +52,8 @@ public class URL_Utility {
 		WS_LOGIN,
 		WS_FORGOT_PASSWORD,
 		WS_FORM,
-		WS_RESURVEY_FORM
+		WS_RESURVEY_FORM,
+		WS_FORM_SYNC
 	}
 
 }

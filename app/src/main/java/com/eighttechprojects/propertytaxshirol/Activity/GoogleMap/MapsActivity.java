@@ -110,7 +110,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Logout ----------------------------------------------------------------
     // ArrayList
     private ArrayList<FormDBModel> formDBModelList = new ArrayList<>();
+
+    private ArrayList<FormDBModel> formSyncList = new ArrayList<>();
     private FormDBModel formDBModel;
+
+
 
     // Broadcast Receiver
     BroadcastReceiver broadcastReceiver;
@@ -161,7 +165,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationPermission();
 
 
-     //   registerReceiver();
+        registerReceiver();
     }
 
 //------------------------------------------------------- InitDatabase --------------------------------------------------------------------------------------------------------------------------
@@ -359,14 +363,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progressDialog.show();
         }
-
+    }
+    private void showProgressBar(String msg) {
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setCancelable(false);
+            progressDialog.setMessage(msg);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progressDialog.show();
+        }
     }
 
 //------------------------------------------------------- onSuccessResponse -----------------------------------------------------------------------------------------------------------------------------------------
 
     @Override
     public void onSuccessResponse(URL_Utility.ResponseCode responseCode, String response) {
-
+        // Form
         if(responseCode == URL_Utility.ResponseCode.WS_FORM){
             if(!response.equals("")){
                 try {
@@ -401,7 +413,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
-
+        // Sync Form
+        if(responseCode == URL_Utility.ResponseCode.WS_FORM_SYNC){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "Sync Form Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+                        if (formDBModel != null && formDBModel.getId() != null) {
+                            // then
+                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
+                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                dataBaseHelper.updateMapData(formDBModel.getToken(),"f");
+                            }
+                            SyncFormDetails();
+                        }
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    dismissProgressBar();
+                    Log.e(TAG,"Sync Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                dismissProgressBar();
+                Log.e(TAG, "Sync Response Empty");
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
     }
 
 //------------------------------------------------------- onErrorResponse -----------------------------------------------------------------------------------------------------------------------------------------
@@ -419,15 +466,49 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void Sync(){
         ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
         if(formDBModels.size() == 0){
+            dismissProgressBar();
+            Log.e(TAG, "Sync Local Database Contain no Data");
             Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
         }
         else{
             if(SystemPermission.isInternetConnected(mActivity)){
-                baseApplication.startSyncService();
+                //baseApplication.startSyncService();
+                showProgressBar("Sync...");
+                Log.e(TAG, "Sync Database Contain some Data");
+                if(formDBModels.size() > 0){
+                    Log.e(TAG, "Sync Service Form On");
+                    formSyncList = dataBaseHelper.getMapFormLocalDataList();
+                    Log.e(TAG, "Sync Form Size: "+ formSyncList.size());
+                    SyncFormDetails();
+                }
             }
 
         }
     }
+
+
+    private void SyncFormDetails(){
+        if(formSyncList != null && formSyncList.size() > 0){
+            formDBModel = formSyncList.get(0);
+            formSyncList.remove(0);
+            SyncFormDataToServer(formDBModel);
+        }
+        else{
+            Log.e(TAG, "Sync Service Form Off");
+            Log.e(TAG,  "Data Sync Successfully");
+            dismissProgressBar();
+            refreshFormData();
+            Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
+        }
+    }
+
+    private void SyncFormDataToServer(FormDBModel formDBModel){
+        Log.e(TAG, "Upload to Server.........!");
+        Map<String, String> params = new HashMap<>();
+        params.put("data", formDBModel.getFormData());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
+    }
+
 
 //------------------------------------------------------- onClick ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -731,12 +812,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if(!Utility.isEmptyString(formDBModel.getLatitude()) && !Utility.isEmptyString(formDBModel.getLongitude())) {
                         LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
                         Marker marker;
-                        //if((formDBModels.get(i).getIsOnlineSave()).equalsIgnoreCase("f")){
+                        if((formDBModels.get(i).getIsOnlineSave()).equalsIgnoreCase("f")){
                             marker = Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_RED);
-//                      }
-//                      else{
-//                          marker = Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_BLUE);
-//                      }
+                      }
+                      else{
+                          marker = Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_BLUE);
+                      }
                         FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
                         marker.setDraggable(false);
                         marker.setTag(formModel);
@@ -872,35 +953,43 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+    private void refreshFormData(){
+        mMap.clear();
+        showAllForm();
+    }
+
 //------------------------------------------------------- BoardCast Receiver ----------------------------------------------------------------------------------------------------------------
 
+    private final BroadcastReceiver syncReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String data = intent.getStringExtra("sync");
+            if(data.equalsIgnoreCase("on")){
+                refreshFormData();
+            }
+        }
+    };
 
-//    private final BroadcastReceiver syncReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            String data = intent.getStringExtra("sync");
-//            if(data.equalsIgnoreCase("on")){
-//                mMap.clear();
-//                showAllForm();
-//            }
-//        }
-//    };
-//
-//    private void registerReceiver(){
-//        registerReceiver(syncReceiver, new IntentFilter(Utility.SyncServiceOn));
-//    }
-//
-//    private void unregisterReceiver(){
-//        try{
-//            unregisterReceiver(syncReceiver);
-//        }catch (IllegalArgumentException e){
-//            e.printStackTrace();
-//        }
-//    }
+
+
+    private void registerReceiver(){
+        registerReceiver(syncReceiver, new IntentFilter(Utility.SyncServiceOn));
+    }
+
+    private void unregisterReceiver(){
+        try{
+            unregisterReceiver(syncReceiver);
+        }catch (IllegalArgumentException e){
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-   //     unregisterReceiver();
+        unregisterReceiver();
     }
+
+
+
 }

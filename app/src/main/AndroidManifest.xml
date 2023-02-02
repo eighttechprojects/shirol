@@ -16,7 +16,7 @@
     <!-- Vibrate -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- -->
-    <!-- Ringtone -->
+
     <application
         android:name=".volly.BaseApplication"
         android:allowBackup="true"

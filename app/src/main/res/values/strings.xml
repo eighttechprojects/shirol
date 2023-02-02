@@ -7,8 +7,8 @@
     <string name="storage_permission">Storage Permission</string>
     <string name="cameraPermissionDescription">Allows apps to use your camera to take photos and record videos. Apps need this permission so you can take pictures.</string>
     <string name="storagePermissionDescription">Allows apps to read and write to your internal or external storage. Apps need this permission so you can pick image or file form your device and you can upload it to server</string>
-    <string name="locationPermissionDescription">Allows apps to access your approximate Location.</string>
-    <string name="permissionHeaderDescription">For the purpose of PropertyTax Shirol, we need the following Permission form you:</string>
+    <string name="locationPermissionDescription">Allows apps to access your approximate location.</string>
+    <string name="permissionHeaderDescription">For the purpose of PropertyTax Shirol, we need the following Permission from you:</string>
     <string name="permission_storage_title">Storage Permission</string>
     <string name="permission_storage_description">Grant storage permission to enable load or store image from/to storage</string>
     <string name="permission_camera_title">Camera Permission</string>
