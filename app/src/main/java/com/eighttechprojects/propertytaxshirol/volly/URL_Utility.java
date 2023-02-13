@@ -10,7 +10,12 @@ public class URL_Utility {
 	public static final String SAVE_SUCCESSFULLY = "Save Successfully";
 	// App Version
 	public static final String APP_VERSION = "1.0";
-	public static final String COMMON_API = "https://surveybaba.com/propertyform-shirol/api/";
+	// old API
+	//public static final String COMMON_API = "https://surveybaba.com/propertyform-shirol/api/";
+
+	// new API
+	public static final String COMMON_API = "http://173.249.24.149/shirol/api/";
+
 
 // ########################################## COMMON PARAM ###########################################################################################################################
 
