@@ -144,7 +144,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="2. जनुा मिळकत क्र."
+                            android:text="2. जुना मिळकत क्र."
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -448,7 +448,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="9. गट न."
+                            android:text="9. गट नं."
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -811,6 +811,29 @@
                         app:theme="@style/ThemeOverlay.AppCompat.Light"
                         tools:listitem="@android:layout/simple_selectable_list_item" />
                 </LinearLayout>
+            </LinearLayout>
+            <!-- 17.1 -->
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/ll_17_1"
+                android:padding="@dimen/formPadding"
+                android:layout_marginTop="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- value -->
+                <EditText
+                    android:id="@+id/form_no_of_floors"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_edittext"
+                    android:padding="10dp"
+                    android:textSize="@dimen/formValueSize"
+                    android:inputType="text"
+                    android:hint="No of Floors"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black" />
             </LinearLayout>
             <!-- 18 -->
             <LinearLayout
@@ -1184,7 +1207,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="25. दिवाबत्ती सोय आहेका ?"
+                            android:text="25. दिवाबत्ती सोय आहे का ?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
 
@@ -1282,21 +1305,109 @@
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
-                <!-- value  spinner -->
+<!--                &lt;!&ndash; value  spinner &ndash;&gt;-->
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="@dimen/formSpinnerSize"-->
+<!--                    android:layout_marginTop="5dp"-->
+<!--                    android:orientation="vertical"-->
+<!--                    android:background="@drawable/bg_edittext">-->
+<!--                    <Spinner-->
+<!--                        android:id="@+id/form_sp_total_water_line"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="match_parent"-->
+<!--                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"-->
+<!--                        app:theme="@style/ThemeOverlay.AppCompat.Light"-->
+<!--                        tools:listitem="@android:layout/simple_selectable_list_item" />-->
+<!--                </LinearLayout>-->
+<!--                -->
+            </LinearLayout>
+
+            <!-- 27.1  -->
+            <LinearLayout
+                android:id="@+id/ll_27_1"
+                android:padding="@dimen/formPadding"
+                android:layout_marginTop="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- label -->
                 <LinearLayout
+                    android:background="@color/formColor"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/formSpinnerSize"
-                    android:layout_marginTop="5dp"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_edittext">
-                    <Spinner
-                        android:id="@+id/form_sp_total_water_line"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:visibility="gone"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="top"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_star"
+                        android:contentDescription="@string/todo" />
+                    <TextView
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                        app:theme="@style/ThemeOverlay.AppCompat.Light"
-                        tools:listitem="@android:layout/simple_selectable_list_item" />
+                        android:layout_height="wrap_content"
+                        android:text="१” "
+                        android:textSize="@dimen/formLabelSize"
+                        android:textColor="@color/formTextColor" />
                 </LinearLayout>
+                <!-- value -->
+                <EditText
+                    android:id="@+id/form_total_water_line_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_edittext"
+                    android:padding="10dp"
+                    android:textSize="@dimen/formValueSize"
+                    android:textAlignment="textStart"
+                    android:inputType="number"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+            <!-- 27.2  -->
+            <LinearLayout
+                android:id="@+id/ll_27_2"
+                android:padding="@dimen/formPadding"
+                android:layout_marginTop="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- label -->
+                <LinearLayout
+                    android:background="@color/formColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:visibility="gone"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="top"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_star"
+                        android:contentDescription="@string/todo" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="१/२”"
+                        android:textSize="@dimen/formLabelSize"
+                        android:textColor="@color/formTextColor" />
+                </LinearLayout>
+                <!-- value -->
+                <EditText
+                    android:id="@+id/form_total_water_line_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_edittext"
+                    android:padding="10dp"
+                    android:textSize="@dimen/formValueSize"
+                    android:textAlignment="textStart"
+                    android:inputType="number"
+                    android:textColor="@color/black" />
             </LinearLayout>
             <!-- 28 spinner -->
             <LinearLayout
@@ -1370,7 +1481,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="29. छतावरील सौर ऊजा प्रकल्प"
+                            android:text="29. छतावरील सौर ऊर्जा प्रकल्प"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>

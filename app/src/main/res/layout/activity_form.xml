@@ -9,6 +9,11 @@
     tools:context=".Activity.Form.FormActivity">
 
 
+    <RelativeLayout
+        android:id="@+id/llMain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
 <!-- ############################## Form Layout ###################################### -->
         <!--  Form Layout -->
         <ScrollView
@@ -143,7 +148,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="2. जनुा मिळकत क्र."
+                                android:text="2. जुना मिळकत क्र."
                                 android:textSize="@dimen/formLabelSize"
                                 android:textColor="@color/formTextColor" />
                     </LinearLayout>
@@ -447,7 +452,7 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="9. गट न."
+                                    android:text="9. गट नं."
                                     android:textSize="@dimen/formLabelSize"
                                     android:textColor="@color/formTextColor" />
                         </LinearLayout>
@@ -812,6 +817,29 @@
                                 app:theme="@style/ThemeOverlay.AppCompat.Light"
                                 tools:listitem="@android:layout/simple_selectable_list_item" />
                         </LinearLayout>
+                    </LinearLayout>
+                    <!-- 17.1 -->
+                    <LinearLayout
+                        android:visibility="gone"
+                        android:id="@+id/ll_17_1"
+                        android:padding="@dimen/formPadding"
+                        android:layout_marginTop="5dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <!-- value -->
+                        <EditText
+                            android:id="@+id/form_no_of_floors"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:background="@drawable/bg_edittext"
+                            android:padding="10dp"
+                            android:textSize="@dimen/formValueSize"
+                            android:inputType="text"
+                            android:hint="No of Floors"
+                            android:textAlignment="textStart"
+                            android:textColor="@color/black" />
                     </LinearLayout>
                     <!-- 18 -->
                     <LinearLayout
@@ -1184,7 +1212,7 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="25. दिवाबत्ती सोय आहेका ?"
+                                    android:text="25. दिवाबत्ती सोय आहे का ?"
                                     android:textSize="@dimen/formLabelSize"
                                     android:textColor="@color/formTextColor" />
                         </LinearLayout>
@@ -1251,7 +1279,7 @@
                         </LinearLayout>
                     </LinearLayout>
                     <!-- 27 and 28 link with 26 -->
-                    <!-- 27 spinner -->
+                    <!-- 27 -->
                     <LinearLayout
                         android:id="@+id/ll_27"
                         android:padding="@dimen/formPadding"
@@ -1281,22 +1309,122 @@
                                     android:textSize="@dimen/formLabelSize"
                                     android:textColor="@color/formTextColor" />
                         </LinearLayout>
-                        <!-- value  spinner -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="@dimen/formSpinnerSize"
-                            android:layout_marginTop="5dp"
-                            android:orientation="vertical"
-                            android:background="@drawable/bg_edittext">
-                            <Spinner
-                                android:id="@+id/form_sp_total_water_line"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                                app:theme="@style/ThemeOverlay.AppCompat.Light"
-                                tools:listitem="@android:layout/simple_selectable_list_item" />
-                        </LinearLayout>
+<!--                        &lt;!&ndash; value  spinner &ndash;&gt;-->
+<!--                        <LinearLayout-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="@dimen/formSpinnerSize"-->
+<!--                            android:layout_marginTop="5dp"-->
+<!--                            android:orientation="vertical"-->
+<!--                            android:background="@drawable/bg_edittext">-->
+<!--                            <Spinner-->
+<!--                                android:id="@+id/form_sp_total_water_line"-->
+<!--                                android:layout_width="match_parent"-->
+<!--                                android:layout_height="match_parent"-->
+<!--                                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"-->
+<!--                                app:theme="@style/ThemeOverlay.AppCompat.Light"-->
+<!--                                tools:listitem="@android:layout/simple_selectable_list_item" />-->
+<!--                        </LinearLayout>-->
+
+                        <!-- value -->
+<!--                        <EditText                             -->
+<!--                            android:id="@+id/form_total_water_line"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_marginTop="5dp"-->
+<!--                            android:background="@drawable/bg_edittext"-->
+<!--                            android:padding="10dp"-->
+<!--                            android:textSize="@dimen/formValueSize"-->
+<!--                            android:textAlignment="textStart"-->
+<!--                            android:inputType="number"-->
+<!--                            android:textColor="@color/black" />-->
+
                     </LinearLayout>
+                    <!-- 27.1  -->
+                    <LinearLayout
+                    android:id="@+id/ll_27_1"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="१” "
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <EditText
+                        android:id="@+id/form_total_water_line_1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="number"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                    <!-- 27.2  -->
+                    <LinearLayout
+                    android:id="@+id/ll_27_2"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="१/२”"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <EditText
+                        android:id="@+id/form_total_water_line_2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="number"
+                        android:textColor="@color/black" />
+                </LinearLayout>
                     <!-- 28 spinner -->
                     <LinearLayout
                         android:id="@+id/ll_28"
@@ -1369,7 +1497,7 @@
                                 <TextView
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="29. छतावरील सौर ऊजा प्रकल्प"
+                                    android:text="29. छतावरील सौर ऊर्जा प्रकल्प"
                                     android:textSize="@dimen/formLabelSize"
                                     android:textColor="@color/formTextColor" />
                         </LinearLayout>
@@ -1480,8 +1608,7 @@
                             android:textSize="@dimen/formHeaderSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
-
-            <!-- RecycleView -->
+               <!-- RecycleView -->
                 <LinearLayout
                     android:layout_marginTop="5dp"
                     android:padding="@dimen/formPadding"
@@ -1509,16 +1636,308 @@
                         android:layout_height="45dp"/>
 
                 </LinearLayout>
+                <!-- End  -->
+                <!-- 32 -->
+                <LinearLayout
+                    android:id="@+id/ll_32"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="32. प्लॉटचे एकूण शेटफळ"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="text"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- minus Sign -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+                       <ImageView
+                           android:layout_width="30dp"
+                           android:layout_height="20dp"
+                           android:gravity="center"
+                           android:src="@drawable/ic_minus" />
+                    </LinearLayout>
+
+                </LinearLayout>
+                <!-- 33 -->
+                <LinearLayout
+                    android:id="@+id/ll_33"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="33. तळ मजल्याचे बांधकाम शेटफळ"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="text"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- equals Sign -->
+                <LinearLayout
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="20dp"
+                            android:gravity="center"
+                            android:src="@drawable/ic_equals" />
+                    </LinearLayout>
+
+                </LinearLayout>
+                <!-- 34 -->
+                <LinearLayout
+                    android:id="@+id/ll_34"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="34. तळ मजला उर्वरित मोकळी जागा"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="text"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+
+<!-- ################ File ########################################################################################################################################################################### -->
+                <!-- Add Image File Upload -->
+                <!-- 35 Photo Upload -->
+                <LinearLayout
+                    android:id="@+id/ll_35_photoupload"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="35. Property Photo"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <LinearLayout
+                        android:id="@+id/llImageCapture"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:layout_marginTop="5dp"
+                        android:orientation="vertical">
+
+                        <ImageView
+                            android:id="@+id/imgCaptured"
+                            android:layout_width="@dimen/margin_100"
+                            android:layout_height="@dimen/margin_100"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_camera"
+                            android:tag="todo" />
+                    </LinearLayout>
+
+
+                </LinearLayout>
+                <!-- 36 File Upload -->
+                <LinearLayout
+                    android:id="@+id/ll_36_fileupload"
+                    android:padding="@dimen/formPadding"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="36. Sketch Plan"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="10dp"
+                        android:weightSum="2">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_edittext"
+                            android:padding="10dp"
+                            android:gravity="center"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="10dp"
+                            android:layout_weight="2">
+
+                            <TextView
+                                android:id="@+id/tv_fileUploadName"
+                                android:hint="File Upload"
+                                android:textColor="@color/black"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"/>
+
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/btFileUpload"
+                            android:text="Upload"
+                            android:background="@drawable/bg_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/white"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+
+
+
+                </LinearLayout>
+
 
                 <!-- Main Layout -->
             </LinearLayout>
         </ScrollView>
 
-
 <!-- ############################## Button Layout ###################################### -->
-
         <!-- Bottom Button -->
-            <LinearLayout
+        <LinearLayout
                 android:id="@+id/llButton"
                 android:layout_alignParentBottom="true"
                 android:layout_width="match_parent"
@@ -1554,6 +1973,32 @@
 
             </LinearLayout>
 
+    </RelativeLayout>
 
+    <!-- Preview Layout Contain Lat Lon Date  -->
+    <LinearLayout
+        android:id="@+id/llPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/imgPreview"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/txtGeoTag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:padding="13dp"
+            android:text="Lat: 1232132\nLong: 12321332\nDate: dd/mm/yy hh:mm:ss" />
+    </LinearLayout>
 
 </RelativeLayout>

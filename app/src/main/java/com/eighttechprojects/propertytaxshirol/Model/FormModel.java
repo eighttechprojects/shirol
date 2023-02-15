@@ -1,11 +1,16 @@
 package com.eighttechprojects.propertytaxshirol.Model;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class FormModel {
 
     private FormFields formFields;
     private ArrayList<FormTableModel> form_detail;
+
+    private CameraFileModel cameraFileModel;
+
+    private FileModel fileModel;
 
 //------------------------------------------------------- Constructor ---------------------------------------------------------------------------------------------------------------------------
 
@@ -15,6 +20,7 @@ public class FormModel {
         this.formFields = formFields;
         this.form_detail = form_detail;
     }
+
 
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
@@ -27,6 +33,15 @@ public class FormModel {
         return form_detail;
     }
 
+    public FileModel getFileModel() {
+        return fileModel;
+    }
+
+    public CameraFileModel getCameraFileModel() {
+        return cameraFileModel;
+    }
+
+
 //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
 
@@ -38,6 +53,13 @@ public class FormModel {
         this.form_detail = form_detail;
     }
 
+    public void setCameraFileModel(CameraFileModel cameraFileModel) {
+        this.cameraFileModel = cameraFileModel;
+    }
+
+    public void setFileModel(FileModel fileModel) {
+        this.fileModel = fileModel;
+    }
 }
 
 

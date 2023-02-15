@@ -229,6 +229,13 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
                 selectedPropertyType = parent.getItemAtPosition(position).toString();
+
+                if(selectedPropertyType.equalsIgnoreCase("इतर")){
+                    binding.ll171.setVisibility(View.VISIBLE);
+                }
+                else{
+                    binding.ll171.setVisibility(View.GONE);
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}});
@@ -458,10 +465,14 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
 
                 if(selectedIsWaterLineAvailable.equals(selectYesOption)){
                     binding.ll27.setVisibility(View.VISIBLE);
+                    binding.ll271.setVisibility(View.VISIBLE);
+                    binding.ll272.setVisibility(View.VISIBLE);
                     binding.ll28.setVisibility(View.VISIBLE);
                 }
                 else{
                     binding.ll27.setVisibility(View.GONE);
+                    binding.ll271.setVisibility(View.GONE);
+                    binding.ll272.setVisibility(View.GONE);
                     binding.ll28.setVisibility(View.GONE);
                     selectedTotalWaterLine = "";
                     selectedWaterUseType   = "";
@@ -471,35 +482,35 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             public void onNothingSelected(AdapterView<?> adapterView) {}});
 
 
-        // 27 - Spinner -----------------------------------------------------------------------------
-        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
-        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.formSpTotalWaterLine.setAdapter(adapterTotalWaterLine);
-        // set Data
-        if(bin != null) {
-            if (!Utility.isEmptyString(bin.getTotal_water_line())) {
-                switch (bin.getTotal_water_line()) {
-                    case "१/२”":
-                        binding.formSpTotalWaterLine.setSelection(0);
-                        break;
-
-//                    case "२”":
+//        // 27 - Spinner -----------------------------------------------------------------------------
+//        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
+//        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        binding.formSpTotalWaterLine.setAdapter(adapterTotalWaterLine);
+//        // set Data
+//        if(bin != null) {
+//            if (!Utility.isEmptyString(bin.getTotal_water_line())) {
+//                switch (bin.getTotal_water_line()) {
+//                    case "१/२”":
+//                        binding.formSpTotalWaterLine.setSelection(0);
+//                        break;
+//
+////                    case "२”":
+////                        binding.formSpTotalWaterLine.setSelection(1);
+////                        break;
+//
+//                    case "१”":
 //                        binding.formSpTotalWaterLine.setSelection(1);
 //                        break;
-
-                    case "१”":
-                        binding.formSpTotalWaterLine.setSelection(1);
-                        break;
-                }
-            }
-        }
-        binding.formSpTotalWaterLine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
-                selectedTotalWaterLine = parent.getItemAtPosition(position).toString();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}});
+//                }
+//            }
+//        }
+//        binding.formSpTotalWaterLine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
+//                selectedTotalWaterLine = parent.getItemAtPosition(position).toString();
+//            }
+//            @Override
+//            public void onNothingSelected(AdapterView<?> adapterView) {}});
 
 
 
@@ -705,7 +716,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         // Init Edit Text
         EditText sr_no            = fDB.findViewById(R.id.form_table_sr_no);
         EditText floor            = fDB.findViewById(R.id.form_table_floor);
-         EditText length          = fDB.findViewById(R.id.form_table_length);
+        EditText length          = fDB.findViewById(R.id.form_table_length);
         EditText height           = fDB.findViewById(R.id.form_table_height);
         EditText area             = fDB.findViewById(R.id.form_table_area);
         EditText building_age     = fDB.findViewById(R.id.form_table_building_age);
@@ -714,6 +725,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         // Spinner
         Spinner building_type     = fDB.findViewById(R.id.form_sp_building_type);
         Spinner building_use_type = fDB.findViewById(R.id.form_sp_building_use_type);
+
         // Building Type Spinner -----------------------------------------------------------------------------
         ArrayAdapter<CharSequence> adapterBuildingType = ArrayAdapter.createFromResource(mActivity, R.array.sp_building_type,android.R.layout.simple_spinner_item);
         adapterBuildingType.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -796,6 +808,9 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setGrid_no(Utility.getEditTextValue(binding.formGridNo));
             bin.setGis_id(Utility.getEditTextValue(binding.formGisId));
             bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
+
+            bin.setNo_of_floors(Utility.getEditTextValue(binding.formNoOfFloors));
+
             bin.setProperty_release_date(Utility.getEditTextValue(binding.formPropertyReleaseDate));
             bin.setBuild_permission(Utility.getStringValue(selectedBuildPermission));
             bin.setBuild_completion_form(Utility.getStringValue(selectedBuildCompletionForm));

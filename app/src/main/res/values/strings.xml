@@ -57,12 +57,13 @@
     <string name="logout">Logout</string>
     <string name="resurvey">Resurvey</string>
     <string name="app_version">App version:</string>
+    <string name="edit">Edit</string>
 
 
     <!-- Form Spinner -->
     <!-- 6 -->
     <string-array name="sp_property_user_type">
-        <item>स्वत</item>
+        <item>स्वत:</item>
         <item>भाडेकरू</item>
         <item>भोगवटदर</item>
     </string-array>
@@ -127,7 +128,7 @@
     </string-array>
 
     <string-array name="sp_building_use_type">
-        <item>नवासी</item>
+        <item>निवासी</item>
         <item>वाणिज्य</item>
         <item>औद्योगिक</item>
         <item>शैक्षणिक</item>

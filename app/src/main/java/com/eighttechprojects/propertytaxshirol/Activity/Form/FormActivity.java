@@ -1,5 +1,6 @@
 package com.eighttechprojects.propertytaxshirol.Activity.Form;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import android.annotation.SuppressLint;
@@ -7,7 +8,12 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.hardware.Camera;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,20 +26,37 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 import com.android.volley.VolleyError;
+import com.bumptech.glide.Glide;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
 import com.eighttechprojects.propertytaxshirol.R;
+import com.eighttechprojects.propertytaxshirol.Utilities.ImageFileUtils;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
 import com.eighttechprojects.propertytaxshirol.databinding.ActivityFormBinding;
+import com.eighttechprojects.propertytaxshirol.volly.AndroidMultiPartEntity;
 import com.eighttechprojects.propertytaxshirol.volly.BaseApplication;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
+import com.mikelau.croperino.Croperino;
+import com.mikelau.croperino.CroperinoConfig;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,6 +108,22 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     String db_form_sp_building_type     = "";
     String db_form_sp_building_use_type = "";
 
+    // Camera
+    private File cameraDestFileTemp;
+    ImageFileUtils imageFileUtils;
+    StringBuilder sbCameraPathLocal;
+    StringBuilder sbCameraImagePath = new StringBuilder();
+
+    // File
+    StringBuilder sbFilePath = new StringBuilder();
+
+    // File Upload
+    public long totalSize = 0;
+    private String unique_number ="", datetime = "";
+    public static final String TYPE_FILE   = "file";
+    public static final String TYPE_CAMERA = "cameraUploader";
+    public static boolean isFileUpload   = true;
+    public static boolean isCameraUpload = true;
 
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
 
@@ -98,6 +137,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         // Activity
         mActivity = this;
+        // ImageFileUtils
+        imageFileUtils = new ImageFileUtils();
         // init Spinner
         initSpinner();
         // Adapter
@@ -111,6 +152,12 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         setOnClickListener();
         // init Extra
         initExtra();
+        // Update PreviewUI
+        updatePreviewUI(false);
+        // Photo Upload
+        binding.imgCaptured.setOnClickListener(view -> {
+            cameraPhotoUpload();
+        });
     }
 
 //------------------------------------------------------- initExtra ----------------------------------------------------------------------------------------------------------------------
@@ -128,6 +175,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             Log.e(TAG, "Form Long: "+longitude);
         }
     }
+
 //------------------------------------------------------- initSpinner ----------------------------------------------------------------------------------------------------------------------
 
     private void initSpinner(){
@@ -153,6 +201,13 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
                 selectedPropertyType = parent.getItemAtPosition(position).toString();
+
+                if(selectedPropertyType.equalsIgnoreCase("इतर")){
+                    binding.ll171.setVisibility(View.VISIBLE);
+                }
+                else{
+                    binding.ll171.setVisibility(View.GONE);
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}});
@@ -271,10 +326,14 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
                 if(selectedIsWaterLineAvailable.equals(selectYesOption)){
                     binding.ll27.setVisibility(View.VISIBLE);
+                    binding.ll271.setVisibility(View.VISIBLE);
+                    binding.ll272.setVisibility(View.VISIBLE);
                     binding.ll28.setVisibility(View.VISIBLE);
                 }
                 else{
                     binding.ll27.setVisibility(View.GONE);
+                    binding.ll271.setVisibility(View.GONE);
+                    binding.ll272.setVisibility(View.GONE);
                     binding.ll28.setVisibility(View.GONE);
                     selectedTotalWaterLine = "";
                     selectedWaterUseType   = "";
@@ -284,19 +343,17 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             public void onNothingSelected(AdapterView<?> adapterView) {}});
 
 
-        // 27 - Spinner -----------------------------------------------------------------------------
-        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
-        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.formSpTotalWaterLine.setAdapter(adapterTotalWaterLine);
-        binding.formSpTotalWaterLine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
-                selectedTotalWaterLine = parent.getItemAtPosition(position).toString();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {}});
-
-
+//        // 27 - Spinner -----------------------------------------------------------------------------
+//        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
+//        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        binding.formSpTotalWaterLine.setAdapter(adapterTotalWaterLine);
+//        binding.formSpTotalWaterLine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
+//                selectedTotalWaterLine = parent.getItemAtPosition(position).toString();
+//            }
+//            @Override
+//            public void onNothingSelected(AdapterView<?> adapterView) {}});
 
         // 28 - Spinner -----------------------------------------------------------------------------
         ArrayAdapter<CharSequence> adapterWaterUseType = ArrayAdapter.createFromResource(mActivity, R.array.sp_water_use_type,android.R.layout.simple_spinner_item);
@@ -374,6 +431,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         binding.btSubmit.setOnClickListener(this);
         binding.btExit.setOnClickListener(this);
         binding.btAddFormTable.setOnClickListener(this);
+        binding.btFileUpload.setOnClickListener(this);
     }
 
 //------------------------------------------------------- Menu ----------------------------------------------------------------------------------------------------------------------
@@ -408,7 +466,55 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btAddFormTable:
                 addFormTable();
                 break;
+
+            case R.id.btFileUpload:
+                fileUpload();
+                break;
+
         }
+    }
+
+//------------------------------------------------------- File Upload ----------------------------------------------------------------------------------------------------------------------
+
+    private void fileUpload(){
+        try{
+            Utility.openMultipleFilePicker(mActivity);
+        }catch (Exception e){
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+//------------------------------------------------------- Camera Photo Upload ----------------------------------------------------------------------------------------------------------------------
+
+    private void updatePreviewUI(boolean isUpdate) {
+        binding.llMain.setVisibility(isUpdate ? View.GONE : View.VISIBLE);
+        binding.llPreview.setVisibility(isUpdate ? View.VISIBLE : View.GONE);
+    }
+
+    private void cameraPhotoUpload(){
+        // Camera
+        try{
+            Utility.openCamera(mActivity, imageFileUtils, path -> {
+                if(path != null){
+                    cameraDestFileTemp = new File(path);
+                }
+            });
+        }
+        catch (Exception e){
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+    private StringBuilder getGeoTagData() {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)) {
+            stringBuilder.append("Latitude : " + "" + latitude);
+            stringBuilder.append("\n");
+            stringBuilder.append("Longitude : " + "" + longitude);
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Date: " + Utility.getRecordDate());
+        return stringBuilder;
     }
 
 //------------------------------------------------------- Add Form Table ----------------------------------------------------------------------------------------------------------------------
@@ -492,9 +598,11 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         // Geom Array not Null
         if(!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)){
 
+
+            unique_number = String.valueOf(Utility.getToken());
+            datetime      = Utility.getDateTime();
             // Form
             formModel = new FormModel();
-
             // 1 -----------------------------
             FormFields bin = new FormFields();
             // Default Fields
@@ -521,6 +629,9 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setGrid_no(Utility.getEditTextValue(binding.formGridNo));
             bin.setGis_id(Utility.getEditTextValue(binding.formGisId));
             bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
+
+            bin.setNo_of_floors(Utility.getEditTextValue(binding.formNoOfFloors));
+
             bin.setProperty_release_date(Utility.getEditTextValue(binding.formPropertyReleaseDate));
             bin.setBuild_permission(Utility.getStringValue(selectedBuildPermission));
             bin.setBuild_completion_form(Utility.getStringValue(selectedBuildCompletionForm));
@@ -599,22 +710,61 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     // Status -> Success
                     if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
                         Log.e(TAG,"Form Upload to Server SuccessFully");
-                        dismissProgressBar();
-                        if(formModel != null){
-                            dataBaseHelper.insertMapForm(
-                                    Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                                    latitude,
-                                    longitude,
-                                    Utility.convertFormModelToString(formModel),
-                                    "f",
-                                    String.valueOf(Utility.getToken())
-                            );
+
+                        // Changes
+                        boolean isFile   = false;
+                        boolean isCamera = false;
+
+                        // File
+                        if(sbFilePath != null && !Utility.isEmptyString(sbFilePath.toString())){
+                            Log.e(TAG,"Form Contain File");
+                            isFile = true;
                         }
-                        Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
-                            okDialogBox.dismiss();
-                            setResult(RESULT_OK);
-                            finish();
-                        });
+
+                        // Camera
+                        if(sbCameraImagePath != null && !Utility.isEmptyString(sbCameraImagePath.toString())){
+                            Log.e(TAG, "Form Contain Camera Image");
+                            isCamera = true;
+                        }
+
+                        // When User Select Any File or Camera
+                        if(isFile || isCamera){
+
+                            if(isFile){
+                                new FormActivity.FileUploadServer(sbFilePath,unique_number,TYPE_FILE).execute();
+                            }
+                            else{
+                                isFileUpload = true;
+                            }
+
+                            if(isCamera){
+                                new FormActivity.FileUploadServer(sbCameraImagePath,unique_number, TYPE_CAMERA).execute();
+                            }
+                            else{
+                                isCameraUpload = true;
+                            }
+                        }
+                        // When User Select Only Form
+                        else{
+                            Log.e(TAG,"User Upload only Form not Camera File or File");
+                            dismissProgressBar();
+                            if(formModel != null){
+                                dataBaseHelper.insertMapForm(
+                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+                                        latitude,
+                                        longitude,
+                                        Utility.convertFormModelToString(formModel),
+                                        "f",
+                                        String.valueOf(Utility.getToken())
+                                );
+                            }
+                            Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
+                                okDialogBox.dismiss();
+                                setResult(RESULT_OK);
+                                finish();
+                            });
+                        }
+
                     }
                     // Status -> Fail
                     else{
@@ -678,6 +828,327 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onBackPressed() {
         finish();
+    }
+
+//------------------------------------------------------- onActivity Result ----------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // Camera Photo/Image Request
+        if(requestCode == Utility.REQUEST_TAKE_PHOTO){
+            if(resultCode == Activity.RESULT_OK){
+                Croperino.runCropImage(cameraDestFileTemp, mActivity, true, 1, 1, R.color.colorAccent, R.color.colorPrimary);
+//                try{
+//                    binding.txtGeoTag.setText(getGeoTagData());
+//                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(cameraDestFileTemp));
+//                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
+//                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
+//                    binding.imgPreview.setImageBitmap(bitmapPreview);
+//                    updatePreviewUI(true);
+//
+//                    new Handler().postDelayed(() -> {
+//                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+//                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
+//                            Log.e("Picture", "screenshot capture success");
+//                        } else {
+//                            destFile = destFileTemp2;
+//                            Log.e("Picture", "screenshot capture failed");
+//                        }
+//                        sbCameraImagePath.append(destFile.getPath());
+//                        updatePreviewUI(false);
+//                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
+//                        // Set Image
+//                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
+//                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+//                    }, 400);
+//                }
+//                catch (Exception e){
+//                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
+//                    Log.e(TAG, e.getMessage());
+//                }
+            }
+        }
+        // Crop Camera Photo/Image Request
+        else if(requestCode == CroperinoConfig.REQUEST_CROP_PHOTO){
+            //try {
+                try{
+                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
+
+                    binding.txtGeoTag.setText(getGeoTagData());
+                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(destFile1));
+                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
+                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
+                    binding.imgPreview.setImageBitmap(bitmapPreview);
+                    updatePreviewUI(true);
+
+                    new Handler().postDelayed(() -> {
+                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
+                            Log.e("Picture", "screenshot capture success");
+                        } else {
+                            destFile = destFileTemp2;
+                            Log.e("Picture", "screenshot capture failed");
+                        }
+                        sbCameraImagePath.append(destFile.getPath());
+                        updatePreviewUI(false);
+                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
+                        // Set Image
+                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
+                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+                    }, 400);
+                }
+                catch (Exception e){
+                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
+                    Log.e(TAG, e.getMessage());
+                }
+                //listFormDetailsData.get(positionCaptureImagePojo).setValue(destFile.getAbsolutePath());
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+        }
+        // File Request
+        else if(requestCode == Utility.PICK_FILE_RESULT_CODE){
+            if(resultCode == Activity.RESULT_OK){
+                assert data != null;
+                Uri uri = data.getData();
+                // Multiple Files Selected
+                if(null != data.getClipData()){
+                    Log.e(TAG,"Multiple File Selected");
+                    ArrayList<Uri> multipleFileList = new ArrayList<>();
+                    int n = data.getClipData().getItemCount(); // size
+                    for(int i=0; i<n; i++){
+                        Uri multipleUri = data.getClipData().getItemAt(i).getUri();
+                        multipleFileList.add(multipleUri);
+                    }
+                    sbFilePath = new StringBuilder();
+                    for(int i=0; i<multipleFileList.size(); i++){
+                        File sourceFile = new File(imageFileUtils.getPathUri(mActivity, multipleFileList.get(i)));
+                        File destFile = imageFileUtils.getDestinationFileDoc(imageFileUtils.getRootDirFileDoc(mActivity), ImageFileUtils.getExtFromUri(this, multipleFileList.get(i)));
+                        try{
+                            imageFileUtils.copyFile(sourceFile, destFile);
+                        }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        if(destFile != null){
+                            sbFilePath.append(destFile.getPath());
+                            if(i < multipleFileList.size() - 1){
+                                sbFilePath.append(",");
+                            }
+                        }
+                    }
+
+                }
+                // Single File Selected
+                else{
+                    Log.e(TAG,"Single File Selected");
+                    File sourceFile = new File(imageFileUtils.getPathUri(mActivity, uri));
+                    File destFile = imageFileUtils.getDestinationFileDoc(imageFileUtils.getRootDirFileDoc(mActivity), ImageFileUtils.getExtFromUri(this, uri));
+                    try{
+                        imageFileUtils.copyFile(sourceFile, destFile);
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    if(destFile != null){
+                        sbFilePath = new StringBuilder();
+                        sbFilePath.append(destFile.getPath());
+                    }
+                }
+
+                Log.e(TAG, "File Path: "+sbFilePath.toString());
+            }
+
+        }
+    }
+
+
+
+//------------------------------------------------- File Upload ------------------------------------------------------------------------------------------------------------------------
+
+    private class FileUploadServer extends AsyncTask<Void, Integer, String> {
+        HashMap<String,String> filePathData;
+        String form_id;
+        String unique_number;
+        String type;
+
+        public FileUploadServer(HashMap<String,String> filePathData, String form_id, String unique_number,String type) {
+            this.filePathData = filePathData;
+            this.form_id = form_id;
+            this.unique_number = unique_number;
+            this.type = type;
+
+            if(type.equals(TYPE_FILE)){
+                Log.e(TAG, "File Type ");
+                isFileUpload = false;
+            }
+            else if(type.equals(TYPE_CAMERA) ){
+                Log.e(TAG, "Camera Type ");
+                isCameraUpload = false;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+        }
+        @Override
+        protected String doInBackground(Void... params) {
+            return uploadFile();
+        }
+        @SuppressWarnings("deprecation")
+        private String uploadFile(){
+            String responseString = null;
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost(URL_Utility.WS_FORM_FILE_UPLOAD);
+            try {
+
+                if(filePathData != null){
+                    if(!filePathData.isEmpty()){
+                        // outer Loop
+                        for(Map.Entry<String,String> entry: filePathData.entrySet()) {
+                            String col_name = entry.getKey();
+                            // File Path!
+                            String[] path = entry.getValue().split(",");
+                            Log.e(TAG, "path: "+entry.getValue());
+                            for (String filepath : path) {
+                                File sourceFile = new File(filepath);
+                                String data = "";
+                                JSONObject params = new JSONObject();
+                                try {
+                                    params.put("formID", form_id);
+                                    params.put("unique_number", unique_number);
+                                    params.put("column_name", col_name);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                // Encrypt Data!
+                                data = params.toString();
+
+                                AndroidMultiPartEntity entity = new AndroidMultiPartEntity(num -> publishProgress((int) ((num / (float) totalSize) * 100)));
+                                entity.addPart(URL_Utility.PARAM_IMAGE_DATA, new FileBody(sourceFile));
+                                entity.addPart("data", new StringBody(data));
+                                totalSize = entity.getContentLength();
+                                httppost.setEntity(entity);
+                                HttpResponse response = httpclient.execute(httppost);
+                                HttpEntity r_entity = response.getEntity();
+                                int statusCode = response.getStatusLine().getStatusCode();
+
+                                if (statusCode == 200) {
+                                    responseString = EntityUtils.toString(r_entity);
+                                    String res = (responseString);
+                                    if (!res.equals("")) {
+                                        try {
+                                            JSONObject mLoginObj = new JSONObject(res);
+                                            String status = mLoginObj.optString("status");
+                                            Log.e(TAG, status);
+                                            if (status.equalsIgnoreCase("Success")) {
+
+                                            }
+                                            else {
+                                                dismissProgressBar();
+                                                Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                                            }
+                                        } catch (JSONException e) {
+                                            dismissProgressBar();
+                                            Log.e(TAG, e.getMessage());
+                                            Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                                        }
+                                    } else {
+                                        dismissProgressBar();
+                                        Log.e(TAG,"response null");
+                                        Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                                    }
+                                } else {
+                                    dismissProgressBar();
+                                    responseString = "Error occurred! Http Status Code: " + statusCode;
+                                    Log.e(TAG, responseString);
+                                    Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG,"filePathData is Empty");
+                    }
+
+                }
+                else{
+                    Log.e(TAG,"filePathData null");
+                    Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+
+            } catch (IOException e) {
+                dismissProgressBar();
+                Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                Log.e(TAG, e.getMessage());
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+                dismissProgressBar();
+                Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+            }
+            return responseString;
+        }
+        @Override
+        protected void onPostExecute(String result) {
+            String response = result;
+            if(!response.equals("")){
+                try {
+                    JSONObject mLoginObj = new JSONObject(response);
+                    String status = mLoginObj.optString("status");
+                    if (status.equalsIgnoreCase("Success")){
+
+                        switch (type) {
+                            case TYPE_FILE:
+                                Log.e(TAG, "File Upload Successfully");
+                                isFileUpload = true;
+                                break;
+
+                            case TYPE_CAMERA:
+                                Log.e(TAG, "Camera File Upload Successfully");
+                                isCameraUpload = true;
+                                break;
+                        }
+
+                        if((isCameraUpload && isFileUpload )){
+                            Log.e(TAG,"Save File Successfully");
+                            dismissProgressBar();
+                            //SaveToSurveyFormTable();
+                            Utility.showOKDialogBox(mActivity, "Save Successfully", dialog -> {
+                                dialog.dismiss();
+                                setResult(RESULT_OK);
+                                finish();
+                            });
+                        }
+                    }
+                    else{
+                        Log.e(TAG,status);
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+
+                } catch (JSONException e) {
+                    Log.e(TAG,e.getMessage());
+                    dismissProgressBar();
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                Log.e(TAG, response);
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+            super.onPostExecute(result);
+        }
     }
 
 

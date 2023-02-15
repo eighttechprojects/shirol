@@ -143,7 +143,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="2. जनुा मिळकत क्र."
+                            android:text="2. जुना मिळकत क्र."
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -437,7 +437,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="9. गट न."
+                            android:text="9. गट नं."
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
 
@@ -782,6 +782,26 @@
                 <!-- value  spinner -->
                 <TextView
                     android:id="@+id/db_form_sp_property_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_edittext"
+                    android:padding="10dp"
+                    android:textSize="@dimen/formValueSize"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+            <!-- 17.1  -->
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/ll_17_1"
+                android:padding="@dimen/formPadding"
+                android:layout_marginTop="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/db_form_no_of_floor"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
@@ -1140,7 +1160,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="25. दिवाबत्ती सोय आहेका ?"
+                            android:text="25. दिवाबत्ती सोय आहे का ?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1229,9 +1249,51 @@
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
-                <!-- value  spinner -->
+<!--                &lt;!&ndash; value  spinner &ndash;&gt;-->
+<!--                <TextView-->
+<!--                    android:id="@+id/db_form_sp_total_water_line"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="5dp"-->
+<!--                    android:background="@drawable/bg_edittext"-->
+<!--                    android:padding="10dp"-->
+<!--                    android:textSize="@dimen/formValueSize"-->
+<!--                    android:textAlignment="textStart"-->
+<!--                    android:textColor="@color/black" />-->
+            </LinearLayout>
+            <!-- 27.1 -->
+            <LinearLayout
+                android:id="@+id/ll_27_1"
+                android:padding="@dimen/formPadding"
+                android:layout_marginTop="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- label -->
+                <LinearLayout
+                    android:background="@color/formColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:visibility="gone"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="top"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_star"
+                        android:contentDescription="@string/todo" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="१” "
+                        android:textSize="@dimen/formLabelSize"
+                        android:textColor="@color/formTextColor" />
+                </LinearLayout>
+                <!-- value -->
                 <TextView
-                    android:id="@+id/db_form_sp_total_water_line"
+                    android:id="@+id/db_form_sp_total_water_line_27_1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
@@ -1241,6 +1303,49 @@
                     android:textAlignment="textStart"
                     android:textColor="@color/black" />
             </LinearLayout>
+            <!-- 27.2 -->
+            <LinearLayout
+                android:id="@+id/ll_27_2"
+                android:padding="@dimen/formPadding"
+                android:layout_marginTop="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- label -->
+                <LinearLayout
+                    android:background="@color/formColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:visibility="gone"
+                        android:layout_marginEnd="5dp"
+                        android:layout_gravity="top"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_star"
+                        android:contentDescription="@string/todo" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="१/२”"
+                        android:textSize="@dimen/formLabelSize"
+                        android:textColor="@color/formTextColor" />
+                </LinearLayout>
+                <!-- value -->
+                <TextView
+                    android:id="@+id/db_form_sp_total_water_line_27_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_edittext"
+                    android:padding="10dp"
+                    android:textSize="@dimen/formValueSize"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
             <!-- 28 spinner -->
             <LinearLayout
                 android:id="@+id/ll_28"
@@ -1309,7 +1414,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="29. छतावरील सौर ऊजा प्रकल्प"
+                            android:text="29. छतावरील सौर ऊर्जा प्रकल्प"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>

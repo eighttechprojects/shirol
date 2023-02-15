@@ -9,6 +9,7 @@ public class FormFields {
     private String longitude;
     private String created_on;
     private String version;
+
     // form fields---------------------
     private String owner_name;
     private String old_property_no;
@@ -27,6 +28,7 @@ public class FormFields {
     private String grid_no;
     private String gis_id;
     private String property_type;
+    private String no_of_floors;
     private String property_release_date;
     private String build_permission;
     private String build_completion_form;
@@ -112,6 +114,10 @@ public class FormFields {
         return property_type;
     }
 
+    public String getNo_of_floors() {
+        return no_of_floors;
+    }
+
     public String getProperty_release_date() {
         return property_release_date;
     }
@@ -192,6 +198,7 @@ public class FormFields {
     public String getForm_id() {
         return form_id;
     }
+
 //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
 
@@ -261,6 +268,10 @@ public class FormFields {
 
     public void setProperty_type(String property_type) {
         this.property_type = property_type;
+    }
+
+    public void setNo_of_floors(String no_of_floors) {
+        this.no_of_floors = no_of_floors;
     }
 
     public void setProperty_release_date(String property_release_date) {

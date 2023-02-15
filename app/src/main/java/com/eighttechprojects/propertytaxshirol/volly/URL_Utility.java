@@ -36,6 +36,7 @@ public class URL_Utility {
 	public static final String PARAM_LOGIN_TOKEN      = "login_token";
 	public static final String PARAM_UNIQUE_NUMBER    = "unique_number";
 
+	public static final String PARAM_IMAGE_DATA       = "imageData";
 
 // ########################################## NEW API ###########################################################################################################################
 
@@ -50,6 +51,7 @@ public class URL_Utility {
 	// Resurvey
 	public static final String WS_RESURVEY_FORM   = COMMON_API + "login";
 
+	public static final String WS_FORM_FILE_UPLOAD = COMMON_API + "";
 
 // ########################################## Response Code ####################################################################################################################
 

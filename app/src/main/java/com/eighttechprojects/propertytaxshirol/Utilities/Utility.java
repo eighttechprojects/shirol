@@ -361,7 +361,7 @@ public class Utility {
     }
 //------------------------------------------------------- Picker ----------------------------------------------------------------------------------------------------------------
 
-    public void openFilePicker(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
+    public static void openFilePicker(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
         if (SystemPermission.isExternalStorage(context)) {
             Intent chooseFile = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
@@ -372,7 +372,7 @@ public class Utility {
         }
     }
 
-    public void openFilePickerMultiple(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
+    public static void openFilePickerMultiple(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
         if (SystemPermission.isExternalStorage(context)) {
             Intent chooseFile = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
@@ -384,7 +384,29 @@ public class Utility {
         }
     }
 
-    public void openAudioFilePicker(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
+
+    public static void openMultipleFilePicker(Activity context) {
+        if (SystemPermission.isExternalStorage(context)) {
+            Intent chooseFile = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
+            chooseFile.setType("*/*");
+            chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            chooseFile = Intent.createChooser(chooseFile, "Choose a file");
+            context.startActivityForResult(chooseFile, PICK_FILE_RESULT_CODE);
+        }
+    }
+
+    public static void openSingleFilePicker(Activity context) {
+        if (SystemPermission.isExternalStorage(context)) {
+            Intent chooseFile = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
+            chooseFile.setType("*/*");
+            chooseFile = Intent.createChooser(chooseFile, "Choose a file");
+            context.startActivityForResult(chooseFile, PICK_FILE_RESULT_CODE);
+        }
+    }
+
+    public static void openAudioFilePicker(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
         if (SystemPermission.isExternalStorage(context)) {
             Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
             chooseFile.setType("audio/*");
@@ -394,7 +416,7 @@ public class Utility {
         }
     }
 
-    public void openVideoFilePicker(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
+    public static void openVideoFilePicker(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
         if (SystemPermission.isExternalStorage(context)) {
             Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
             chooseFile.setType("video/*");
@@ -404,7 +426,7 @@ public class Utility {
         }
     }
 
-    public void openImagePicker(Activity context, ImageFileUtils imageFileUtils, int position, onPhotoCaptured onPhotoCaptured) {
+    public static void openImagePicker(Activity context, ImageFileUtils imageFileUtils, int position, onPhotoCaptured onPhotoCaptured) {
         String[] items = getPhotoSelectionOptions();
         showLocationDialog(context, context.getString(R.string.select), items,
                 (dialogInterface, item) -> {
@@ -428,7 +450,54 @@ public class Utility {
                 });
     }
 
-    private void pickFromGallery(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
+
+    public static void openImagePicker(Activity context, ImageFileUtils imageFileUtils, onPhotoUpload onPhotoUpload) {
+        String[] items = getPhotoSelectionOptions();
+        showLocationDialog(context, context.getString(R.string.select), items,
+                (dialogInterface, item) -> {
+                    switch (items[item]) {
+                        case PHOTO_SELECTION.TAKE_PHOTO:
+                            if (SystemPermission.isExternalStorage(context)) {
+                                if (SystemPermission.isCamera(context)) {
+                                    takePhoto(context, imageFileUtils, onPhotoUpload);
+                                }
+                            }
+                            break;
+                        case PHOTO_SELECTION.CHOOSE_FROM_GAL:
+                            if (SystemPermission.isExternalStorage(context)) {
+                                pickFromGallery(context, onPhotoUpload);
+                            }
+                            break;
+                        case PHOTO_SELECTION.CANCEL:
+                            dialogInterface.dismiss();
+                            break;
+                    }
+                });
+    }
+
+
+    public static void openCamera(Activity context, ImageFileUtils imageFileUtils, onPhotoUpload onPhotoUpload) {
+        String[] items = getCameraOptions();
+        showLocationDialog(context, context.getString(R.string.select), items,
+                (dialogInterface, item) -> {
+                    switch (items[item]) {
+                        case PHOTO_SELECTION.TAKE_PHOTO:
+                            if (SystemPermission.isExternalStorage(context)) {
+                                if (SystemPermission.isCamera(context)) {
+                                    takePhoto(context, imageFileUtils, onPhotoUpload);
+                                }
+                            }
+                            break;
+
+                        case PHOTO_SELECTION.CANCEL:
+                            dialogInterface.dismiss();
+                            break;
+                    }
+                });
+    }
+
+
+    private static void pickFromGallery(Activity context, int position, onPhotoCaptured onPhotoCaptured) {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_PICK);
@@ -436,7 +505,7 @@ public class Utility {
         context.startActivityForResult(Intent.createChooser(intent, context.getString(R.string.select_image)), PICK_IMAGE_REQUEST);
     }
 
-    private void takePhoto(Activity context, ImageFileUtils imageFileUtils, int position, onPhotoCaptured onPhotoCaptured) {
+    private static void takePhoto(Activity context, ImageFileUtils imageFileUtils, int position, onPhotoCaptured onPhotoCaptured) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         File destFileTemp = imageFileUtils.getDestinationFile(imageFileUtils.getRootDirFile(context));
         Uri photoURI = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider", destFileTemp);
@@ -445,6 +514,23 @@ public class Utility {
         context.startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
     }
 
+
+    private static void pickFromGallery(Activity context, onPhotoUpload onPhotoUpload) {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_PICK);
+        onPhotoUpload.getPhotoPath(null);
+        context.startActivityForResult(Intent.createChooser(intent, context.getString(R.string.select_image)), PICK_IMAGE_REQUEST);
+    }
+
+    private static void takePhoto(Activity context, ImageFileUtils imageFileUtils, onPhotoUpload onPhotoUpload) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File destFileTemp = imageFileUtils.getDestinationFile(imageFileUtils.getRootDirFile(context));
+        Uri photoURI = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider", destFileTemp);
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+        onPhotoUpload.getPhotoPath(destFileTemp.getAbsolutePath());
+        context.startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+    }
 
 
 //------------------------------------------------------- Calender ----------------------------------------------------------------------------------------------------------------
@@ -560,6 +646,18 @@ public class Utility {
         void getPath(String path, int position);
     }
 
+    public interface onPhotoUpload{
+        void getPhotoPath(String path);
+    }
+
+    public interface onFileUpload{
+        void getFilePath(String path);
+    }
+
+
+
+
+
     public interface COLOR_CODE {
         String ORANGE     = "#E78B13";
         String PURPLE     = "#800080";
@@ -594,6 +692,12 @@ public class Utility {
                 PHOTO_SELECTION.CANCEL};
     }
 
+    public static String[] getCameraOptions() {
+        return new String[]{
+                PHOTO_SELECTION.TAKE_PHOTO,
+                PHOTO_SELECTION.CANCEL
+        };
+    }
 
     public static void setToVerticalRecycleView(Context mActivity, RecyclerView recyclerView, RecyclerView.Adapter<?> adapter ){
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(mActivity, LinearLayoutManager.VERTICAL, false);
