@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,17 +13,23 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.eighttechprojects.propertytaxshirol.Activity.Form.FormActivity;
 import com.eighttechprojects.propertytaxshirol.BuildConfig;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
@@ -86,6 +93,8 @@ public class Utility {
     public static final String PASS_GEOM_TYPE  = "geom-type";
     public static final String PASS_LAT        = "latitude";
     public static final String PASS_LONG       = "longitude";
+    public static final String PASS_FORM_ID    = "form_id";
+    public static final String PASS_POLYGON_ID = "polygon_id";
     public static final String PASS_ID         = "id";
     public static final String PASS_USER_ID    = "user_id";
 
@@ -157,20 +166,55 @@ public class Utility {
 
 //------------------------------------------------------- Toast ----------------------------------------------------------------------------------------------------------------
 
-    public static void showToast(Context context, String errorMessage) {
-        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show();
+    public static void showToast(Context context, String msg) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
     }
 
 //------------------------------------------------------- Dialog box ----------------------------------------------------------------------------------------------------------------
 
+    public static void showSelectBox(Context context, onItemSelected onItemSelected,boolean isResurveyMode){
+        Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.selectbox_view);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.setCancelable(false);
+        if(!isResurveyMode){
+            // Add Form
+            Button btAddForm    = dialog.findViewById(R.id.btAddForm);
+            btAddForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.ADD);  dialog.dismiss();});
+            // View Form
+            Button btViewForm   = dialog.findViewById(R.id.btViewForm);
+            btViewForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.VIEW); dialog.dismiss();});
+        }
+        else{
+            // Edit Form
+            Button btEditForm   = dialog.findViewById(R.id.btEditForm);
+            btEditForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.EDIT); dialog.dismiss();});
+        }
+        // Cancel Form
+        Button btCancelForm = dialog.findViewById(R.id.btCancelForm);
+        btCancelForm.setOnClickListener(view -> dialog.dismiss());
+        dialog.show();
+    }
+
     public static void showSelectDialog(Context context, String[] arr, onItemClick onItemClick) {
-        AlertDialog.Builder pictureDialog = new AlertDialog.Builder(context);
-        pictureDialog.setTitle(context.getString(R.string.select));
-        pictureDialog.setItems(arr, (dialog, position) -> {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(context.getString(R.string.select));
+        builder.setItems(arr, (dialog, position) -> {
             onItemClick.itemSelected(position);
             dialog.dismiss();
         });
-        pictureDialog.show();
+        builder.show();
+    }
+
+    public static void showSelectDialog(Context context,String title, String[] arr, onItemClick onItemClick) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(title);
+        builder.setItems(arr, (dialog, position) -> {
+            onItemClick.itemSelected(position);
+            dialog.dismiss();
+        });
+        builder.show();
     }
 
     public static String validateDoubleDigit(int digit) {
@@ -654,7 +698,9 @@ public class Utility {
         void getFilePath(String path);
     }
 
-
+    public interface onItemSelected{
+        void selectedItem(String item);
+    }
 
 
 
@@ -684,6 +730,13 @@ public class Utility {
     }
 
 
+    public interface ITEM_SELECTED {
+        String ADD    = "Add";
+        String EDIT   = "Edit";
+        String VIEW   = "View";
+        String CANCEL = "Cancel";
+    }
+
 //------------------------------------------------------- String Array -------------------------------------------------------------------------------------------------------------------------------------------------
 
     public static String[] getPhotoSelectionOptions() {
@@ -698,6 +751,8 @@ public class Utility {
                 PHOTO_SELECTION.CANCEL
         };
     }
+
+
 
     public static void setToVerticalRecycleView(Context mActivity, RecyclerView recyclerView, RecyclerView.Adapter<?> adapter ){
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(mActivity, LinearLayoutManager.VERTICAL, false);

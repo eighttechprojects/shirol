@@ -577,7 +577,7 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
                                 // Clear Resurvey DataBase
                                 dataBaseHelper.clearResurveyDatabaseTable();
                                 // Resurvey Form
-                                dataBaseHelper.insertResurveyMapForm(Utility.getSavedData(mActivity,Utility.LOGGED_USERID),lat,lon,Utility.convertFormModelToString(formModel));
+                                dataBaseHelper.insertResurveyMapForm(Utility.getSavedData(mActivity,Utility.LOGGED_USERID),lat,lon,Utility.convertFormModelToString(formModel),"","");
                             }
                             // Clear Resurvey Map
                             mMap.clear();

@@ -263,7 +263,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
 
                         // Form Data
                         JSONArray formDataArray = new JSONArray(mLoginObj.getString("form_data"));
-                        if(formDataArray.length() > 0){
+                        if(formDataArray.length() > 0) {
                             for(int i=0; i<formDataArray.length(); i++){
                                 FormModel formModel = new FormModel();
                                 // Form ------------------------
@@ -285,7 +285,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                                     formModel.setForm_detail(list);
                                 }
                                 // Save to Database!
-                                dataBaseHelper.insertMapForm(userid,lat,lon,Utility.convertFormModelToString(formModel),"f",String.valueOf(Utility.getToken()));
+                                dataBaseHelper.insertMapForm(userid,"","",lat,lon,Utility.convertFormModelToString(formModel),"f",String.valueOf(Utility.getToken()),"","");
                             }
                         }
                         else{
@@ -317,7 +317,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                                     formModel.setForm_detail(list);
                                 }
                                 // Resurvey Form
-                                dataBaseHelper.insertResurveyMapForm(userid,lat,lon,Utility.convertFormModelToString(formModel));
+                                dataBaseHelper.insertResurveyMapForm(userid,lat,lon,Utility.convertFormModelToString(formModel),"","");
                             }
                         }
                         else{

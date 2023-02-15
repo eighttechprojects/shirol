@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import com.android.volley.VolleyError;
+import com.bumptech.glide.util.Util;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.Model.FormDBModel;
@@ -83,6 +84,8 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     String db_form_sp_building_type     = "";
     String db_form_sp_building_use_type = "";
 
+    private String polygonID = "";
+
 //------------------------------------------------------- onCreate ----------------------------------------------------------------------------------------------------------------------
 
     @Override
@@ -128,6 +131,12 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             longitude = intent.getStringExtra(Utility.PASS_LONG);
             Log.e(TAG, "Resurvey Form DB Long: "+longitude);
         }
+        // Polygon ID Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_POLYGON_ID)) {
+            polygonID = intent.getStringExtra(Utility.PASS_LONG);
+            Log.e(TAG, "Resurvey Form DB Polygon ID: "+polygonID);
+        }
+
         // Id
         if(intent.getExtras().containsKey(Utility.PASS_ID)) {
             resurveyID = intent.getStringExtra(Utility.PASS_ID);
@@ -161,6 +170,18 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             binding.formGisId.setText(Utility.getStringValue(bin.getGis_id()));
             binding.formPropertyReleaseDate.setText(Utility.getStringValue(bin.getProperty_release_date()));
             binding.formTotalToilet.setText(Utility.getStringValue(bin.getTotal_toilet()));
+            // 17
+            binding.formNoOfFloors.setText(Utility.getStringValue(bin.getNo_of_floor()));
+            // 32
+            binding.formPlotArea.setText(Utility.getStringValue(bin.getPlot_area()));
+            //33
+            binding.formPropertyArea.setText(Utility.getStringValue(bin.getProperty_area()));
+            // 34
+            binding.formTotalArea.setText(Utility.getStringValue(bin.getTotal_area()));
+            // 27.1
+            binding.formTotalWaterLine1.setText(Utility.getStringValue(bin.getTotal_water_line1()));
+            // 27.2
+            binding.formTotalWaterLine2.setText(Utility.getStringValue(bin.getTotal_water_line2()));
         }
     }
 
@@ -474,7 +495,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                     binding.ll271.setVisibility(View.GONE);
                     binding.ll272.setVisibility(View.GONE);
                     binding.ll28.setVisibility(View.GONE);
-                    selectedTotalWaterLine = "";
                     selectedWaterUseType   = "";
                 }
             }
@@ -809,7 +829,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setGis_id(Utility.getEditTextValue(binding.formGisId));
             bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
 
-            bin.setNo_of_floors(Utility.getEditTextValue(binding.formNoOfFloors));
+            bin.setNo_of_floor(Utility.getEditTextValue(binding.formNoOfFloors));
 
             bin.setProperty_release_date(Utility.getEditTextValue(binding.formPropertyReleaseDate));
             bin.setBuild_permission(Utility.getStringValue(selectedBuildPermission));
@@ -820,11 +840,19 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setToilet_type(Utility.getStringValue(selectedToiletType));
             bin.setIs_streetlight_available(Utility.getStringValue(selectedIsStreetlightAvailable));
             bin.setIs_water_line_available(Utility.getStringValue(selectedIsWaterLineAvailable));
-            bin.setTotal_water_line(Utility.getStringValue(selectedTotalWaterLine));
+
+            bin.setTotal_water_line1(Utility.getEditTextValue(binding.formTotalWaterLine1));
+            bin.setTotal_water_line2(Utility.getEditTextValue(binding.formTotalWaterLine2));
+
             bin.setWater_use_type(Utility.getStringValue(selectedWaterUseType));
             bin.setSolar_panel_available(Utility.getStringValue(selectedSolarPanelAvailable));
             bin.setSolar_panel_type(Utility.getStringValue(selectedSolarPanelType));
             bin.setRain_water_harvesting(Utility.getStringValue(selectedRaniWaterHarvesting));
+
+            bin.setPlot_area(Utility.getEditTextValue(binding.formPlotArea));
+            bin.setProperty_area(Utility.getEditTextValue(binding.formPropertyArea));
+            bin.setTotal_area(Utility.getEditTextValue(binding.formTotalArea));
+
             // Form
             formModel = new FormModel(bin,adapterFormTable.getFormTableModels());
             // Upload Form
@@ -851,11 +879,13 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         String token = String.valueOf(Utility.getToken());
         dataBaseHelper.insertMapForm(
                 Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+                polygonID,
+                formID,
                 latitude,
                 longitude,
                 Utility.convertFormModelToString(formModel),
                 "t",
-                token
+                token,"",""
         );
 
         dataBaseHelper.insertMapFormLocal(
@@ -863,7 +893,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                 latitude,
                 longitude,
                 Utility.convertFormModelToString(formModel),
-                token
+                token,"",""
         );
 
         // Delete Resurvey Form Data by ID
@@ -895,11 +925,15 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                         if(formModel != null){
                             dataBaseHelper.insertMapForm(
                                     Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+                                    polygonID,
+                                    formID,
                                     latitude,
                                     longitude,
                                     Utility.convertFormModelToString(formModel),
                                     "f",
-                                    String.valueOf(Utility.getToken())
+                                    String.valueOf(Utility.getToken()),
+                                    "",
+                                    ""
                             );
                         }
                         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {

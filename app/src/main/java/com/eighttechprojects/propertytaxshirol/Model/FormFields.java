@@ -3,6 +3,7 @@ package com.eighttechprojects.propertytaxshirol.Model;
 public class FormFields {
 
     // default fields-----------------
+    private String polygon_id;
     private String form_id;
     private String user_id;
     private String latitude;
@@ -28,7 +29,7 @@ public class FormFields {
     private String grid_no;
     private String gis_id;
     private String property_type;
-    private String no_of_floors;
+    private String no_of_floor;
     private String property_release_date;
     private String build_permission;
     private String build_completion_form;
@@ -38,11 +39,16 @@ public class FormFields {
     private String toilet_type;
     private String is_streetlight_available;
     private String is_water_line_available;
-    private String total_water_line;
+    private String total_water_line1;
+    private String total_water_line2;
     private String water_use_type;
     private String solar_panel_available;
     private String solar_panel_type;
     private String rain_water_harvesting;
+
+    private String plot_area;
+    private String property_area;
+    private String total_area;
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
@@ -114,8 +120,8 @@ public class FormFields {
         return property_type;
     }
 
-    public String getNo_of_floors() {
-        return no_of_floors;
+    public String getNo_of_floor() {
+        return no_of_floor;
     }
 
     public String getProperty_release_date() {
@@ -154,8 +160,12 @@ public class FormFields {
         return is_water_line_available;
     }
 
-    public String getTotal_water_line() {
-        return total_water_line;
+    public String getTotal_water_line1() {
+        return total_water_line1;
+    }
+
+    public String getTotal_water_line2() {
+        return total_water_line2;
     }
 
     public String getWater_use_type() {
@@ -194,12 +204,27 @@ public class FormFields {
         return created_on;
     }
 
+    public String getPolygon_id() {
+        return polygon_id;
+    }
 
     public String getForm_id() {
         return form_id;
     }
 
-//------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
+    public String getPlot_area() {
+        return plot_area;
+    }
+
+    public String getProperty_area() {
+        return property_area;
+    }
+
+    public String getTotal_area() {
+        return total_area;
+    }
+
+    //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
 
     public void setOwner_name(String owner_name) {
@@ -270,8 +295,8 @@ public class FormFields {
         this.property_type = property_type;
     }
 
-    public void setNo_of_floors(String no_of_floors) {
-        this.no_of_floors = no_of_floors;
+    public void setNo_of_floor(String no_of_floor) {
+        this.no_of_floor = no_of_floor;
     }
 
     public void setProperty_release_date(String property_release_date) {
@@ -310,8 +335,12 @@ public class FormFields {
         this.is_water_line_available = is_water_line_available;
     }
 
-    public void setTotal_water_line(String total_water_line) {
-        this.total_water_line = total_water_line;
+    public void setTotal_water_line1(String total_water_line1) {
+        this.total_water_line1 = total_water_line1;
+    }
+
+    public void setTotal_water_line2(String total_water_line2) {
+        this.total_water_line2 = total_water_line2;
     }
 
     public void setWater_use_type(String water_use_type) {
@@ -328,6 +357,18 @@ public class FormFields {
 
     public void setRain_water_harvesting(String rain_water_harvesting) {
         this.rain_water_harvesting = rain_water_harvesting;
+    }
+
+    public void setPlot_area(String plot_area) {
+        this.plot_area = plot_area;
+    }
+
+    public void setProperty_area(String property_area) {
+        this.property_area = property_area;
+    }
+
+    public void setTotal_area(String total_area) {
+        this.total_area = total_area;
     }
 
     public void setUser_id(String user_id) {
@@ -354,6 +395,10 @@ public class FormFields {
     public void setForm_id(String form_id) {
         this.form_id = form_id;
     }
+
+    public void setPolygon_id(String polygon_id) {
+        this.polygon_id = polygon_id;
+    }
 }
 
 
@@ -364,6 +409,7 @@ public class FormFields {
 //    property_address
 //    property_user_type
 //    property_user
+//    no_of_floor
 //    resurvey_no
 //    gat_no
 //    zone
@@ -383,8 +429,12 @@ public class FormFields {
 //    toilet_type
 //    is_streetlight_available
 //    is_water_line_available
-//    total_water_line
+//    total_water_line1
+//    total_water_line2
 //    water_use_type
 //    solar_panel_available
 //    solar_panel_type
 //    rain_water_harvesting
+//    plot_area
+//    property_area
+//    total_area

@@ -37,6 +37,8 @@ public class URL_Utility {
 	public static final String PARAM_UNIQUE_NUMBER    = "unique_number";
 
 	public static final String PARAM_IMAGE_DATA       = "imageData";
+	public static final String PARAM_IMAGE            = "property_images";
+	public static final String PARAM_PLAN_ATTACHMENT  = "plan_attachment";
 
 // ########################################## NEW API ###########################################################################################################################
 

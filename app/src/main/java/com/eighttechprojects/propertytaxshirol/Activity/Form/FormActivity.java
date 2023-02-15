@@ -1,5 +1,8 @@
 package com.eighttechprojects.propertytaxshirol.Activity.Form;
 
+import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -8,8 +11,10 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
+import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -41,6 +46,18 @@ import com.eighttechprojects.propertytaxshirol.volly.AndroidMultiPartEntity;
 import com.eighttechprojects.propertytaxshirol.volly.BaseApplication;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.Task;
 import com.mikelau.croperino.Croperino;
 import com.mikelau.croperino.CroperinoConfig;
 
@@ -74,7 +91,11 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     private DataBaseHelper dataBaseHelper;
     // progress Dialog
     private static ProgressDialog progressDialog;
-
+    // Location
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LocationCallback locationCallback;
+    private LocationRequest mRequest;
+    private Location mCurrentLocation = null;
     private final String selectYesOption = "होय";
     private final String selectNoOption  = "नाही";
 
@@ -88,7 +109,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     private String selectedToiletType             = "";
     private String selectedIsStreetlightAvailable = "";
     private String selectedIsWaterLineAvailable   = "";
-    private String selectedTotalWaterLine         = "";
     private String selectedWaterUseType           = "";
     private String selectedSolarPanelAvailable    = "";
     private String selectedSolarPanelType         = "";
@@ -111,19 +131,24 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     // Camera
     private File cameraDestFileTemp;
     ImageFileUtils imageFileUtils;
-    StringBuilder sbCameraPathLocal;
+
+    StringBuilder sbCameraImagePathLocal = new StringBuilder();
     StringBuilder sbCameraImagePath = new StringBuilder();
 
     // File
     StringBuilder sbFilePath = new StringBuilder();
-
+    StringBuilder sbFilePathLocal = new StringBuilder();
     // File Upload
     public long totalSize = 0;
-    private String unique_number ="", datetime = "";
+    private String unique_number ="";
+    private String datetime = "";
+    private String formID = "";
     public static final String TYPE_FILE   = "file";
     public static final String TYPE_CAMERA = "cameraUploader";
     public static boolean isFileUpload   = true;
     public static boolean isCameraUpload = true;
+
+    public String polygonID = "";
 
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
 
@@ -137,6 +162,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         // Activity
         mActivity = this;
+        // FusedLocationProviderClient
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(mActivity);
         // ImageFileUtils
         imageFileUtils = new ImageFileUtils();
         // init Spinner
@@ -154,26 +181,44 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         initExtra();
         // Update PreviewUI
         updatePreviewUI(false);
+
+        // Location Call Back
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                for (Location loc : locationResult.getLocations()) {
+                    mCurrentLocation = loc;
+                    if(mCurrentLocation != null){
+                        latitude = String.valueOf(mCurrentLocation.getLatitude());
+                        longitude = String.valueOf(mCurrentLocation.getLongitude());
+                    }
+                }
+            }
+        };
+        LocationPermission();
+
         // Photo Upload
         binding.imgCaptured.setOnClickListener(view -> {
             cameraPhotoUpload();
         });
+
     }
 
 //------------------------------------------------------- initExtra ----------------------------------------------------------------------------------------------------------------------
 
     private void initExtra(){
         Intent intent = getIntent();
-        // Latitude Contain or not
-        if(intent.getExtras().containsKey(Utility.PASS_LAT)){
-            latitude = intent.getStringExtra(Utility.PASS_LAT);
-            Log.e(TAG,"Form Lat:  "+latitude);
+        // Form ID Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_FORM_ID)) {
+            formID= intent.getStringExtra(Utility.PASS_FORM_ID);
+            Log.e(TAG, "Form ID: "+ formID);
         }
-        // Longitude Contains or not
-        if(intent.getExtras().containsKey(Utility.PASS_LONG)) {
-            longitude = intent.getStringExtra(Utility.PASS_LONG);
-            Log.e(TAG, "Form Long: "+longitude);
+        // Polygon ID Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_POLYGON_ID)) {
+            polygonID = intent.getStringExtra(Utility.PASS_POLYGON_ID);
+            Log.e(TAG, "Polygon ID: "+ polygonID);
         }
+
     }
 
 //------------------------------------------------------- initSpinner ----------------------------------------------------------------------------------------------------------------------
@@ -335,7 +380,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     binding.ll271.setVisibility(View.GONE);
                     binding.ll272.setVisibility(View.GONE);
                     binding.ll28.setVisibility(View.GONE);
-                    selectedTotalWaterLine = "";
                     selectedWaterUseType   = "";
                 }
             }
@@ -416,7 +460,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}});
 
-
     }
 
 //------------------------------------------------------- initDatabase ----------------------------------------------------------------------------------------------------------------------
@@ -432,6 +475,46 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         binding.btExit.setOnClickListener(this);
         binding.btAddFormTable.setOnClickListener(this);
         binding.btFileUpload.setOnClickListener(this);
+    }
+
+//---------------------------------------------- Location Permission ------------------------------------------------------------------------------------------------------------------------
+
+    private void LocationPermission() {
+        if(SystemPermission.isLocation(mActivity)) {
+            location();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void location() {
+        //now for receiving constant location updates:
+        mRequest = LocationRequest.create();
+        mRequest.setInterval(2000);//time in ms; every ~2 seconds
+        mRequest.setFastestInterval(1000);
+        mRequest.setPriority(PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mRequest);
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+        task.addOnFailureListener(e -> {
+            if (e instanceof ResolvableApiException) {
+                try {
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(this, 500);
+                }
+                catch (IntentSender.SendIntentException sendEx) {
+                    // Ignore the error.
+                }
+            }
+        });
+    }
+
+    @SuppressLint("MissingPermission")
+    protected void startLocationUpdates() {
+        fusedLocationProviderClient.requestLocationUpdates(mRequest, locationCallback, null);
+    }
+
+    protected void stopLocationUpdates(){
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
 //------------------------------------------------------- Menu ----------------------------------------------------------------------------------------------------------------------
@@ -596,8 +679,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     private void onFormSubmit(){
         // Geom Array not Null
-        if(!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)){
-
+        if(!Utility.isEmptyString(polygonID)){
 
             unique_number = String.valueOf(Utility.getToken());
             datetime      = Utility.getDateTime();
@@ -606,7 +688,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             // 1 -----------------------------
             FormFields bin = new FormFields();
             // Default Fields
-            bin.setForm_id("");
+            bin.setPolygon_id(polygonID);
+            bin.setForm_id(formID);
             bin.setUser_id(Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
             bin.setLatitude(latitude);
             bin.setLongitude(longitude);
@@ -630,7 +713,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setGis_id(Utility.getEditTextValue(binding.formGisId));
             bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
 
-            bin.setNo_of_floors(Utility.getEditTextValue(binding.formNoOfFloors));
+            bin.setNo_of_floor(Utility.getEditTextValue(binding.formNoOfFloors));
 
             bin.setProperty_release_date(Utility.getEditTextValue(binding.formPropertyReleaseDate));
             bin.setBuild_permission(Utility.getStringValue(selectedBuildPermission));
@@ -641,11 +724,18 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setToilet_type(Utility.getStringValue(selectedToiletType));
             bin.setIs_streetlight_available(Utility.getStringValue(selectedIsStreetlightAvailable));
             bin.setIs_water_line_available(Utility.getStringValue(selectedIsWaterLineAvailable));
-            bin.setTotal_water_line(Utility.getStringValue(selectedTotalWaterLine));
+
+            bin.setTotal_water_line1(Utility.getStringValue(Utility.getEditTextValue(binding.formTotalWaterLine1)));
+            bin.setTotal_water_line2(Utility.getStringValue(Utility.getEditTextValue(binding.formTotalWaterLine2)));
+
             bin.setWater_use_type(Utility.getStringValue(selectedWaterUseType));
             bin.setSolar_panel_available(Utility.getStringValue(selectedSolarPanelAvailable));
             bin.setSolar_panel_type(Utility.getStringValue(selectedSolarPanelType));
             bin.setRain_water_harvesting(Utility.getStringValue(selectedRaniWaterHarvesting));
+
+            bin.setPlot_area(Utility.getEditTextValue(binding.formPlotArea));
+            bin.setProperty_area(Utility.getEditTextValue(binding.formPropertyArea));
+            bin.setTotal_area(Utility.getEditTextValue(binding.formTotalArea));
 
             formModel.setFormFields(bin);
             formModel.setForm_detail(adapterFormTable.getFormTableModels());
@@ -670,14 +760,18 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void SaveFormToDatabase(FormModel formModel){
-        String token = String.valueOf(Utility.getToken());
+       // String token = String.valueOf(Utility.getToken());
         dataBaseHelper.insertMapForm(
                 Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+                polygonID,
+                formID,
                 latitude,
                 longitude,
                 Utility.convertFormModelToString(formModel),
                 "t",
-                token
+                unique_number,
+                sbFilePathLocal.toString(),
+                sbCameraImagePathLocal.toString()
         );
 
         dataBaseHelper.insertMapFormLocal(
@@ -685,7 +779,9 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                 latitude,
                 longitude,
                 Utility.convertFormModelToString(formModel),
-                token
+                unique_number,
+                sbFilePath.toString(),
+                sbCameraImagePath.toString()
         );
 
         Log.e(TAG,"Form Save To Local Database");
@@ -731,14 +827,14 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         if(isFile || isCamera){
 
                             if(isFile){
-                                new FormActivity.FileUploadServer(sbFilePath,unique_number,TYPE_FILE).execute();
+                                new FormActivity.FileUploadServer(sbFilePath,formID,unique_number,TYPE_FILE,false).execute();
                             }
                             else{
                                 isFileUpload = true;
                             }
 
                             if(isCamera){
-                                new FormActivity.FileUploadServer(sbCameraImagePath,unique_number, TYPE_CAMERA).execute();
+                                new FormActivity.FileUploadServer(sbCameraImagePath,formID,unique_number, TYPE_CAMERA,true).execute();
                             }
                             else{
                                 isCameraUpload = true;
@@ -751,11 +847,15 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                             if(formModel != null){
                                 dataBaseHelper.insertMapForm(
                                         Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+                                        polygonID,
+                                        formID,
                                         latitude,
                                         longitude,
                                         Utility.convertFormModelToString(formModel),
                                         "f",
-                                        String.valueOf(Utility.getToken())
+                                        unique_number,
+                                        "",
+                                        ""
                                 );
                             }
                             Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
@@ -873,6 +973,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         else if(requestCode == CroperinoConfig.REQUEST_CROP_PHOTO){
             //try {
                 try{
+                    sbCameraImagePath = new StringBuilder();
+                    sbCameraImagePathLocal = new StringBuilder();
                     File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
                     imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
 
@@ -892,6 +994,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                             Log.e("Picture", "screenshot capture failed");
                         }
                         sbCameraImagePath.append(destFile.getPath());
+                        sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
                         updatePreviewUI(false);
                         Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
                         // Set Image
@@ -923,6 +1026,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         multipleFileList.add(multipleUri);
                     }
                     sbFilePath = new StringBuilder();
+                    sbFilePathLocal = new StringBuilder();
                     for(int i=0; i<multipleFileList.size(); i++){
                         File sourceFile = new File(imageFileUtils.getPathUri(mActivity, multipleFileList.get(i)));
                         File destFile = imageFileUtils.getDestinationFileDoc(imageFileUtils.getRootDirFileDoc(mActivity), ImageFileUtils.getExtFromUri(this, multipleFileList.get(i)));
@@ -935,6 +1039,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         if(destFile != null){
                             sbFilePath.append(destFile.getPath());
+                            sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
                             if(i < multipleFileList.size() - 1){
                                 sbFilePath.append(",");
                             }
@@ -956,7 +1061,9 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     }
                     if(destFile != null){
                         sbFilePath = new StringBuilder();
+                        sbFilePathLocal = new StringBuilder();
                         sbFilePath.append(destFile.getPath());
+                        sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
                     }
                 }
 
@@ -966,21 +1073,22 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
-
 //------------------------------------------------- File Upload ------------------------------------------------------------------------------------------------------------------------
 
     private class FileUploadServer extends AsyncTask<Void, Integer, String> {
-        HashMap<String,String> filePathData;
+        StringBuilder filePathData;
         String form_id;
         String unique_number;
         String type;
+        boolean isCameraFileUpload = false;
 
-        public FileUploadServer(HashMap<String,String> filePathData, String form_id, String unique_number,String type) {
+
+        public FileUploadServer(StringBuilder filePathData, String form_id, String unique_number,String type, boolean isCameraFileUpload) {
             this.filePathData = filePathData;
             this.form_id = form_id;
             this.unique_number = unique_number;
             this.type = type;
+            this.isCameraFileUpload = isCameraFileUpload;
 
             if(type.equals(TYPE_FILE)){
                 Log.e(TAG, "File Type ");
@@ -1009,16 +1117,13 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             String responseString = null;
             HttpClient httpclient = new DefaultHttpClient();
             HttpPost httppost = new HttpPost(URL_Utility.WS_FORM_FILE_UPLOAD);
-            try {
 
+            try {
                 if(filePathData != null){
-                    if(!filePathData.isEmpty()){
-                        // outer Loop
-                        for(Map.Entry<String,String> entry: filePathData.entrySet()) {
-                            String col_name = entry.getKey();
+                    if(!Utility.isEmptyString(filePathData.toString())){
                             // File Path!
-                            String[] path = entry.getValue().split(",");
-                            Log.e(TAG, "path: "+entry.getValue());
+                            String[] path = filePathData.toString().split(",");
+                            Log.e(TAG, "path: "+ filePathData.toString());
                             for (String filepath : path) {
                                 File sourceFile = new File(filepath);
                                 String data = "";
@@ -1026,15 +1131,18 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                                 try {
                                     params.put("formID", form_id);
                                     params.put("unique_number", unique_number);
-                                    params.put("column_name", col_name);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
                                 // Encrypt Data!
                                 data = params.toString();
-
                                 AndroidMultiPartEntity entity = new AndroidMultiPartEntity(num -> publishProgress((int) ((num / (float) totalSize) * 100)));
-                                entity.addPart(URL_Utility.PARAM_IMAGE_DATA, new FileBody(sourceFile));
+                                if(isCameraFileUpload){
+                                    entity.addPart(URL_Utility.PARAM_IMAGE, new FileBody(sourceFile));
+                                }
+                                else{
+                                    entity.addPart(URL_Utility.PARAM_PLAN_ATTACHMENT, new FileBody(sourceFile));
+                                }
                                 entity.addPart("data", new StringBody(data));
                                 totalSize = entity.getContentLength();
                                 httppost.setEntity(entity);
@@ -1074,7 +1182,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                                     Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
                                 }
                             }
-                        }
                     }
                     else{
                         Log.e(TAG,"filePathData is Empty");
@@ -1122,7 +1229,20 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         if((isCameraUpload && isFileUpload )){
                             Log.e(TAG,"Save File Successfully");
                             dismissProgressBar();
-                            //SaveToSurveyFormTable();
+                            if(formModel != null){
+                                dataBaseHelper.insertMapForm(
+                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+                                        polygonID,
+                                        formID,
+                                        latitude,
+                                        longitude,
+                                        Utility.convertFormModelToString(formModel),
+                                        "t",
+                                        unique_number,
+                                        sbFilePathLocal.toString(),
+                                        sbCameraImagePathLocal.toString()
+                                );
+                            }
                             Utility.showOKDialogBox(mActivity, "Save Successfully", dialog -> {
                                 dialog.dismiss();
                                 setResult(RESULT_OK);
@@ -1151,5 +1271,21 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
+//---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+//---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startLocationUpdates();
+    }
 
 }

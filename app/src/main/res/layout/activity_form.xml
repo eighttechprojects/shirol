@@ -1669,6 +1669,7 @@
                     </LinearLayout>
                     <!-- value -->
                     <EditText
+                        android:id="@+id/form_plot_area"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
@@ -1732,6 +1733,7 @@
                     </LinearLayout>
                     <!-- value -->
                     <EditText
+                        android:id="@+id/form_property_area"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
@@ -1795,6 +1797,7 @@
                     </LinearLayout>
                     <!-- value -->
                     <EditText
+                        android:id="@+id/form_total_area"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
@@ -1929,7 +1932,6 @@
 
 
                 </LinearLayout>
-
 
                 <!-- Main Layout -->
             </LinearLayout>
