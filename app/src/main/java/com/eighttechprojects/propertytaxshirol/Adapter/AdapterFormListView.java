@@ -43,7 +43,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         // Form Name
-        holder.formName.setText(Utility.getStringValue(formList.get(position).getForm_id()));
+        holder.formName.setText(Utility.getStringValue(formList.get(position).getFid()));
     }
 
 //------------------------------------ View HOLDER --------------------------------------------------------------------------------------------------------------------------------

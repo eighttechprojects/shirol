@@ -44,6 +44,8 @@ public class URL_Utility {
 
 	// Login API
 	public static final String WS_LOGIN           = COMMON_API + "login";
+	// GEO JSON API
+	public static final String WS_GEOJSON         = COMMON_API + "geojason";
 	// Forgot Password API
 	public static final String WS_FORGOT_PASSWORD = COMMON_API + "forgot-password";
 	// Form Upload
@@ -53,7 +55,7 @@ public class URL_Utility {
 	// Resurvey
 	public static final String WS_RESURVEY_FORM   = COMMON_API + "login";
 
-	public static final String WS_FORM_FILE_UPLOAD = COMMON_API + "";
+	public static final String WS_FORM_FILE_UPLOAD = COMMON_API + "upload-file";
 
 // ########################################## Response Code ####################################################################################################################
 
@@ -62,7 +64,8 @@ public class URL_Utility {
 		WS_FORGOT_PASSWORD,
 		WS_FORM,
 		WS_RESURVEY_FORM,
-		WS_FORM_SYNC
+		WS_FORM_SYNC,
+		WS_GEOJSON
 	}
 
 }

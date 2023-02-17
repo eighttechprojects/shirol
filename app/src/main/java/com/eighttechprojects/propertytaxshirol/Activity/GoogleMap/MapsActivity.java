@@ -37,7 +37,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
 import com.eighttechprojects.propertytaxshirol.Activity.Form.FormActivity;
@@ -51,10 +50,7 @@ import com.eighttechprojects.propertytaxshirol.Model.FormDBModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormListModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
-import com.eighttechprojects.propertytaxshirol.Model.GeoJson.Feature;
-import com.eighttechprojects.propertytaxshirol.Model.GeoJson.GeoJson;
-import com.eighttechprojects.propertytaxshirol.Model.GeoJson.Geometry;
-import com.eighttechprojects.propertytaxshirol.Model.GeoJson.ShirolGeoModel;
+import com.eighttechprojects.propertytaxshirol.Model.GeoJsonModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
@@ -81,21 +77,14 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.Task;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.maps.android.data.geojson.GeoJsonLayer;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnPolygonClickListener, View.OnClickListener, WSResponseInterface {
@@ -127,7 +116,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String selectYesOption = "होय";
     private static final String selectNoOption  = "नाही";
     private static final int FORM_REQUEST_CODE = 1001;
-    private boolean isFormClick = false;
 
     // Logout ----------------------------------------------------------------
     // ArrayList
@@ -176,8 +164,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if(!isGoToCurrentLocation){
                             isGoToCurrentLocation = true;
                             // Current LatLon
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),DEFAULT_ZOOM));
-                            Log.e(TAG,"Current Location: " + mCurrentLocation.getLatitude() + " , " + mCurrentLocation.getLongitude());
+                            LatLng latLng = new LatLng(16.751075235,74.587887456);
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
+//                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),DEFAULT_ZOOM));
+                           // Log.e(TAG,"Current Location: " + mCurrentLocation.getLatitude() + " , " + mCurrentLocation.getLongitude());
                         }
                     }
                 }
@@ -222,12 +212,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Utility.showSyncYourDataAlert(this);
         }
 
-        LatLng latLng = new LatLng(16.740298501194108,74.582463077023661);
+        LatLng latLng = new LatLng(16.751075235,74.587887456);
         Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
 
-//        fetchGeoJsonFile();
-        //showWMSLayer();
-        //  showShirolGeoJson();
+        // Show GeoJson Polygon
+        showAllGeoJsonPolygon();
+
 
     }
 
@@ -349,8 +339,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void LogoutAfter24hr(){
         @SuppressLint("SimpleDateFormat") String currentDate = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
         String date = Utility.getSavedData(mActivity,Utility.OLD_DATE);
-        Log.e(TAG,"Current Date: "+ currentDate);
-        Log.e(TAG,"Old Date: "+ date);
+       // Log.e(TAG,"Current Date: "+ currentDate);
+       // Log.e(TAG,"Old Date: "+ date);
         if(!Utility.isEmptyString(date)){
             if(date.equals(currentDate)){
                 Log.e(TAG, "true");
@@ -529,7 +519,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
     }
 
-
 //------------------------------------------------------- onClick ------------------------------------------------------------------------------------------------------------------------------------------------
 
     @SuppressLint("NonConstantResourceId")
@@ -564,27 +553,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapClick(@NonNull LatLng latLng) {
-        showSelectedDialogBox("");
+
     }
 
-//------------------------------------------------------- onPolygonClick ----------------------------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onPolygonClick(@NonNull Polygon polygon) {
-
-        if(polygon.getTag() instanceof ShirolGeoModel){
-            ShirolGeoModel shirolGeoModel = (ShirolGeoModel) polygon.getTag();
-            Log.e(TAG, Utility.getStringValue(shirolGeoModel.getGISID()));
-        }
-    }
 
 //------------------------------------------------------- Form ------------------------------------------------------------------------------------------------------------------------------------------------
-    private void viewFormDialogBox(String id,String polygonID){
+    private void viewFormDialogBox(String ID,String polygonID,String FID){
         try{
-            FormDBModel formDBModel = dataBaseHelper.getFormByPolygonAndFormID(polygonID,id);
+            FormDBModel formDBModel = dataBaseHelper.getFormByPolygonIDAndID(polygonID,ID);
+            // Form Model
             FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
-            assert  formModel != null;
-            FormFields bin = formModel.getFormFields();
+            // Form Fields
+            FormFields bin = formModel.getForm();
             // Dialog Box
             Dialog fDB = new Dialog(this);
             fDB.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -611,7 +591,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             LinearLayout ll_27_2 = fDB.findViewById(R.id.ll_27_2);
             LinearLayout ll_28 = fDB.findViewById(R.id.ll_28);
             LinearLayout ll_30 = fDB.findViewById(R.id.ll_30);
+
             // init Text View ----------------------------------------
+            TextView tv_form_property_id                 = fDB.findViewById(R.id.db_form_property_id);
+            TextView tv_form_property_number             = fDB.findViewById(R.id.db_form_property_number);
+
             TextView tv_form_owner_name                  = fDB.findViewById(R.id.db_form_owner_name);
             TextView tv_form_old_property_no             = fDB.findViewById(R.id.db_form_old_property_no);
             TextView tv_form_new_property_no             = fDB.findViewById(R.id.db_form_new_property_no);
@@ -650,6 +634,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             TextView tv_form_total_area                  = fDB.findViewById(R.id.db_form_total_area);
 
             // Set Text -------------------------------
+            // 0
+            tv_form_property_id.setText(Utility.getStringValue(polygonID));
+            // 01
+            tv_form_property_number.setText(Utility.getStringValue(FID));
             // 1
             tv_form_owner_name.setText(Utility.getStringValue(bin.getOwner_name()));
             // 2
@@ -760,22 +748,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // 31
             tv_form_sp_rain_water_harvesting.setText(Utility.getStringValue(bin.getRain_water_harvesting()));
 
+
             // RecycleView -----------------------------
             RecyclerView rvForm = fDB.findViewById(R.id.db_rvFormTableView);
-            if(formModel.getForm_detail().size() > 0){
+            if(formModel.getDetais().size() > 0){
                 rvForm.setVisibility(View.VISIBLE);
-                AdapterFormTable adapterFormTable = new AdapterFormTable(mActivity,formModel.getForm_detail(),true);
+                AdapterFormTable adapterFormTable = new AdapterFormTable(mActivity,formModel.getDetais(),true);
                 Utility.setToVerticalRecycleView(mActivity,rvForm,adapterFormTable);
             }
             else{
                 rvForm.setVisibility(View.GONE);
             }
+            // ----------------
             // 32
             tv_form_plot_area.setText(Utility.getStringValue(bin.getPlot_area()));
             // 33
             tv_form_property_area.setText(Utility.getStringValue(bin.getProperty_area()));
             // 34
             tv_form_total_area.setText(Utility.getStringValue(bin.getTotal_area()));
+
 
             // Camera Image Upload View -----------------------
             if(!Utility.isEmptyString(formDBModel.getCameraPath())){
@@ -901,7 +892,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if(!Utility.isEmptyString(formDBModel.getLatitude()) && !Utility.isEmptyString(formDBModel.getLongitude())) {
                         LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
                         Marker marker;
-                        if((formDBModels.get(i).getIsOnlineSave()).equalsIgnoreCase("f")){
+                        if((formDBModels.get(i).isOnlineSave())){
                             marker = Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_RED);
                       }
                       else{
@@ -925,26 +916,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void viewAllFormDialogBox(String polygonID){
-        Dialog vfBox = new Dialog(this);
-        vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        vfBox.setCancelable(false);
-        vfBox.setContentView(R.layout.dialogbox_formlist_view);
-        vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-        // Button
-        Button btExit = vfBox.findViewById(R.id.btExit);
-        btExit.setOnClickListener(view -> vfBox.dismiss());
-        // RecycleView
-        RecyclerView rvFormListView = vfBox.findViewById(R.id.rvFormListView);
+    private void viewAllFormDialogBox(String polygonID,DialogInterface dialogBox){
         ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
-        AdapterFormListView adapterFormListView = new AdapterFormListView(mActivity, formList, formListModel -> {
-            vfBox.dismiss();
-            if(!Utility.isEmptyString(polygonID)){
-                viewFormDialogBox(formListModel.getId(),polygonID);
-            }
-        });
-        Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
-        vfBox.show();
+        if(formList.size() > 0){
+            dialogBox.dismiss();
+            Dialog vfBox = new Dialog(this);
+            vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            vfBox.setCancelable(false);
+            vfBox.setContentView(R.layout.dialogbox_formlist_view);
+            vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+            // Button
+            Button btExit = vfBox.findViewById(R.id.btExit);
+            btExit.setOnClickListener(view -> vfBox.dismiss());
+            // RecycleView
+            RecyclerView rvFormListView = vfBox.findViewById(R.id.rvFormListView);
+
+            AdapterFormListView adapterFormListView = new AdapterFormListView(mActivity, formList, formListModel -> {
+                vfBox.dismiss();
+                if(!Utility.isEmptyString(polygonID)){
+                    viewFormDialogBox(formListModel.getId(),polygonID,formListModel.getFid());
+                }
+            });
+            Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
+            vfBox.show();
+        }
+        else{
+            Log.e(TAG,"Form Not Found");
+            Utility.showToast(mActivity,"Form Not Found");
+        }
     }
 
     private boolean isFormDataNotSync(){
@@ -955,10 +954,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //------------------------------------------------------- Dialog Box Show ----------------------------------------------------------------------------------------------------------------------
 
     private void showSelectedDialogBox(String polygonID){
-        Utility.showSelectBox(mActivity, item -> {
+        Utility.showSelectBox(mActivity, (item, dialogBox) -> {
             switch (item){
 
                 case Utility.ITEM_SELECTED.ADD:
+                    dialogBox.dismiss();
                     Intent intent = new Intent(MapsActivity.this, FormActivity.class);
                     intent.putExtra(Utility.PASS_FORM_ID,"");
                     intent.putExtra(Utility.PASS_POLYGON_ID,polygonID);
@@ -966,10 +966,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     break;
 
                 case Utility.ITEM_SELECTED.VIEW:
-                    viewAllFormDialogBox("");
+                    //dialogBox.dismiss();
+
+                    viewAllFormDialogBox(polygonID,dialogBox);
                     break;
             }
         },false);
+
     }
 
 //---------------------------------------------- Location Permission ------------------------------------------------------------------------------------------------------------------------
@@ -1079,26 +1082,194 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         unregisterReceiver();
     }
 
+//------------------------------------------------------- onPolygonClick ----------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onPolygonClick(@NonNull Polygon polygon) {
+
+        if(polygon.getTag() instanceof GeoJsonModel){
+            //Log.e(TAG,"Polygon instance of GeoJsonModel");
+            GeoJsonModel geoJsonModel = (GeoJsonModel) polygon.getTag();
+            if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
+                Log.e(TAG, "Polygon ID: -> "+Utility.getStringValue(geoJsonModel.getPolygonID()));
+                showSelectedDialogBox(geoJsonModel.getPolygonID());
+            }
+            else{
+                Log.e(TAG,"Polygon ID is Empty");
+            }
+        }
+        else{
+            Log.e(TAG,"Polygon not instance of GeoJsonModel");
+        }
+
+    }
+
 //------------------------------------------------------- Fetch GeoJson File ----------------------------------------------------------------------------------------------------------------------
 
-    private void fetchGeoJsonFile(){
-        Log.e(TAG_GEO_JSON, "GeoJson");
-        ArrayList<ShirolGeoModel> listArrayList = new ArrayList<>();
-        showProgressBar("Loading....");
-//        ExecutorService service = Executors.newSingleThreadExecutor();
-//        service.execute(new Runnable() {
+    private void showAllGeoJsonPolygon(){
+        //showProgressBar("Loading Wards.....");
+                ArrayList<GeoJsonModel> geoJsonModels = dataBaseHelper.getAllGeoJsonPolygon();
+                Log.e(TAG,"Geo-Json Polygon Size: "+ geoJsonModels.size());
+                try{
+                    if(geoJsonModels.size() > 0){
+                        for(int i=0; i<geoJsonModels.size(); i++){
+
+                            GeoJsonModel geoJsonModel = geoJsonModels.get(i);
+                            if(!Utility.isEmptyString(geoJsonModel.getLatLon())){
+                                ArrayList<ArrayList<LatLng>> geoJsonLatLonList = Utility.convertStringToListOfPolygon(geoJsonModel.getLatLon());
+                                if(geoJsonLatLonList.size() > 0){
+
+                                    for(int j=0; j<geoJsonLatLonList.size(); j++){
+                                        ArrayList<LatLng> latLngs = geoJsonLatLonList.get(j);
+                                        if(latLngs.size() > 0){
+                                            PolygonOptions polygonOptions = new PolygonOptions()
+                                                    .clickable(true)
+                                                    .addAll(latLngs)
+                                                    .strokeWidth(4)
+                                                    .strokeColor(Color.parseColor("#04faee"));
+                                            Polygon polygon = mMap.addPolygon(polygonOptions);
+                                            polygon.setTag(geoJsonModel);
+                                            //   public Marker addGeoJsonPolygonMarker(final Context context, final GoogleMap map, final LatLng location, final String text, final int padding) {
+                                           // Marker marker = Utility.addGeoJsonPolygonMarker(mActivity,mMap,Utility.getPolygonCenterPoint(latLngs),geoJsonModel.getPolygonID(),1);
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG, "Geo-Json Polygon Empty");
+                        dismissProgressBar();
+                    }
+                }
+                catch (Exception e){
+                    dismissProgressBar();
+                    Log.e(TAG, "Error: "+e.getMessage());
+                }
+
+
+      //  dismissProgressBar();
+
+
+
+    }
+
+}
+
+//    private void fetchGeoJsonFile(){
+//        Log.e(TAG_GEO_JSON, "GeoJson");
+//        ArrayList<ShirolGeoModel> listArrayList = new ArrayList<>();
+//        showProgressBar("Loading....");
+////        ExecutorService service = Executors.newSingleThreadExecutor();
+////        service.execute(new Runnable() {
+////
+////            @Override
+////            public void run() {
+////                // On PreExecute Method
+////                runOnUiThread(new Runnable() {
+////                    @Override
+////                    public void run() {
+////                        showProgressBar("Loading....");
+////                    }
+////                });
+////
+////                // On Background Method
+////                try{
+////                    InputStream inputStream = getAssets().open("shirol.json");
+////                    int size = inputStream.available();
+////                    byte[] buffer = new byte[size];
+////                    inputStream.read(buffer);
+////                    inputStream.close();
+////                    String json = new String(buffer,"UTF-8");
+////                    java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
+////                    GeoJson geoJson =  new Gson().fromJson(json, Type);
+////                    int n = geoJson.getFeatures().size();
+////
+////                    ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
+////
+////                    ArrayList<Feature> features = geoJson.getFeatures();
+////                    // Features Loops
+////                    for(int i=0; i<n; i++){
+////                        Geometry geometry = features.get(i).getGeometry();
+////                        String gisid = features.get(i).getProperties().getGISID();
+////
+////                        coordinates = geometry.getCoordinates();
+////                        if(coordinates.size() > 0){
+////                            int coo_size = coordinates.get(0).get(0).size();
+////                            ArrayList<LatLng> latLngs = new ArrayList<>();
+////                            for(int j=0; j<coo_size; j++){
+////                                latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
+////                            }
+////                            listArrayList.add(new ShirolGeoModel(gisid,latLngs));
+////                        }
+////                    }
+//////            String json = new String(buffer,"UTF-8");
+//////            JSONArray jsonArray = new JSONArray(json);
+//////
+//////            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
+//////            for(int i=0; i<jsonArray.length(); i++){
+//////                JSONObject object = jsonArray.getJSONObject(i);
+//////                String GISID = object.getString("GISID");
+////
+////                    //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
+////                    //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
+////
+//////                if(!Utility.isEmptyString(GISID)){
+//////                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
+//////                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
+//////                    shirolModelArrayList.add(s);
+//////                    Log.e(TAG,"GISID: " + s.getGISID());
+//////                    if(s.getCoordinates().size() > 0){
+//////                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
+//////                    }
+//////                    else{
+//////                        Log.e(TAG, "Coordinate Size: ");
+//////                    }
+//////                }
+////
+//////                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
+//////                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
+//////
+//////                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
+////
+////                    // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
+////                    //}
+////
+////                    // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
+////                    //               Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
+////                }
+////                catch (IOException e){
+////                    dismissProgressBar();
+////                    Log.e(TAG, "Error: "+e.getMessage());
+////                }
+////
+////                // On PostExecute Method
+////                runOnUiThread(() -> {
+////                    try{
+////                        for(int i=0; i<listArrayList.size(); i++){
+////                            ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
+////                            PolygonOptions polygonOptions = new PolygonOptions()
+////                                    .clickable(true)
+////                                    .addAll(latLngs)
+////                                    .strokeWidth(3)
+////                                    .strokeColor(Color.YELLOW);
+////                            Polygon polygon =  mMap.addPolygon(polygonOptions);
+////                            polygon.setTag(listArrayList.get(i));
+////                        }
+////                        dismissProgressBar();
+////                    }
+////                    catch (Exception e){
+////                        dismissProgressBar();
+////                        Log.e(TAG, e.getMessage());
+////                    }
+////                });
+////            }
+////        });
 //
+//        new AsyncTask<Void,Void,Void>(){
 //            @Override
-//            public void run() {
-//                // On PreExecute Method
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        showProgressBar("Loading....");
-//                    }
-//                });
-//
-//                // On Background Method
+//            protected Void doInBackground(Void... voids) {
 //                try{
 //                    InputStream inputStream = getAssets().open("shirol.json");
 //                    int size = inputStream.available();
@@ -1161,257 +1332,158 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                    //}
 //
 //                    // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-//                    //               Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
+//     //               Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
 //                }
 //                catch (IOException e){
 //                    dismissProgressBar();
 //                    Log.e(TAG, "Error: "+e.getMessage());
 //                }
-//
-//                // On PostExecute Method
-//                runOnUiThread(() -> {
-//                    try{
-//                        for(int i=0; i<listArrayList.size(); i++){
-//                            ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
-//                            PolygonOptions polygonOptions = new PolygonOptions()
-//                                    .clickable(true)
-//                                    .addAll(latLngs)
-//                                    .strokeWidth(3)
-//                                    .strokeColor(Color.YELLOW);
-//                            Polygon polygon =  mMap.addPolygon(polygonOptions);
-//                            polygon.setTag(listArrayList.get(i));
-//                        }
-//                        dismissProgressBar();
-//                    }
-//                    catch (Exception e){
-//                        dismissProgressBar();
-//                        Log.e(TAG, e.getMessage());
-//                    }
-//                });
-//            }
-//        });
-
-        new AsyncTask<Void,Void,Void>(){
-            @Override
-            protected Void doInBackground(Void... voids) {
-                try{
-                    InputStream inputStream = getAssets().open("shirol.json");
-                    int size = inputStream.available();
-                    byte[] buffer = new byte[size];
-                    inputStream.read(buffer);
-                    inputStream.close();
-                    String json = new String(buffer,"UTF-8");
-                    java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
-                    GeoJson geoJson =  new Gson().fromJson(json, Type);
-                    int n = geoJson.getFeatures().size();
-
-                    ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
-
-                    ArrayList<Feature> features = geoJson.getFeatures();
-                    // Features Loops
-                    for(int i=0; i<n; i++){
-                        Geometry geometry = features.get(i).getGeometry();
-                        String gisid = features.get(i).getProperties().getGISID();
-
-                        coordinates = geometry.getCoordinates();
-                        if(coordinates.size() > 0){
-                            int coo_size = coordinates.get(0).get(0).size();
-                            ArrayList<LatLng> latLngs = new ArrayList<>();
-                            for(int j=0; j<coo_size; j++){
-                                latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
-                            }
-                            listArrayList.add(new ShirolGeoModel(gisid,latLngs));
-                        }
-                    }
-//            String json = new String(buffer,"UTF-8");
-//            JSONArray jsonArray = new JSONArray(json);
-//
-//            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
-//            for(int i=0; i<jsonArray.length(); i++){
-//                JSONObject object = jsonArray.getJSONObject(i);
-//                String GISID = object.getString("GISID");
-
-                    //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
-                    //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
-
-//                if(!Utility.isEmptyString(GISID)){
-//                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-//                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
-//                    shirolModelArrayList.add(s);
-//                    Log.e(TAG,"GISID: " + s.getGISID());
-//                    if(s.getCoordinates().size() > 0){
-//                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
-//                    }
-//                    else{
-//                        Log.e(TAG, "Coordinate Size: ");
-//                    }
-//                }
-
-//                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-//                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
-//
-//                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
-
-                    // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
-                    //}
-
-                    // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-     //               Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
-                }
-                catch (IOException e){
-                    dismissProgressBar();
-                    Log.e(TAG, "Error: "+e.getMessage());
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void unused) {
-                super.onPostExecute(unused);
-                for(int i=0; i<listArrayList.size(); i++){
-                    ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
-                    PolygonOptions polygonOptions = new PolygonOptions()
-                            .clickable(true)
-                            .addAll(latLngs)
-                            .strokeWidth(3)
-                            .strokeColor(Color.YELLOW);
-                    Polygon polygon =  mMap.addPolygon(polygonOptions);
-                    polygon.setTag(listArrayList.get(i));
-                }
-                dismissProgressBar();
-            }
-        }.execute();
-
-
-
-//        try{
-//            InputStream inputStream = getAssets().open("shirol.json");
-//            int size = inputStream.available();
-//            byte[] buffer = new byte[size];
-//            inputStream.read(buffer);
-//            inputStream.close();
-//            String json = new String(buffer,"UTF-8");
-//
-//            java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
-//            GeoJson geoJson =  new Gson().fromJson(json, Type);
-//            int n = geoJson.getFeatures().size();
-//
-//            ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
-//
-//            ArrayList<ShirolGeoModel> listArrayList = new ArrayList<>();
-//
-//            ArrayList<Feature> features = geoJson.getFeatures();
-//            // Features Loops
-//            for(int i=0; i<n; i++){
-//                Geometry geometry = features.get(i).getGeometry();
-//                String gisid = features.get(i).getProperties().getGISID();
-//
-//                coordinates = geometry.getCoordinates();
-//                if(coordinates.size() > 0){
-//                    int coo_size = coordinates.get(0).get(0).size();
-//                    ArrayList<LatLng> latLngs = new ArrayList<>();
-//                    for(int j=0; j<coo_size; j++){
-//                        latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
-//                    }
-//
-//                    listArrayList.add(new ShirolGeoModel(gisid,latLngs));
-//                }
+//                return null;
 //            }
 //
-////            String json = new String(buffer,"UTF-8");
-////            JSONArray jsonArray = new JSONArray(json);
-////
-////            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
-////            for(int i=0; i<jsonArray.length(); i++){
-////                JSONObject object = jsonArray.getJSONObject(i);
-////                String GISID = object.getString("GISID");
-//
-//                //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
-//                //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
-//
-////                if(!Utility.isEmptyString(GISID)){
-////                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-////                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
-////                    shirolModelArrayList.add(s);
-////                    Log.e(TAG,"GISID: " + s.getGISID());
-////                    if(s.getCoordinates().size() > 0){
-////                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
-////                    }
-////                    else{
-////                        Log.e(TAG, "Coordinate Size: ");
-////                    }
-////                }
-//
-////                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-////                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
-////
-////                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
-//
-//               // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
-//            //}
-//
-//                // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-//
-//
-//            Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
-//            for(int i=0; i<listArrayList.size(); i++){
+//            @Override
+//            protected void onPostExecute(Void unused) {
+//                super.onPostExecute(unused);
+//                for(int i=0; i<listArrayList.size(); i++){
 //                    ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
-////                    StringBuilder sb = new StringBuilder();
-////                    for(int j=0; j<latLngs.size(); j++){
-////                        sb.append(latLngs.get(j).latitude +","+ latLngs.get(j).longitude+" $ ");
-////                    }
-////                    Log.e(TAG_GEO_JSON,"Latlon: " + sb.toString());
-////                    Log.e(TAG_GEO_JSON,"Inside Size : "+ latLngs.size());
-//////                    LatLng latLng = new LatLng(latLngs.get(0).latitude,latLngs.get(0).longitude);
-////                    Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
-//
 //                    PolygonOptions polygonOptions = new PolygonOptions()
 //                            .clickable(true)
 //                            .addAll(latLngs)
 //                            .strokeWidth(3)
 //                            .strokeColor(Color.YELLOW);
-//                  Polygon polygon =  mMap.addPolygon(polygonOptions);
-//                  polygon.setTag(listArrayList.get(i));
-//
+//                    Polygon polygon =  mMap.addPolygon(polygonOptions);
+//                    polygon.setTag(listArrayList.get(i));
+//                }
+//                dismissProgressBar();
 //            }
+//        }.execute();
+//
+//
+//
+////        try{
+////            InputStream inputStream = getAssets().open("shirol.json");
+////            int size = inputStream.available();
+////            byte[] buffer = new byte[size];
+////            inputStream.read(buffer);
+////            inputStream.close();
+////            String json = new String(buffer,"UTF-8");
 ////
+////            java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
+////            GeoJson geoJson =  new Gson().fromJson(json, Type);
+////            int n = geoJson.getFeatures().size();
+////
+////            ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
+////
+////            ArrayList<ShirolGeoModel> listArrayList = new ArrayList<>();
+////
+////            ArrayList<Feature> features = geoJson.getFeatures();
+////            // Features Loops
+////            for(int i=0; i<n; i++){
+////                Geometry geometry = features.get(i).getGeometry();
+////                String gisid = features.get(i).getProperties().getGISID();
+////
+////                coordinates = geometry.getCoordinates();
+////                if(coordinates.size() > 0){
+////                    int coo_size = coordinates.get(0).get(0).size();
+////                    ArrayList<LatLng> latLngs = new ArrayList<>();
+////                    for(int j=0; j<coo_size; j++){
+////                        latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
+////                    }
+////
+////                    listArrayList.add(new ShirolGeoModel(gisid,latLngs));
+////                }
 ////            }
 ////
+//////            String json = new String(buffer,"UTF-8");
+//////            JSONArray jsonArray = new JSONArray(json);
+//////
+//////            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
+//////            for(int i=0; i<jsonArray.length(); i++){
+//////                JSONObject object = jsonArray.getJSONObject(i);
+//////                String GISID = object.getString("GISID");
+////
+////                //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
+////                //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
+////
+//////                if(!Utility.isEmptyString(GISID)){
+//////                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
+//////                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
+//////                    shirolModelArrayList.add(s);
+//////                    Log.e(TAG,"GISID: " + s.getGISID());
+//////                    if(s.getCoordinates().size() > 0){
+//////                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
+//////                    }
+//////                    else{
+//////                        Log.e(TAG, "Coordinate Size: ");
+//////                    }
+//////                }
+////
+//////                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
+//////                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
+//////
+//////                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
+////
+////               // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
+////            //}
+////
+////                // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
+////
+////
+////            Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
+////            for(int i=0; i<listArrayList.size(); i++){
+////                    ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
+//////                    StringBuilder sb = new StringBuilder();
+//////                    for(int j=0; j<latLngs.size(); j++){
+//////                        sb.append(latLngs.get(j).latitude +","+ latLngs.get(j).longitude+" $ ");
+//////                    }
+//////                    Log.e(TAG_GEO_JSON,"Latlon: " + sb.toString());
+//////                    Log.e(TAG_GEO_JSON,"Inside Size : "+ latLngs.size());
+////////                    LatLng latLng = new LatLng(latLngs.get(0).latitude,latLngs.get(0).longitude);
+//////                    Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
+////
+////                    PolygonOptions polygonOptions = new PolygonOptions()
+////                            .clickable(true)
+////                            .addAll(latLngs)
+////                            .strokeWidth(3)
+////                            .strokeColor(Color.YELLOW);
+////                  Polygon polygon =  mMap.addPolygon(polygonOptions);
+////                  polygon.setTag(listArrayList.get(i));
+////
+////            }
+//////
+//////            }
+//////
+////
+////        }
+////        catch (IOException e){
+////            Log.e(TAG, "Error: "+e.getMessage());
+////        }
+//
+////        catch (IOException | JSONException e){
+////            Log.e(TAG, "Error: "+e.getMessage());
+////        }
+//    }
+//
+//    private void showShirolGeoJson(){
+//
+//        try {
+//            GeoJsonLayer layer = new GeoJsonLayer(mMap, R.raw.shirol, mActivity);
+//
+//            layer.addLayerToMap();
+//         //   layer.getDefaultPolygonStyle().setFillColor(Color.BLUE);
+//            layer.getDefaultPolygonStyle().setStrokeColor(Color.YELLOW);
+//
+//            layer.setOnFeatureClickListener(feature -> {
+//                // Log
+//                Log.i(TAG, "Feature GISID       : " + feature.getProperty("GISID"));
+//            //    Log.i(TAG, "Feature Geom Type: " + feature.getGeometry().getGeometryType());
+//            //    Log.i(TAG, "Feature LatLon   : " + feature.getGeometry().getGeometryObject());
+//                //layer.removeFeature((GeoJsonFeature) feature);
+//            });
 //
 //        }
-//        catch (IOException e){
-//            Log.e(TAG, "Error: "+e.getMessage());
+//        catch (IOException | JSONException e) {
+//            Log.e(TAG, e.getMessage());
+//
 //        }
-
-//        catch (IOException | JSONException e){
-//            Log.e(TAG, "Error: "+e.getMessage());
-//        }
-    }
-
-    private void showShirolGeoJson(){
-
-        try {
-            GeoJsonLayer layer = new GeoJsonLayer(mMap, R.raw.shirol, mActivity);
-
-            layer.addLayerToMap();
-         //   layer.getDefaultPolygonStyle().setFillColor(Color.BLUE);
-            layer.getDefaultPolygonStyle().setStrokeColor(Color.YELLOW);
-
-            layer.setOnFeatureClickListener(feature -> {
-                // Log
-                Log.i(TAG, "Feature GISID       : " + feature.getProperty("GISID"));
-            //    Log.i(TAG, "Feature Geom Type: " + feature.getGeometry().getGeometryType());
-            //    Log.i(TAG, "Feature LatLon   : " + feature.getGeometry().getGeometryObject());
-                //layer.removeFeature((GeoJsonFeature) feature);
-            });
-
-        }
-        catch (IOException | JSONException e) {
-            Log.e(TAG, e.getMessage());
-
-        }
-    }
-
-
-
-}
+//    }

@@ -53,7 +53,94 @@
                                 android:textColor="@color/formTextColor" />
                     </LinearLayout>
 <!-- ################ Header - 1 ########################################################################################################################################################################### -->
-                 <!-- 1- header -->
+                <!-- Property ID -->
+                <LinearLayout
+                    android:id="@+id/ll_0"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="gone"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Property ID"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <TextView
+                        android:id="@+id/form_property_id"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="text"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+                <!-- Property Number -->
+                <LinearLayout
+                    android:id="@+id/ll_01"
+                    android:padding="@dimen/formPadding"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <!-- label -->
+                    <LinearLayout
+                        android:background="@color/formColor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:visibility="visible"
+                            android:layout_marginEnd="5dp"
+                            android:layout_gravity="top"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:src="@drawable/ic_star"
+                            android:contentDescription="@string/todo" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Property Number"
+                            android:textSize="@dimen/formLabelSize"
+                            android:textColor="@color/formTextColor" />
+                    </LinearLayout>
+                    <!-- value -->
+                    <EditText
+                        android:id="@+id/form_property_number"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:background="@drawable/bg_edittext"
+                        android:padding="10dp"
+                        android:textSize="@dimen/formValueSize"
+                        android:textAlignment="textStart"
+                        android:inputType="text"
+                        android:textColor="@color/black" />
+                </LinearLayout>
+
+                <!-- 1- header -->
                  <LinearLayout
                      android:id="@+id/ll_header1"
                      android:background="@color/formHeaderColor"
@@ -1923,7 +2010,7 @@
                             android:text="Upload"
                             android:background="@drawable/bg_button"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="40dp"
                             android:textColor="@color/white"
                             android:gravity="center" />
 

@@ -2,7 +2,6 @@ package com.eighttechprojects.propertytaxshirol.Model;
 
 public class FormDBModel {
 
-
     private String id;
     private String form_id;
     private String polygon_id;
@@ -10,7 +9,7 @@ public class FormDBModel {
     private String latitude;
     private String longitude;
     private String formData;
-    private String isOnlineSave = "f";
+    private boolean isOnlineSave = false;
     private String token;
     private String filePath;
     private String cameraPath;
@@ -45,7 +44,7 @@ public class FormDBModel {
         return formData;
     }
 
-    public String getIsOnlineSave() {
+    public boolean isOnlineSave() {
         return isOnlineSave;
     }
 
@@ -92,8 +91,8 @@ public class FormDBModel {
         this.formData = formData;
     }
 
-    public void setIsOnlineSave(String isOnlineSave) {
-        this.isOnlineSave = isOnlineSave;
+    public void setOnlineSave(boolean onlineSave) {
+        isOnlineSave = onlineSave;
     }
 
     public void setToken(String token) {

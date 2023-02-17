@@ -216,9 +216,9 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         // Polygon ID Contains or not
         if(intent.getExtras().containsKey(Utility.PASS_POLYGON_ID)) {
             polygonID = intent.getStringExtra(Utility.PASS_POLYGON_ID);
+            binding.formPropertyId.setText(Utility.getStringValue(polygonID));
             Log.e(TAG, "Polygon ID: "+ polygonID);
         }
-
     }
 
 //------------------------------------------------------- initSpinner ----------------------------------------------------------------------------------------------------------------------
@@ -679,7 +679,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     private void onFormSubmit(){
         // Geom Array not Null
-        if(!Utility.isEmptyString(polygonID)){
+        if(!Utility.isEmptyString(polygonID) && !Utility.isEmptyString(binding.formPropertyName.getText().toString())){
 
             unique_number = String.valueOf(Utility.getToken());
             datetime      = Utility.getDateTime();
@@ -688,6 +688,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             // 1 -----------------------------
             FormFields bin = new FormFields();
             // Default Fields
+            bin.setFid(Utility.getEditTextValue(binding.formPropertyName));
             bin.setPolygon_id(polygonID);
             bin.setForm_id(formID);
             bin.setUser_id(Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
@@ -737,8 +738,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setProperty_area(Utility.getEditTextValue(binding.formPropertyArea));
             bin.setTotal_area(Utility.getEditTextValue(binding.formTotalArea));
 
-            formModel.setFormFields(bin);
-            formModel.setForm_detail(adapterFormTable.getFormTableModels());
+            formModel.setForm(bin);
+            formModel.setDetais(adapterFormTable.getFormTableModels());
 
             // Upload Form
             if(SystemPermission.isInternetConnected(mActivity)){
@@ -747,6 +748,10 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             else{
                 SaveFormToDatabase(formModel);
             }
+        }
+        else{
+            // When FID is Null then!
+            Utility.showToast(mActivity,"Field Is Required");
         }
     }
 
@@ -761,28 +766,30 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     private void SaveFormToDatabase(FormModel formModel){
        // String token = String.valueOf(Utility.getToken());
-        dataBaseHelper.insertMapForm(
-                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                polygonID,
-                formID,
-                latitude,
-                longitude,
-                Utility.convertFormModelToString(formModel),
-                "t",
-                unique_number,
-                sbFilePathLocal.toString(),
-                sbCameraImagePathLocal.toString()
-        );
+        dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
+        dataBaseHelper.insertGeoJsonPolygonFormLocal(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
 
-        dataBaseHelper.insertMapFormLocal(
-                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                latitude,
-                longitude,
-                Utility.convertFormModelToString(formModel),
-                unique_number,
-                sbFilePath.toString(),
-                sbCameraImagePath.toString()
-        );
+//        dataBaseHelper.insertMapForm(
+//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                polygonID,
+//                formID,
+//                latitude,
+//                longitude,
+//                Utility.convertFormModelToString(formModel),
+//                "t",
+//                unique_number,
+//                sbFilePathLocal.toString(),
+//                sbCameraImagePathLocal.toString()
+//        );
+//        dataBaseHelper.insertMapFormLocal(
+//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                latitude,
+//                longitude,
+//                Utility.convertFormModelToString(formModel),
+//                unique_number,
+//                sbFilePath.toString(),
+//                sbCameraImagePath.toString()
+//        );
 
         Log.e(TAG,"Form Save To Local Database");
         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
@@ -844,19 +851,21 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         else{
                             Log.e(TAG,"User Upload only Form not Camera File or File");
                             dismissProgressBar();
-                            if(formModel != null){
-                                dataBaseHelper.insertMapForm(
-                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                                        polygonID,
-                                        formID,
-                                        latitude,
-                                        longitude,
-                                        Utility.convertFormModelToString(formModel),
-                                        "f",
-                                        unique_number,
-                                        "",
-                                        ""
-                                );
+                            if(formModel != null)
+                            {
+                                dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"t","","");
+//                                dataBaseHelper.insertMapForm(
+//                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                                        polygonID,
+//                                        formID,
+//                                        latitude,
+//                                        longitude,
+//                                        Utility.convertFormModelToString(formModel),
+//                                        "f",
+//                                        unique_number,
+//                                        "",
+//                                        ""
+//                                );
                             }
                             Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
                                 okDialogBox.dismiss();
@@ -995,6 +1004,9 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         sbCameraImagePath.append(destFile.getPath());
                         sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
+                        if(formModel != null){
+                            formModel.getForm().setProperty_images(destFile.getName());
+                        }
                         updatePreviewUI(false);
                         Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
                         // Set Image
@@ -1003,6 +1015,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     }, 400);
                 }
                 catch (Exception e){
+                    formModel.getForm().setProperty_images("");
                     Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
                     Log.e(TAG, e.getMessage());
                 }
@@ -1025,6 +1038,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         Uri multipleUri = data.getClipData().getItemAt(i).getUri();
                         multipleFileList.add(multipleUri);
                     }
+                    StringBuilder sbFileName = new StringBuilder();
                     sbFilePath = new StringBuilder();
                     sbFilePathLocal = new StringBuilder();
                     for(int i=0; i<multipleFileList.size(); i++){
@@ -1038,12 +1052,18 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                             e.printStackTrace();
                         }
                         if(destFile != null){
+                            sbFileName.append(destFile.getName());
                             sbFilePath.append(destFile.getPath());
                             sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
                             if(i < multipleFileList.size() - 1){
                                 sbFilePath.append(",");
+                                sbFileName.append(",");
+                                sbFilePathLocal.append(",");
                             }
                         }
+                    }
+                    if(formModel != null){
+                        formModel.getForm().setPlan_attachment(sbFileName.toString());
                     }
 
                 }
@@ -1059,11 +1079,15 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     {
                         e.printStackTrace();
                     }
+
                     if(destFile != null){
                         sbFilePath = new StringBuilder();
                         sbFilePathLocal = new StringBuilder();
                         sbFilePath.append(destFile.getPath());
                         sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
+                        if(formModel != null){
+                            formModel.getForm().setPlan_attachment(destFile.getName());
+                        }
                     }
                 }
 
@@ -1129,7 +1153,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                                 String data = "";
                                 JSONObject params = new JSONObject();
                                 try {
-                                    params.put("formID", form_id);
+                                    params.put(Utility.PASS_USER_ID,Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
+                                    params.put(Utility.PASS_POLYGON_ID,polygonID);
                                     params.put("unique_number", unique_number);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
@@ -1230,18 +1255,19 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                             Log.e(TAG,"Save File Successfully");
                             dismissProgressBar();
                             if(formModel != null){
-                                dataBaseHelper.insertMapForm(
-                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                                        polygonID,
-                                        formID,
-                                        latitude,
-                                        longitude,
-                                        Utility.convertFormModelToString(formModel),
-                                        "t",
-                                        unique_number,
-                                        sbFilePathLocal.toString(),
-                                        sbCameraImagePathLocal.toString()
-                                );
+                                dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"t",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
+//                                dataBaseHelper.insertMapForm(
+//                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                                        polygonID,
+//                                        formID,
+//                                        latitude,
+//                                        longitude,
+//                                        Utility.convertFormModelToString(formModel),
+//                                        "t",
+//                                        unique_number,
+//                                        sbFilePathLocal.toString(),
+//                                        sbCameraImagePathLocal.toString()
+//                                );
                             }
                             Utility.showOKDialogBox(mActivity, "Save Successfully", dialog -> {
                                 dialog.dismiss();

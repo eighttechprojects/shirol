@@ -1,15 +1,23 @@
 package com.eighttechprojects.propertytaxshirol.Model;
 
+import java.util.ArrayList;
+
 public class FormFields {
 
     // default fields-----------------
+    private String form_number;
+    private String fid;
     private String polygon_id;
+
     private String form_id;
     private String user_id;
     private String latitude;
     private String longitude;
     private String created_on;
     private String version;
+
+    private String property_images;
+    private String plan_attachment;
 
     // form fields---------------------
     private String owner_name;
@@ -50,7 +58,31 @@ public class FormFields {
     private String property_area;
     private String total_area;
 
+    private ArrayList<FormTableModel> detais;
+
+
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
+
+
+    public ArrayList<FormTableModel> getDetais() {
+        return detais;
+    }
+
+    public String getForm_number() {
+        return form_number;
+    }
+
+    public String getFid() {
+        return fid;
+    }
+
+    public String getProperty_images() {
+        return property_images;
+    }
+
+    public String getPlan_attachment() {
+        return plan_attachment;
+    }
 
     public String getOwner_name() {
         return owner_name;
@@ -224,8 +256,28 @@ public class FormFields {
         return total_area;
     }
 
-    //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public void setDetais(ArrayList<FormTableModel> detais) {
+        this.detais = detais;
+    }
+
+    public void setForm_number(String form_number) {
+        this.form_number = form_number;
+    }
+
+    public void setFid(String fid) {
+        this.fid = fid;
+    }
+
+    public void setProperty_images(String property_images) {
+        this.property_images = property_images;
+    }
+
+    public void setPlan_attachment(String plan_attachment) {
+        this.plan_attachment = plan_attachment;
+    }
 
     public void setOwner_name(String owner_name) {
         this.owner_name = owner_name;
@@ -398,6 +450,60 @@ public class FormFields {
 
     public void setPolygon_id(String polygon_id) {
         this.polygon_id = polygon_id;
+    }
+
+
+    @Override
+    public String toString() {
+        return "FormFields{" +
+                "form_number='" + form_number + '\'' +
+                ", fid='" + fid + '\'' +
+                ", polygon_id='" + polygon_id + '\'' +
+                ", form_id='" + form_id + '\'' +
+                ", user_id='" + user_id + '\'' +
+                ", latitude='" + latitude + '\'' +
+                ", longitude='" + longitude + '\'' +
+                ", created_on='" + created_on + '\'' +
+                ", version='" + version + '\'' +
+                ", property_images='" + property_images + '\'' +
+                ", plan_attachment='" + plan_attachment + '\'' +
+                ", owner_name='" + owner_name + '\'' +
+                ", old_property_no='" + old_property_no + '\'' +
+                ", new_property_no='" + new_property_no + '\'' +
+                ", property_name='" + property_name + '\'' +
+                ", property_address='" + property_address + '\'' +
+                ", property_user_type='" + property_user_type + '\'' +
+                ", property_user='" + property_user + '\'' +
+                ", resurvey_no='" + resurvey_no + '\'' +
+                ", gat_no='" + gat_no + '\'' +
+                ", zone='" + zone + '\'' +
+                ", ward='" + ward + '\'' +
+                ", mobile='" + mobile + '\'' +
+                ", email='" + email + '\'' +
+                ", aadhar_no='" + aadhar_no + '\'' +
+                ", grid_no='" + grid_no + '\'' +
+                ", gis_id='" + gis_id + '\'' +
+                ", property_type='" + property_type + '\'' +
+                ", no_of_floor='" + no_of_floor + '\'' +
+                ", property_release_date='" + property_release_date + '\'' +
+                ", build_permission='" + build_permission + '\'' +
+                ", build_completion_form='" + build_completion_form + '\'' +
+                ", metal_road='" + metal_road + '\'' +
+                ", is_toilet_available='" + is_toilet_available + '\'' +
+                ", total_toilet='" + total_toilet + '\'' +
+                ", toilet_type='" + toilet_type + '\'' +
+                ", is_streetlight_available='" + is_streetlight_available + '\'' +
+                ", is_water_line_available='" + is_water_line_available + '\'' +
+                ", total_water_line1='" + total_water_line1 + '\'' +
+                ", total_water_line2='" + total_water_line2 + '\'' +
+                ", water_use_type='" + water_use_type + '\'' +
+                ", solar_panel_available='" + solar_panel_available + '\'' +
+                ", solar_panel_type='" + solar_panel_type + '\'' +
+                ", rain_water_harvesting='" + rain_water_harvesting + '\'' +
+                ", plot_area='" + plot_area + '\'' +
+                ", property_area='" + property_area + '\'' +
+                ", total_area='" + total_area + '\'' +
+                '}';
     }
 }
 

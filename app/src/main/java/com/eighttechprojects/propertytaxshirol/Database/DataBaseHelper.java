@@ -6,13 +6,20 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
 import com.eighttechprojects.propertytaxshirol.Model.FormDBModel;
+import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormListModel;
+import com.eighttechprojects.propertytaxshirol.Model.FormModel;
+import com.eighttechprojects.propertytaxshirol.Model.GeoJsonModel;
+import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
 
 import java.util.ArrayList;
 
 public class DataBaseHelper extends SQLiteOpenHelper {
 
+	private static final String TAG = DataBaseHelper.class.getSimpleName();
 	// SQLiteDatabase
 	SQLiteDatabase db;
 	// Context
@@ -20,14 +27,13 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	// DataBase Name
 	public static final String DATABASE_NAME = "PropertyTaxShirol2.db";
 	// DataBase Version
-	public static final int DATABASE_VERSION = 7;
+	public static final int DATABASE_VERSION = 8;
 
 	// param
 
 	public static final String keyParamID           = "id";
 	public static final String keyParamPolygonID    = "polygon_id";
 	public static final String keyParamUserID       = "user_id";
-
 	public static final String keyParamFormID       = "form_id";
 	public static final String keyParamData         = "data";
 	public static final String keyParamLat          = "latitude";
@@ -38,11 +44,18 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	public static final String keyParamFile         = "file";
 	public static final String keyParamCamera       = "camera";
 
+	public static final String keyParamGeoJsonLatLon = "geojsonlatlong";
+	public static final String keyParamGeoJsonForm   = "geojsonform";
 
 	// Table Names
 	private static final String TABLE_MAP_FORM_LOCAL = "FormLocal";
 	private static final String TABLE_MAP_FORM       = "Form";
 	private static final String TABLE_RESURVEY_MAP_FORM = "ResurveyForm";
+	private static final String TABLE_GEO_JSON_POLYGON      = "GeoJsonPolygon";
+	private static final String TABLE_GEO_JSON_POLYGON_FORM = "GeoJsonPolygonForm";
+
+	private static final String TABLE_GEO_JSON_POLYGON_FORM_LOCAL = "GeoJsonPolygonFormLocal";
+
 
 
 //---------------------------------------------------------- Create Table Query -----------------------------------------------------------------------------------------------
@@ -65,6 +78,33 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	public static final String DELETE_TABLE_MAP_FORM_LOCAL = "DELETE FROM "  + TABLE_MAP_FORM_LOCAL;
 	public static final String GET_MAP_FORM_LOCAL          = "SELECT * FROM "+ TABLE_MAP_FORM_LOCAL;
 
+	// -----------------------------------##############################------------------------------------------------------------------
+
+	// GeoJson Polygon Data  ----------------------------------------------------------------------------
+	public static final String CREATE_TABLE_GEO_JSON_POLYGON = "CREATE TABLE " + TABLE_GEO_JSON_POLYGON +"(id INTEGER PRIMARY KEY AUTOINCREMENT, polygon_id VARCHAR(100), geojsonlatlong TEXT)";
+	public static final String DROP_TABLE_GEO_JSON_POLYGON   = "DROP TABLE "   + TABLE_GEO_JSON_POLYGON;
+	public static final String DELETE_TABLE_GEO_JSON_POLYGON = "DELETE FROM "  + TABLE_GEO_JSON_POLYGON;
+	public static final String GET_GEO_JSON_POLYGON          = "SELECT * FROM "+ TABLE_GEO_JSON_POLYGON;
+
+
+	// GeoJson Polygon Form Data  ----------------------------------------------------------------------------
+	public static final String CREATE_TABLE_GEO_JSON_POLYGON_FORM = "CREATE TABLE " + TABLE_GEO_JSON_POLYGON_FORM +"(id INTEGER PRIMARY KEY AUTOINCREMENT, polygon_id VARCHAR(100), geojsonform TEXT,isOnlineSave VARCHAR(10), file TEXT, camera TEXT)";
+	public static final String DROP_TABLE_GEO_JSON_POLYGON_FORM   = "DROP TABLE "   + TABLE_GEO_JSON_POLYGON_FORM;
+	public static final String DELETE_TABLE_GEO_JSON_POLYGON_FORM = "DELETE FROM "  + TABLE_GEO_JSON_POLYGON_FORM;
+	public static final String GET_GEO_JSON_POLYGON_FORM          = "SELECT * FROM "+ TABLE_GEO_JSON_POLYGON_FORM;
+
+
+
+
+	// GeoJson Polygon Form Local Data  ----------------------------------------------------------------------------
+	public static final String CREATE_TABLE_GEO_JSON_POLYGON_FORM_LOCAL = "CREATE TABLE " + TABLE_GEO_JSON_POLYGON_FORM_LOCAL +"(id INTEGER PRIMARY KEY AUTOINCREMENT, polygon_id VARCHAR(100), geojsonform TEXT,isOnlineSave VARCHAR(10), file TEXT, camera TEXT)";
+	public static final String DROP_TABLE_GEO_JSON_POLYGON_FORM_LOCAL   = "DROP TABLE "   + TABLE_GEO_JSON_POLYGON_FORM_LOCAL;
+	public static final String DELETE_TABLE_GEO_JSON_POLYGON_FORM_LOCAL = "DELETE FROM "  + TABLE_GEO_JSON_POLYGON_FORM_LOCAL;
+	public static final String GET_GEO_JSON_POLYGON_FORM_LOCAL          = "SELECT * FROM "+ TABLE_GEO_JSON_POLYGON_FORM_LOCAL;
+
+
+
+
 //---------------------------------------------------------- Constructor ----------------------------------------------------------------------------------------------------------------------
 
 	public DataBaseHelper(Context c) {
@@ -79,6 +119,11 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		db.execSQL(CREATE_TABLE_MAP_FORM);
 		db.execSQL(CREATE_TABLE_MAP_FORM_LOCAL);
 		db.execSQL(CREATE_TABLE_RESURVEY_MAP_FORM);
+
+		db.execSQL(CREATE_TABLE_GEO_JSON_POLYGON);
+		db.execSQL(CREATE_TABLE_GEO_JSON_POLYGON_FORM);
+		db.execSQL(CREATE_TABLE_GEO_JSON_POLYGON_FORM_LOCAL);
+
 	}
 
 //---------------------------------------------------------- onUpgrade ----------------------------------------------------------------------------------------------------------------
@@ -90,10 +135,17 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		db.execSQL(DROP_TABLE_MAP_FORM_LOCAL);
 		db.execSQL(DROP_TABLE_RESURVEY_MAP_FORM);
 
+		db.execSQL(DROP_TABLE_GEO_JSON_POLYGON);
+		db.execSQL(DROP_TABLE_GEO_JSON_POLYGON_FORM);
+
 		// Insert ---------------------
 		db.execSQL(CREATE_TABLE_MAP_FORM);
 		db.execSQL(CREATE_TABLE_MAP_FORM_LOCAL);
 		db.execSQL(CREATE_TABLE_RESURVEY_MAP_FORM);
+
+		db.execSQL(CREATE_TABLE_GEO_JSON_POLYGON);
+		db.execSQL(CREATE_TABLE_GEO_JSON_POLYGON_FORM);
+		db.execSQL(CREATE_TABLE_GEO_JSON_POLYGON_FORM_LOCAL);
 	}
 
 //---------------------------------------------------------- Open Database ----------------------------------------------------------------------------------------------------------------
@@ -123,6 +175,46 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
 
 // ######################################################### Insert Query ######################################################################################################
+
+	//---------------------------------------------------------- Insert Geo Json Polygon -------------------------------------------------------
+
+	public void insertGeoJsonPolygon(String polygonID, String LatLong){
+		open();
+		ContentValues cv = new ContentValues();
+		cv.put(keyParamPolygonID,polygonID);
+		cv.put(keyParamGeoJsonLatLon,LatLong);
+		db.insert(TABLE_GEO_JSON_POLYGON, null, cv);
+		close();
+	}
+
+	//---------------------------------------------------------- Insert Geo Json Polygon Form -------------------------------------------------------
+
+	public void insertGeoJsonPolygonForm(String polygonID, String Form,String isOnlineSave,String file, String camera){
+		open();
+		ContentValues cv = new ContentValues();
+		cv.put(keyParamPolygonID,polygonID);
+		cv.put(keyParamGeoJsonForm,Form);
+		cv.put(keyParamIsOnlineSave,isOnlineSave);
+		cv.put(keyParamFile,file);
+		cv.put(keyParamCamera,camera);
+		db.insert(TABLE_GEO_JSON_POLYGON_FORM, null, cv);
+		close();
+	}
+
+//---------------------------------------------------------- Insert Geo Json Polygon Form Local -------------------------------------------------------
+
+	public void insertGeoJsonPolygonFormLocal(String polygonID, String Form,String isOnlineSave,String file, String camera){
+		open();
+		ContentValues cv = new ContentValues();
+		cv.put(keyParamPolygonID,polygonID);
+		cv.put(keyParamGeoJsonForm,Form);
+		cv.put(keyParamIsOnlineSave,isOnlineSave);
+		cv.put(keyParamFile,file);
+		cv.put(keyParamCamera,camera);
+		db.insert(TABLE_GEO_JSON_POLYGON_FORM, null, cv);
+		close();
+	}
+
 
 	//---------------------------------------------------------- Insert Resurvey Form -------------------------------------------------------
 	public void insertResurveyMapForm(String user_id,String lat, String lon,String data, String filePath, String cameraPath) {
@@ -215,7 +307,21 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		close();
 	}
 
+
+	//---------------------------------------------------------- Delete Geo Json Polygon Form Local ------------------------------------------------------------
+	public void deleteGeoJsonPolygonFormLocalData(String id)
+	{
+		open();
+		String whereClause = "id = ?";
+		String[] whereArgs = { id };
+		db.delete(TABLE_GEO_JSON_POLYGON_FORM_LOCAL, whereClause, whereArgs);
+		close();
+	}
+
 // ######################################################### Select Query #######################################################################################################
+
+
+//---------------------------------------------------------- Map Form List ------------------------------------------------------------
 
 	// Map Form Data List
 	@SuppressLint("Range")
@@ -233,7 +339,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 				bin.setLatitude(cv.getString(cv.getColumnIndex(keyParamLat)));
 				bin.setLongitude(cv.getString(cv.getColumnIndex(keyParamLon)));
 				bin.setFormData(cv.getString(cv.getColumnIndex(keyParamData)));
-				bin.setIsOnlineSave(cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)));
+				bin.setOnlineSave(cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)).equals("t"));
 				bin.setToken(cv.getString(cv.getColumnIndex(keyParamToken)));
 				bin.setFilePath(cv.getString(cv.getColumnIndex(keyParamFile)));
 				bin.setCameraPath(cv.getString(cv.getColumnIndex(keyParamCamera)));
@@ -246,25 +352,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	}
 
 
-	@SuppressLint("Range")
-	public ArrayList<FormListModel> getFormIDByPolygonID(String polygonID) {
-		ArrayList<FormListModel> list = new ArrayList<>();
-		open();
-		Cursor cv = executeCursor("Select * From "+TABLE_MAP_FORM+" Where polygon_id ="+ polygonID);
-		if(cv.getCount() > 0) {
-			cv.moveToFirst();
-			for(int i=0; i<cv.getCount(); i++) {
-				FormListModel bin = new FormListModel();
-				bin.setId(cv.getString(cv.getColumnIndex(keyParamID)));
-				bin.setForm_id(cv.getString(cv.getColumnIndex(keyParamFormID)));
-				bin.setPolygon_id(cv.getString(cv.getColumnIndex(keyParamPolygonID)));
-				list.add(bin);
-				cv.moveToNext();
-			}
-		}
-		close();
-		return list;
-	}
 	@SuppressLint("Range")
 	public FormDBModel getFormByPolygonAndFormID(String polygonID,String id) {
 		FormDBModel bin = new FormDBModel();
@@ -279,7 +366,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 			bin.setLatitude(cv.getString(cv.getColumnIndex(keyParamLat)));
 			bin.setLongitude(cv.getString(cv.getColumnIndex(keyParamLon)));
 			bin.setFormData(cv.getString(cv.getColumnIndex(keyParamData)));
-			bin.setIsOnlineSave(cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)));
+			bin.setOnlineSave(cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)).equals("t"));
 			bin.setToken(cv.getString(cv.getColumnIndex(keyParamToken)));
 			bin.setFilePath(cv.getString(cv.getColumnIndex(keyParamFile)));
 			bin.setCameraPath(cv.getString(cv.getColumnIndex(keyParamCamera)));
@@ -288,6 +375,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		return bin;
 	}
 
+//---------------------------------------------------------- Map Form Local List ------------------------------------------------------------
 
 	// Map Form Local Data List
 	@SuppressLint("Range")
@@ -314,6 +402,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		close();
 		return list;
 	}
+
+//---------------------------------------------------------- Resurvey Map Form List ------------------------------------------------------------
 
 	// Resurvey Map Form Data List
 	@SuppressLint("Range")
@@ -360,6 +450,106 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		return bin;
 	}
 
+//---------------------------------------------------------- Geo Json Polygon List ------------------------------------------------------------
+
+	// GeoJson Polygon
+	@SuppressLint("Range")
+	public ArrayList<GeoJsonModel> getAllGeoJsonPolygon(){
+		ArrayList<GeoJsonModel> list = new ArrayList<>();
+		open();
+		Cursor cv = executeCursor(GET_GEO_JSON_POLYGON);
+		if(cv.getCount() > 0) {
+			cv.moveToFirst();
+			for(int i=0; i<cv.getCount(); i++) {
+				GeoJsonModel bin = new GeoJsonModel();
+				bin.setId(cv.getString(cv.getColumnIndex(keyParamID)));
+				bin.setPolygonID(cv.getString(cv.getColumnIndex(keyParamPolygonID)));
+				bin.setLatLon(cv.getString(cv.getColumnIndex(keyParamGeoJsonLatLon)));
+				list.add(bin);
+				cv.moveToNext();
+			}
+		}
+		close();
+		return list;
+	}
+
+//---------------------------------------------------------- Geo Json Polygon Form List ------------------------------------------------------------
+
+	// GeoJson Polygon Form
+	@SuppressLint("Range")
+	public ArrayList<GeoJsonModel> getAllGeoJsonPolygonForm(String polygonID){
+		ArrayList<GeoJsonModel> list = new ArrayList<>();
+		open();
+		Cursor cv = executeCursor("Select * From "+TABLE_GEO_JSON_POLYGON_FORM+" Where polygon_id ="+ polygonID);
+		if(cv.getCount() > 0) {
+			cv.moveToFirst();
+			for(int i=0; i<cv.getCount(); i++) {
+				GeoJsonModel bin = new GeoJsonModel();
+				bin.setId(cv.getString(cv.getColumnIndex(keyParamID)));
+				bin.setPolygonID(cv.getString(cv.getColumnIndex(keyParamPolygonID)));
+				bin.setForm(cv.getString(cv.getColumnIndex(keyParamGeoJsonForm)));
+				bin.setOnlineSave((cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)).equals("t")));
+				list.add(bin);
+				cv.moveToNext();
+			}
+		}
+		close();
+		return list;
+	}
+
+	@SuppressLint("Range")
+	public ArrayList<FormListModel> getFormIDByPolygonID(String polygonID) {
+		ArrayList<FormListModel> list = new ArrayList<>();
+		open();
+		Cursor cv = executeCursor("Select * From "+TABLE_GEO_JSON_POLYGON_FORM+" Where polygon_id ='"+polygonID+"'");
+		//Log.e(TAG, "DB Form Size -> "+ cv.getCount());
+		if(cv.getCount() > 0) {
+			cv.moveToFirst();
+			for(int i=0; i<cv.getCount(); i++) {
+				FormListModel bin = new FormListModel();
+				String form = cv.getString(cv.getColumnIndex(keyParamGeoJsonForm));
+				//Log.e(TAG,"DB Form -> " + form);
+				if(!Utility.isEmptyString(form)){
+					FormModel formModel = Utility.convertStringToFormModel(form);
+					//Log.e(TAG, "FFFF -> " + formModel.getForm().getFid());
+					if(!Utility.isEmptyString(formModel.getForm().getFid())){
+						bin.setId(cv.getString(cv.getColumnIndex(keyParamID)));
+						bin.setFid(formModel.getForm().getFid());
+						bin.setPolygon_id(cv.getString(cv.getColumnIndex(keyParamPolygonID)));
+						list.add(bin);
+					}
+				}
+				else{
+					bin.setFid("");
+				}
+				cv.moveToNext();
+			}
+		}
+		close();
+		return list;
+	}
+
+	@SuppressLint("Range")
+	public FormDBModel getFormByPolygonIDAndID(String polygonID,String id) {
+		FormDBModel bin = new FormDBModel();
+		open();
+		Cursor cv = executeCursor("Select * From "+TABLE_GEO_JSON_POLYGON_FORM+" Where id=" +id);
+		Log.e(TAG,"Size File-> "+cv.getCount());
+		if(cv.getCount() > 0) {
+			cv.moveToFirst();
+			bin.setId(cv.getString(cv.getColumnIndex(keyParamID)));
+			bin.setPolygon_id(cv.getString(cv.getColumnIndex(keyParamPolygonID)));
+			bin.setFormData(cv.getString(cv.getColumnIndex(keyParamGeoJsonForm)));
+			bin.setOnlineSave((cv.getString(cv.getColumnIndex(keyParamIsOnlineSave)).equals("t")));
+			bin.setFilePath(cv.getString(cv.getColumnIndex(keyParamFile)));
+			bin.setCameraPath(cv.getString(cv.getColumnIndex(keyParamCamera)));
+			Log.e(TAG,"Form Open-> "+cv.getString(cv.getColumnIndex(keyParamGeoJsonForm)));
+		}
+		close();
+		return bin;
+	}
+
+
 // ######################################################### Logout ##############################################################################################################
 
 	public void logout() {
@@ -367,6 +557,11 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		executeQuery(DELETE_TABLE_MAP_FORM);
 		executeQuery(DELETE_TABLE_MAP_FORM_LOCAL);
 		executeQuery(DELETE_TABLE_RESURVEY_MAP_FORM);
+
+		executeQuery(DELETE_TABLE_GEO_JSON_POLYGON);
+		executeQuery(DELETE_TABLE_GEO_JSON_POLYGON_FORM);
+		executeQuery(DELETE_TABLE_GEO_JSON_POLYGON_FORM_LOCAL);
+
 		close();
 	}
 
@@ -377,6 +572,10 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		executeQuery(DELETE_TABLE_MAP_FORM);
 		executeQuery(DELETE_TABLE_MAP_FORM_LOCAL);
 		executeQuery(DELETE_TABLE_RESURVEY_MAP_FORM);
+
+		executeQuery(DELETE_TABLE_GEO_JSON_POLYGON);
+		executeQuery(DELETE_TABLE_GEO_JSON_POLYGON_FORM);
+		executeQuery(DELETE_TABLE_GEO_JSON_POLYGON_FORM_LOCAL);
 		close();
 	}
 

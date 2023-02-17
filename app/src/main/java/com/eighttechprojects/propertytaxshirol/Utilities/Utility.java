@@ -13,7 +13,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -24,6 +27,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,10 +39,13 @@ import com.eighttechprojects.propertytaxshirol.BuildConfig;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
+import com.eighttechprojects.propertytaxshirol.Model.GeoJsonModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
@@ -56,6 +64,8 @@ import java.util.Random;
 
 public class Utility {
 
+    public static final int GeoJsonPolygonStrokeColor = Color.YELLOW;
+    public static final int GeoJsonPolygonFillColor   = Color.parseColor("#4DFFEA00");
     public static final String  SyncServiceOn = "com.eighttechprojects.propertytaxshirol.syncserviceon";
     // Pref key
     private final static String PREF_KEY = "EShop";
@@ -97,8 +107,6 @@ public class Utility {
     public static final String PASS_POLYGON_ID = "polygon_id";
     public static final String PASS_ID         = "id";
     public static final String PASS_USER_ID    = "user_id";
-
-
 
 
 //------------------------------------------------------- SharedPreferences ----------------------------------------------------------------------------------------------------------------
@@ -181,15 +189,15 @@ public class Utility {
         if(!isResurveyMode){
             // Add Form
             Button btAddForm    = dialog.findViewById(R.id.btAddForm);
-            btAddForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.ADD);  dialog.dismiss();});
+            btAddForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.ADD, dialog); });
             // View Form
             Button btViewForm   = dialog.findViewById(R.id.btViewForm);
-            btViewForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.VIEW); dialog.dismiss();});
+            btViewForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.VIEW, dialog); });
         }
         else{
             // Edit Form
             Button btEditForm   = dialog.findViewById(R.id.btEditForm);
-            btEditForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.EDIT); dialog.dismiss();});
+            btEditForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.EDIT,dialog); });
         }
         // Cancel Form
         Button btCancelForm = dialog.findViewById(R.id.btCancelForm);
@@ -699,7 +707,7 @@ public class Utility {
     }
 
     public interface onItemSelected{
-        void selectedItem(String item);
+        void selectedItem(String item,DialogInterface dialogBox);
     }
 
 
@@ -799,7 +807,76 @@ public class Utility {
         return null;
     }
 
+
+    public static Marker addGeoJsonPolygonMarker(Activity mActivity,GoogleMap Map, LatLng latLng,String msg){
+        if(latLng != null){
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .icon(showTextOnMap(mActivity,msg))
+                    .position(latLng);
+            return Map.addMarker(markerOptions);
+        }
+        return null;
+    }
+
+    public static BitmapDescriptor showTextOnMap(Activity context, String polygonID)
+    {
+        LinearLayout layout = (LinearLayout) context.getLayoutInflater().inflate(R.layout.custom_text_on_map_view, null);
+        layout.setDrawingCacheEnabled(true);
+        layout.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        layout.layout(0, 0, layout.getMeasuredWidth(), layout.getMeasuredHeight());
+        layout.buildDrawingCache(true);
+        TextView positionDistance = (TextView) layout.findViewById(R.id.tvPolygonID);
+        positionDistance.setText(polygonID);
+        Bitmap flagBitmap = Bitmap.createBitmap(layout.getDrawingCache());
+        layout.setDrawingCacheEnabled(false);
+        BitmapDescriptor flagBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(flagBitmap);
+        return flagBitmapDescriptor;
+
+    }
+
+    public static Marker addGeoJsonPolygonMarker(final Context context, final GoogleMap map, final LatLng location, final String text, final int padding) {
+        Marker marker = null;
+
+        if (context == null || map == null || location == null || text == null) {
+            return marker;
+        }
+
+        final TextView textView = new TextView(context);
+        textView.setText(text);
+        textView.setTextSize(16f);
+
+        final Paint paintText = textView.getPaint();
+        final Rect boundsText = new Rect();
+        paintText.getTextBounds(text, 0, textView.length(), boundsText);
+        paintText.setTextAlign(Paint.Align.CENTER);
+
+        final Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        //final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() + 2 * padding, boundsText.height() + 2 * padding, conf);
+        final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() , boundsText.height(), conf);
+
+        final Canvas canvasText = new Canvas(bmpText);
+        paintText.setColor(Color.parseColor("#e9f50a"));
+
+        canvasText.drawText(text, canvasText.getWidth() / 2, canvasText.getHeight()  - boundsText.bottom, paintText);
+
+        final MarkerOptions markerOptions = new MarkerOptions()
+                .position(location)
+                .icon(BitmapDescriptorFactory.fromBitmap(bmpText));
+
+        marker = map.addMarker(markerOptions);
+
+        return marker;
+    }
+
 //------------------------------------------------------- converter ----------------------------------------------------------------------------------------------------------------
+
+    public static ArrayList<ArrayList<LatLng>> convertStringToListOfPolygon(String responseString)
+    {
+        Type userListType = new TypeToken<ArrayList<ArrayList<LatLng>>>() {
+        }.getType();
+        return new Gson().fromJson(responseString, userListType);
+    }
+
 
     public static FormModel convertStringToFormModel(String data){
             java.lang.reflect.Type listType = new TypeToken<FormModel>() {}.getType();
@@ -820,6 +897,16 @@ public class Utility {
         return new Gson().fromJson(data, listType);
     }
 
+
+    // get Polygon Center Point
+    public static LatLng getPolygonCenterPoint(ArrayList<LatLng> polygonPointsList){
+        LatLng centerLatLng;
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for(int i = 0 ; i < polygonPointsList.size() ; i++) { builder.include(polygonPointsList.get(i)); }
+        LatLngBounds bounds = builder.build();
+        centerLatLng =  bounds.getCenter();
+        return centerLatLng;
+    }
 
 
 }

@@ -37,4 +37,5 @@
     <color name="formColor">#3D7AA9</color>
     <color name="formTextColor">#FFFFFF</color>
     <color name="formHeaderColor">#3D7AA9</color>
+    <color name="polygonColor">#28bad6</color>
 </resources>

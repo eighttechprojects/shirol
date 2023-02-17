@@ -10,10 +10,31 @@
 
 
     <!-- ############################## Form Layout ###################################### -->
-    <!--  Form Layout -->
 
-        <androidx.recyclerview.widget.RecyclerView
+
+        <!-- label -->
+        <LinearLayout
+            android:id="@+id/tvLabel"
+            android:background="@color/formColor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Property Forms"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="@dimen/formLabelSize"
+                android:textColor="@color/formTextColor" />
+        </LinearLayout>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+            android:layout_below="@+id/tvLabel"
             android:layout_above="@+id/llButton"
+            android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
             android:id="@+id/rvFormListView"
             android:layout_width="match_parent"
@@ -36,13 +57,13 @@
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_button"
+            android:background="@color/formColor"
             android:text="@string/exit"
-            android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="16sp"
+            android:textStyle="bold"
             style="?android:attr/buttonBarButtonStyle"
-            android:layout_margin="5dp" />
+            />
 
     </LinearLayout>
 

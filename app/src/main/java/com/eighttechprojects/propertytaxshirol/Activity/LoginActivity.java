@@ -205,6 +205,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
         BaseApplication.getInstance().makeHttpPostRequest(mActivity, responseCode, URL_Utility.WS_LOGIN, params, false, false);
     }
 
+
 //------------------------------------------------------- Progress Bar ----------------------------------------------------------------------------------------------------------------
 
     private void dismissProgressBar() {
@@ -264,29 +265,47 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                         // Form Data
                         JSONArray formDataArray = new JSONArray(mLoginObj.getString("form_data"));
                         if(formDataArray.length() > 0) {
-                            for(int i=0; i<formDataArray.length(); i++){
-                                FormModel formModel = new FormModel();
-                                // Form ------------------------
-                                JSONObject formObject = formDataArray.getJSONObject(i).getJSONObject("form");
-                                String lat = formObject.optString("latitude");
-                                String lon = formObject.optString("longitude");
-                                formModel.setFormFields(Utility.convertStringToFormFields(formObject.toString()));
-                                // Form Details -----------
-                                JSONArray detailsArrays = formDataArray.getJSONObject(i).getJSONArray("detais");
-                                if(detailsArrays.length() > 0){
-                                    ArrayList<FormTableModel> list = new ArrayList<>();
-                                    for(int j =0 ; j<detailsArrays.length(); j++){
-                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
+                            for(int i=0; i<formDataArray.length(); i++) {
+                                String polygonID        = formDataArray.getJSONObject(i).getString("id");
+                                JSONArray geoJsonLatLon = formDataArray.getJSONObject(i).getJSONArray("latlong");
+                                dataBaseHelper.insertGeoJsonPolygon(polygonID,geoJsonLatLon.toString());
+
+                                JSONArray geoJsonForm   = formDataArray.getJSONObject(i).getJSONArray("forms");
+                                if(geoJsonForm.length() > 0){
+                                    for(int j=0; j<geoJsonForm.length(); j++){
+                                        Log.e(TAG,"Form: -> " + geoJsonForm.getString(j));
+                                        FormModel formModel = Utility.convertStringToFormModel(geoJsonForm.getString(j));
+                                        dataBaseHelper.insertGeoJsonPolygonForm(polygonID,geoJsonForm.getString(j),"t",formModel.getForm().getProperty_images(),formModel.getForm().getPlan_attachment());
                                     }
-                                    formModel.setForm_detail(list);
                                 }
                                 else{
-                                    ArrayList<FormTableModel> list = new ArrayList<>();
-                                    formModel.setForm_detail(list);
+                                      Log.e(TAG,"Polygon ID-> "+polygonID +" Form Empty");
+                                    dataBaseHelper.insertGeoJsonPolygonForm(polygonID,"","t","","");
                                 }
-                                // Save to Database!
-                                dataBaseHelper.insertMapForm(userid,"","",lat,lon,Utility.convertFormModelToString(formModel),"f",String.valueOf(Utility.getToken()),"","");
                             }
+//                            for(int i=0; i<formDataArray.length(); i++){
+//                                FormModel formModel = new FormModel();
+//                                // Form ------------------------
+//                                JSONObject formObject = formDataArray.getJSONObject(i).getJSONObject("form");
+//                                String lat = formObject.optString("latitude");
+//                                String lon = formObject.optString("longitude");
+//                                formModel.setFormFields(Utility.convertStringToFormFields(formObject.toString()));
+//                                // Form Details -----------
+//                                JSONArray detailsArrays = formDataArray.getJSONObject(i).getJSONArray("detais");
+//                                if(detailsArrays.length() > 0){
+//                                    ArrayList<FormTableModel> list = new ArrayList<>();
+//                                    for(int j =0 ; j<detailsArrays.length(); j++){
+//                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
+//                                    }
+//                                    formModel.setForm_detail(list);
+//                                }
+//                                else{
+//                                    ArrayList<FormTableModel> list = new ArrayList<>();
+//                                    formModel.setForm_detail(list);
+//                                }
+//                                // Save to Database!
+//                                dataBaseHelper.insertMapForm(userid,"","",lat,lon,Utility.convertFormModelToString(formModel),"f",String.valueOf(Utility.getToken()),"","");
+//                            }
                         }
                         else{
                             Log.e(TAG, "Form Empty");
@@ -323,28 +342,33 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                         else{
                             Log.e(TAG, "Resurvey Form Empty");
                         }
-                        // Progress Bar
+
+//                         Progress Bar
                         dismissProgressBar();
-                        // ReDirect To Map
+//                        // ReDirect To Map
                         reDirectToMap();
+                        // Fetch GeoJson File
+                      //  processToFetchGeoJson();
                     }
                     else {
                         dismissProgressBar();
                         Utility.showToast(mActivity, "User Not Found");
                     }
                 } catch (JSONException e) {
-                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                    Log.e(TAG, e.getMessage());
                     dismissProgressBar();
+                    Log.e(TAG, e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
                 }
             }
             else{
-                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                Log.e(TAG, "Login Response Empty");
                 dismissProgressBar();
+                Log.e(TAG, "Login Response Empty");
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
-        // Forgot Password
+
+
+        // Forgot Password -------------------------------------------
         if(responseCode == URL_Utility.ResponseCode.WS_FORGOT_PASSWORD){
             Log.e(TAG,"Forgot Response: "+response);
             if(!response.equals("")){
