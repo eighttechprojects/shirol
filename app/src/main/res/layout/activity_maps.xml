@@ -2,7 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Activity.GoogleMap.MapsActivity">
@@ -22,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true">
+        android:layout_alignParentEnd="true">
 
         <!-- Current Location -->
             <RelativeLayout
@@ -32,8 +31,8 @@
                 android:background="@drawable/bg_circle"
                 android:elevation="6.50dp"
                 android:gravity="center"
-                android:layout_marginStart="10dp"
-                android:layout_marginBottom="60dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="50dp"
                 android:visibility="visible">
                 <ImageView
                     android:id="@+id/imgMyLocation"
@@ -45,5 +44,33 @@
             </RelativeLayout>
 
     </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:visibility="gone">
+        <!-- Map Type -->
+        <RelativeLayout
+            android:id="@+id/rlMapType"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_circle"
+            android:elevation="6.50dp"
+            android:gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="50dp"
+            android:visibility="visible">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/ic_map"
+                app:tint="@color/seaColorMid"
+                android:contentDescription="@string/todo" />
+        </RelativeLayout>
+
+    </FrameLayout>
+
 
 </RelativeLayout>

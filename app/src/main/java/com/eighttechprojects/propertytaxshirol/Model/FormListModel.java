@@ -4,10 +4,10 @@ public class FormListModel {
 
     private String id;
     private String form_id;
-
     private String fid;
     private String polygon_id;
-
+    private String form_number;
+    private FormModel formModel;
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
@@ -27,6 +27,14 @@ public class FormListModel {
         return fid;
     }
 
+    public String getForm_number() {
+        return form_number;
+    }
+
+    public FormModel getFormModel() {
+        return formModel;
+    }
+
     //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
     public void setId(String id) {
@@ -44,4 +52,13 @@ public class FormListModel {
     public void setFid(String fid) {
         this.fid = fid;
     }
+
+    public void setForm_number(String form_number) {
+        this.form_number = form_number;
+    }
+
+    public void setFormModel(FormModel formModel) {
+        this.formModel = formModel;
+    }
 }
+

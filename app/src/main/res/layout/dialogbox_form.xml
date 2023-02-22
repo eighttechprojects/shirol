@@ -48,92 +48,6 @@
                         android:textColor="@color/formTextColor" />
             </LinearLayout>
 <!-- ################ Header - 1 ########################################################################################################################################################################### -->
-            <!-- Property ID -->
-            <LinearLayout
-                android:id="@+id/ll_0"
-                android:padding="@dimen/formPadding"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <!-- label -->
-                <LinearLayout
-                    android:background="@color/formColor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="10dp"
-                    android:orientation="horizontal">
-                    <ImageView
-                        android:visibility="gone"
-                        android:layout_marginEnd="5dp"
-                        android:layout_gravity="top"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_star"
-                        android:contentDescription="@string/todo" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Property ID"
-                        android:textSize="@dimen/formLabelSize"
-                        android:textColor="@color/formTextColor" />
-                </LinearLayout>
-                <!-- value -->
-                <TextView
-                    android:id="@+id/db_form_property_id"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:background="@drawable/bg_edittext"
-                    android:padding="10dp"
-                    android:textSize="@dimen/formValueSize"
-                    android:textAlignment="textStart"
-                    android:inputType="text"
-                    android:textColor="@color/black" />
-            </LinearLayout>
-            <!-- Property Number -->
-            <LinearLayout
-                android:id="@+id/ll_01"
-                android:padding="@dimen/formPadding"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <!-- label -->
-                <LinearLayout
-                    android:background="@color/formColor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="10dp"
-                    android:orientation="horizontal">
-                    <ImageView
-                        android:visibility="visible"
-                        android:layout_marginEnd="5dp"
-                        android:layout_gravity="top"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:src="@drawable/ic_star"
-                        android:contentDescription="@string/todo" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Property Number"
-                        android:textSize="@dimen/formLabelSize"
-                        android:textColor="@color/formTextColor" />
-                </LinearLayout>
-                <!-- value -->
-                <TextView
-                    android:id="@+id/db_form_property_number"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:background="@drawable/bg_edittext"
-                    android:padding="10dp"
-                    android:textSize="@dimen/formValueSize"
-                    android:textAlignment="textStart"
-                    android:inputType="text"
-                    android:textColor="@color/black" />
-            </LinearLayout>
 
             <!-- 1- header -->
             <LinearLayout
@@ -751,48 +665,6 @@
                     android:textAlignment="textStart"
                     android:textColor="@color/black" />
             </LinearLayout>
-            <!-- 15 -->
-            <LinearLayout
-                android:id="@+id/ll_15"
-                android:padding="@dimen/formPadding"
-                android:layout_marginTop="5dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <!-- label -->
-                <LinearLayout
-                    android:background="@color/formColor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="10dp"
-                    android:orientation="horizontal">
-                        <ImageView
-                            android:visibility="gone"
-                            android:layout_marginEnd="5dp"
-                            android:layout_gravity="top"
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:src="@drawable/ic_star"
-                            android:contentDescription="@string/todo" />
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/_15_grid_no"
-                            android:textSize="@dimen/formLabelSize"
-                            android:textColor="@color/formTextColor" />
-                </LinearLayout>
-                <!-- value -->
-                <TextView
-                    android:id="@+id/db_form_grid_no"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:background="@drawable/bg_edittext"
-                    android:padding="10dp"
-                    android:textSize="@dimen/formValueSize"
-                    android:textAlignment="textStart"
-                    android:textColor="@color/black" />
-            </LinearLayout>
             <!-- 16 -->
             <LinearLayout
                 android:id="@+id/ll_16"
@@ -819,7 +691,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="16. जी.आय.एस.आय.डी."
+                            android:text="15. जी.आय.एस.आय.डी."
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -861,7 +733,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="17. मिळकतीचे वर्णन"
+                            android:text="16. मिळकतीचे वर्णन"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -923,7 +795,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="18. मिळकतीचे बांधकाम पूर्ण झाल्यची दिनांक / वर्ष"
+                            android:text="17. मिळकतीचे बांधकाम पूर्ण झाल्यची दिनांक / वर्ष"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -965,7 +837,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="19. बांधकाम परवानगी घेतली आहे का?"
+                            android:text="18. बांधकाम परवानगी घेतली आहे का?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1007,7 +879,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="20. बांधकाम पूर्णत्वाचा दाखला घतेला आहे का ?"
+                            android:text="19. बांधकाम पूर्णत्वाचा दाखला घतेला आहे का ?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1077,7 +949,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="21. पोच मार्ग"
+                            android:text="20. पोच मार्ग"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1119,7 +991,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="22. वैयक्तिक शौचालय आहे का ?"
+                            android:text="21. वैयक्तिक शौचालय आहे का ?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1162,7 +1034,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="23. एकूण संख्या"
+                            android:text="22. एकूण संख्या"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1204,7 +1076,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="24. शौचालय प्रकार"
+                            android:text="23. शौचालय प्रकार"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1246,7 +1118,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="25. दिवाबत्ती सोय आहे का ?"
+                            android:text="24. दिवाबत्ती सोय आहे का ?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1288,7 +1160,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="26. नळ कनेक्शन आहे का ?"
+                            android:text="25. नळ कनेक्शन आहे का ?"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1331,7 +1203,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="27. एकूण संख्या"
+                            android:text="26. एकूण संख्या"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1350,6 +1222,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="10dp"
+                    android:visibility="gone"
                     android:orientation="horizontal">
                     <ImageView
                         android:visibility="gone"
@@ -1392,6 +1265,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="10dp"
+                    android:visibility="gone"
                     android:orientation="horizontal">
                     <ImageView
                         android:visibility="gone"
@@ -1446,7 +1320,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="28. वापर"
+                            android:text="27. वापर"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1488,7 +1362,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="29. छतावरील सौर ऊर्जा प्रकल्प"
+                            android:text="28. छतावरील सौर ऊर्जा प्रकल्प"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1550,7 +1424,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="30. पावसाच्या पाण्याची साठवण प्रकल्प (रेन हार्वेस्टिंग)"
+                            android:text="29. पावसाच्या पाण्याची साठवण प्रकल्प (रेन हार्वेस्टिंग)"
                             android:textSize="@dimen/formLabelSize"
                             android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1650,7 +1524,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="32. प्लॉटचे एकूण शेटफळ"
+                        android:text="30. प्लॉटचे एकूण शेटफळ"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1714,7 +1588,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="33. तळ मजल्याचे बांधकाम शेटफळ"
+                        android:text="31. तळ मजल्याचे बांधकाम शेटफळ"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1778,7 +1652,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="34. तळ मजला उर्वरित मोकळी जागा"
+                        android:text="32. तळ मजला उर्वरित मोकळी जागा"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1824,7 +1698,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="35. Property Photo"
+                        android:text="33. Property Photo"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1874,7 +1748,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="36. Sketch Plan"
+                        android:text="34. Sketch Plan"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1956,7 +1830,7 @@
             android:layout_height="50dp"
             android:layout_weight="1"
             android:background="@color/formColor"
-            android:text="@string/exit"
+            android:text="Close"
             android:textStyle="bold"
             android:textColor="@color/white"
             android:textSize="16sp"

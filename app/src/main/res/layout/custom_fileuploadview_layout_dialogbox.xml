@@ -11,14 +11,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_above="@id/bottom_button"
-        android:background="@color/white"
-        >
+        android:background="@color/white">
 
         <!-- Layer  -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/siemensBlueColor"
+            android:background="@color/formColor"
             android:orientation="vertical">
 
 
@@ -26,7 +25,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:padding="8dp"
+                    android:padding="10dp"
                     android:gravity="center">
 
                     <TextView
@@ -35,7 +34,7 @@
                         android:layout_height="wrap_content"
                         android:text="File Upload"
                         android:textStyle="bold"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textColor="@color/white" />
 
 
@@ -68,12 +67,15 @@
 
         <Button
             android:id="@+id/file_upload_view_cancel_bt"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="@color/formColor"
             android:text="Close"
-            android:background="@color/siemensBlueColor"
-            android:backgroundTint="@color/siemensBlueColor"
-            android:textColor="@color/white" />
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            style="?android:attr/buttonBarButtonStyle" />
 
     </LinearLayout>
 

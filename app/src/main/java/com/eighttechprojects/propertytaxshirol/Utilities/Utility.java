@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +41,7 @@ import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
 import com.eighttechprojects.propertytaxshirol.Model.GeoJsonModel;
+import com.eighttechprojects.propertytaxshirol.Model.LastKeyModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -63,6 +65,12 @@ import java.util.Locale;
 import java.util.Random;
 
 public class Utility {
+
+    public static final String SurveyCompleted = "SurveyCompleted";
+    public static final String SurveyNotComplete = "SurveyNotCompleted";
+    public static final String ResurveyCompleted = "ResurveyCompleted";
+
+    public static final String ResurveyNotCompleted = "ResurveyNotCompleted";
 
     public static final int GeoJsonPolygonStrokeColor = Color.YELLOW;
     public static final int GeoJsonPolygonFillColor   = Color.parseColor("#4DFFEA00");
@@ -98,16 +106,30 @@ public class Utility {
     public static final int PICK_VIDEO_FILE_RESULT_CODE = 1006;
     public static final int PICK_BAR_CODE_RESULT_CODE = 1007;
 
-    // Form
+    // PASS in Intent
     public static final String PASS_GEOM_ARRAY = "geom-array";
     public static final String PASS_GEOM_TYPE  = "geom-type";
     public static final String PASS_LAT        = "latitude";
     public static final String PASS_LONG       = "longitude";
     public static final String PASS_FORM_ID    = "form_id";
     public static final String PASS_POLYGON_ID = "polygon_id";
+    public static final String PASS_FID        = "f_id";
+    public static final String PASS_GIS_ID     = "gis_id";
     public static final String PASS_ID         = "id";
     public static final String PASS_USER_ID    = "user_id";
+    public static final String PASS_IS_MULTIPLE = "is-multiple-form";
+    public static final String PASS_LAST_KEY    =  "last-key";
+    public static final String PASS_UNIQUE_NUMBER = "unique_number";
+    //column_name
+    public static final String PASS_COLUMN_NUMBER =  "column_name";
 
+    // Map
+    public static final String BASE_MAP = "BASE_MAP";
+    public static final String BASE_MAP_HYBRID = "HYBRID";
+    public static final String BASE_MAP_TERRAIN = "TERRAIN";
+    public static final String BASE_MAP_SATELLITE = "SATELLITE";
+    public static final String BASE_MAP_NORMAL = "NORMAL";
+    public static final String BASE_MAP_NONE = "NONE";
 
 //------------------------------------------------------- SharedPreferences ----------------------------------------------------------------------------------------------------------------
 
@@ -180,28 +202,78 @@ public class Utility {
 
 //------------------------------------------------------- Dialog box ----------------------------------------------------------------------------------------------------------------
 
-    public static void showSelectBox(Context context, onItemSelected onItemSelected,boolean isResurveyMode){
+    public static void showSelectBox(Context context, onItemSelected onItemSelected,boolean isMultipleMode, boolean isFormStatusCompleted){
         Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.selectbox_view);
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         dialog.setCancelable(false);
-        if(!isResurveyMode){
-            // Add Form
-            Button btAddForm    = dialog.findViewById(R.id.btAddForm);
-            btAddForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.ADD, dialog); });
-            // View Form
-            Button btViewForm   = dialog.findViewById(R.id.btViewForm);
-            btViewForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.VIEW, dialog); });
-        }
-        else{
-            // Edit Form
-            Button btEditForm   = dialog.findViewById(R.id.btEditForm);
-            btEditForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.EDIT,dialog); });
-        }
+
+        // Edit Form
+        Button btEditAddForm    = dialog.findViewById(R.id.btEditForm);
+        btEditAddForm.setVisibility(View.GONE);
+
+        // Single Form
+        Button btSingleAddForm    = dialog.findViewById(R.id.btSingleAddForm);
+        btSingleAddForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.SingleForm, dialog); });
+
+        // Multiple Form
+        Button btMultipleForm   = dialog.findViewById(R.id.btMultipleForm);
+        btMultipleForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.MultipleForm,dialog); });
+
+        // View Form
+        Button btViewForm   = dialog.findViewById(R.id.btViewForm);
+        btViewForm.setOnClickListener(view -> {onItemSelected.selectedItem(ITEM_SELECTED.VIEW, dialog); });
+
         // Cancel Form
         Button btCancelForm = dialog.findViewById(R.id.btCancelForm);
         btCancelForm.setOnClickListener(view -> dialog.dismiss());
+
+        // When Single Form Found
+        if(!isMultipleMode){
+            btMultipleForm.setVisibility(View.VISIBLE);
+            btSingleAddForm.setVisibility(View.VISIBLE);
+        }
+        // When Multiple Form Found
+        else{
+            if(isFormStatusCompleted){
+                btMultipleForm.setVisibility(View.GONE);
+                btSingleAddForm.setVisibility(View.GONE);
+            }
+            else{
+                btMultipleForm.setVisibility(View.VISIBLE);
+                btSingleAddForm.setVisibility(View.GONE);
+            }
+        }
+
+        dialog.show();
+    }
+
+    public static void showEditBox(Context context, onItemSelected onItemSelected){
+        Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.selectbox_view);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.setCancelable(false);
+        // Single Form
+        Button btSingleAddForm    = dialog.findViewById(R.id.btSingleAddForm);
+        btSingleAddForm.setVisibility(View.GONE);
+        // Multiple Form
+        Button btMultipleForm   = dialog.findViewById(R.id.btMultipleForm);
+        btMultipleForm.setVisibility(View.GONE);
+        // View Form
+        Button btViewForm   = dialog.findViewById(R.id.btViewForm);
+        btViewForm.setVisibility(View.GONE);
+        // Edit Form
+        Button btEditForm   = dialog.findViewById(R.id.btEditForm);
+        btEditForm.setVisibility(View.VISIBLE);
+        btEditForm.setOnClickListener(view -> {
+            onItemSelected.selectedItem(ITEM_SELECTED.EDIT,dialog);
+        });
+        // Cancel Form
+        Button btCancelForm = dialog.findViewById(R.id.btCancelForm);
+        btCancelForm.setOnClickListener(view -> dialog.dismiss());
+        // Dialog Box Show
         dialog.show();
     }
 
@@ -709,7 +781,9 @@ public class Utility {
     public interface onItemSelected{
         void selectedItem(String item,DialogInterface dialogBox);
     }
-
+    public interface OnClickMap {
+        void onClickMap(String mapType);
+    }
 
 
     public interface COLOR_CODE {
@@ -728,6 +802,8 @@ public class Utility {
         String SEA_DARK   = "#26648E";
         String SEA_MID    = "#4F8FC0";
         String SEA_LIGHT  = "#53D2DC";
+
+        String DEFAULT_COLOR = "#04faee";
     }
 
 
@@ -740,6 +816,8 @@ public class Utility {
 
     public interface ITEM_SELECTED {
         String ADD    = "Add";
+        String SingleForm = "Single Form";
+        String MultipleForm = "Multiple Form";
         String EDIT   = "Edit";
         String VIEW   = "View";
         String CANCEL = "Cancel";
@@ -851,13 +929,11 @@ public class Utility {
         paintText.setTextAlign(Paint.Align.CENTER);
 
         final Bitmap.Config conf = Bitmap.Config.ARGB_8888;
-        //final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() + 2 * padding, boundsText.height() + 2 * padding, conf);
-        final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() , boundsText.height(), conf);
+        final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() + 2 * padding, boundsText.height() + 2 * padding, conf);
 
         final Canvas canvasText = new Canvas(bmpText);
         paintText.setColor(Color.parseColor("#e9f50a"));
-
-        canvasText.drawText(text, canvasText.getWidth() / 2, canvasText.getHeight()  - boundsText.bottom, paintText);
+         canvasText.drawText(text, canvasText.getWidth() / 2, canvasText.getHeight() - padding  - boundsText.bottom, paintText);
 
         final MarkerOptions markerOptions = new MarkerOptions()
                 .position(location)
@@ -887,6 +963,9 @@ public class Utility {
         return new Gson().toJson(formModel);
     }
 
+    public static String convertlastKeyModelToString(LastKeyModel lastKeyModel){
+        return new Gson().toJson(lastKeyModel);
+    }
     public static FormFields convertStringToFormFields(String data){
         java.lang.reflect.Type listType = new TypeToken<FormFields>() {}.getType();
         return new Gson().fromJson(data, listType);
@@ -908,5 +987,61 @@ public class Utility {
         return centerLatLng;
     }
 
+
+    public static void setBaseMap(Context context, GoogleMap mMap) {
+        String baseMap = Utility.getSavedData(context, Utility.BASE_MAP);
+        if(Utility.isEmptyString(baseMap)) {
+            mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        }
+        else {
+            if (baseMap.equalsIgnoreCase(Utility.BASE_MAP_HYBRID)) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            } else if (baseMap.equalsIgnoreCase(Utility.BASE_MAP_SATELLITE)) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            } else if (baseMap.equalsIgnoreCase(Utility.BASE_MAP_TERRAIN)) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+            } else if (baseMap.equalsIgnoreCase(Utility.BASE_MAP_NORMAL)) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            } else if (baseMap.equalsIgnoreCase(Utility.BASE_MAP_NONE)) {
+                mMap.setMapType(GoogleMap.MAP_TYPE_NONE);
+            }
+        }
+    }
+
+    public static void showMapTypeDialog(Activity mContext, OnClickMap onClickMap){
+
+        Dialog dialog = new Dialog(mContext);
+        dialog.setContentView(R.layout.dialog_map_type);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        //dialog.setCancelable(false);
+        // Button
+        Button btSatellite = dialog.findViewById(R.id.bt_satellite);
+        Button btHybrid = dialog.findViewById(R.id.bt_hybrid);
+        Button btTerrain = dialog.findViewById(R.id.bt_terrain);
+        Button btNormal = dialog.findViewById(R.id.bt_normal);
+        ImageView btClose = dialog.findViewById(R.id.bt_close);
+
+        btSatellite.setOnClickListener(view -> {
+            onClickMap.onClickMap(Utility.BASE_MAP_SATELLITE);
+            dialog.dismiss();
+        });
+        btHybrid.setOnClickListener(view -> {
+            onClickMap.onClickMap(Utility.BASE_MAP_HYBRID);
+            dialog.dismiss();
+        });
+        btTerrain.setOnClickListener(view -> {
+            onClickMap.onClickMap(Utility.BASE_MAP_TERRAIN);
+            dialog.dismiss();
+        });
+        btNormal.setOnClickListener(view -> {
+            onClickMap.onClickMap(Utility.BASE_MAP_NORMAL);
+            dialog.dismiss();
+        });
+        btClose.setOnClickListener(view -> {
+            dialog.dismiss();
+        });
+        dialog.show();
+
+    }
 
 }

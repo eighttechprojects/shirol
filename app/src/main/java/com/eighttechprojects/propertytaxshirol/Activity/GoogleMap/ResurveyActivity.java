@@ -560,7 +560,7 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
                                 JSONObject formObject = formDataArray.getJSONObject(i).getJSONObject("form");
                                 String lat = formObject.optString("latitude");
                                 String lon = formObject.optString("longitude");
-                                formModel.setFormFields(Utility.convertStringToFormFields(formObject.toString()));
+                                formModel.setForm(Utility.convertStringToFormFields(formObject.toString()));
                                 // Form Details -----------
                                 JSONArray detailsArrays = formDataArray.getJSONObject(i).getJSONArray("detais");
                                 if(detailsArrays.length() > 0){
@@ -568,11 +568,11 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
                                     for(int j =0 ; j<detailsArrays.length(); j++){
                                         list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
                                     }
-                                    formModel.setForm_detail(list);
+                                    formModel.setDetais(list);
                                 }
                                 else{
                                     ArrayList<FormTableModel> list = new ArrayList<>();
-                                    formModel.setForm_detail(list);
+                                    formModel.setDetais(list);
                                 }
                                 // Clear Resurvey DataBase
                                 dataBaseHelper.clearResurveyDatabaseTable();

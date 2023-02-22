@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".Activity.Form.FormActivity">
+
+
+    <!-- ############################## Form Layout ###################################### -->
+
+    <!-- label -->
+    <LinearLayout
+        android:id="@+id/tvLabel"
+        android:background="@color/formColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Property Forms"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="@dimen/formLabelSize"
+            android:textColor="@color/formTextColor" />
+    </LinearLayout>
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_below="@+id/tvLabel"
+        android:layout_above="@+id/llButton"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:id="@+id/rvFormListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <!-- ############################## Button Layout ###################################### -->
+
+    <!-- Bottom Button -->
+    <LinearLayout
+        android:id="@+id/llButton"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btAddForm"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:text="Add"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_margin="5dp"
+                style="?android:attr/buttonBarButtonStyle" />
+
+            <Button
+                android:id="@+id/btExitForm"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:text="@string/exit"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_margin="5dp"
+                style="?android:attr/buttonBarButtonStyle" />
+
+
+    </LinearLayout>
+
+</RelativeLayout>

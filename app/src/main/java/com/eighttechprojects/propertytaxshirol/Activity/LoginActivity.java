@@ -67,6 +67,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
     BroadcastReceiver broadcastReceiver;
     // Database
     private DataBaseHelper dataBaseHelper;
+
 //------------------------------------------------------- onCreate ----------------------------------------------------------------------------------------------------------------
 
     @SuppressLint("ClickableViewAccessibility")
@@ -267,45 +268,27 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                         if(formDataArray.length() > 0) {
                             for(int i=0; i<formDataArray.length(); i++) {
                                 String polygonID        = formDataArray.getJSONObject(i).getString("id");
+                                String gisID            = formDataArray.getJSONObject(i).getString("gis_id");
+                                String counter          = formDataArray.getJSONObject(i).getString("counter");
+                                String polygonStatus    = formDataArray.getJSONObject(i).getString("polygon_status");
                                 JSONArray geoJsonLatLon = formDataArray.getJSONObject(i).getJSONArray("latlong");
-                                dataBaseHelper.insertGeoJsonPolygon(polygonID,geoJsonLatLon.toString());
+
+                                dataBaseHelper.insertGeoJsonPolygon(gisID,polygonID,geoJsonLatLon.toString(),polygonStatus);
+                                dataBaseHelper.insertGenerateID(polygonID,counter);
 
                                 JSONArray geoJsonForm   = formDataArray.getJSONObject(i).getJSONArray("forms");
                                 if(geoJsonForm.length() > 0){
                                     for(int j=0; j<geoJsonForm.length(); j++){
-                                        Log.e(TAG,"Form: -> " + geoJsonForm.getString(j));
+                                       // Log.e(TAG,"Form: -> " + geoJsonForm.getString(j));
                                         FormModel formModel = Utility.convertStringToFormModel(geoJsonForm.getString(j));
                                         dataBaseHelper.insertGeoJsonPolygonForm(polygonID,geoJsonForm.getString(j),"t",formModel.getForm().getProperty_images(),formModel.getForm().getPlan_attachment());
                                     }
                                 }
                                 else{
-                                      Log.e(TAG,"Polygon ID-> "+polygonID +" Form Empty");
+                                     // Log.e(TAG,"Polygon ID-> "+polygonID +" Form Empty");
                                     dataBaseHelper.insertGeoJsonPolygonForm(polygonID,"","t","","");
                                 }
                             }
-//                            for(int i=0; i<formDataArray.length(); i++){
-//                                FormModel formModel = new FormModel();
-//                                // Form ------------------------
-//                                JSONObject formObject = formDataArray.getJSONObject(i).getJSONObject("form");
-//                                String lat = formObject.optString("latitude");
-//                                String lon = formObject.optString("longitude");
-//                                formModel.setFormFields(Utility.convertStringToFormFields(formObject.toString()));
-//                                // Form Details -----------
-//                                JSONArray detailsArrays = formDataArray.getJSONObject(i).getJSONArray("detais");
-//                                if(detailsArrays.length() > 0){
-//                                    ArrayList<FormTableModel> list = new ArrayList<>();
-//                                    for(int j =0 ; j<detailsArrays.length(); j++){
-//                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
-//                                    }
-//                                    formModel.setForm_detail(list);
-//                                }
-//                                else{
-//                                    ArrayList<FormTableModel> list = new ArrayList<>();
-//                                    formModel.setForm_detail(list);
-//                                }
-//                                // Save to Database!
-//                                dataBaseHelper.insertMapForm(userid,"","",lat,lon,Utility.convertFormModelToString(formModel),"f",String.valueOf(Utility.getToken()),"","");
-//                            }
                         }
                         else{
                             Log.e(TAG, "Form Empty");
@@ -321,7 +304,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                                 JSONObject formObject = resurveyFormDataArray.getJSONObject(i).getJSONObject("form");
                                 String lat = formObject.optString("latitude");
                                 String lon = formObject.optString("longitude");
-                                formModel.setFormFields(Utility.convertStringToFormFields(formObject.toString()));
+                                formModel.setForm(Utility.convertStringToFormFields(formObject.toString()));
                                 // Form Details -----------
                                 JSONArray detailsArrays = resurveyFormDataArray.getJSONObject(i).getJSONArray("detais");
                                 if(detailsArrays.length() > 0){
@@ -329,11 +312,11 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                                     for(int j =0 ; j<detailsArrays.length(); j++){
                                         list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
                                     }
-                                    formModel.setForm_detail(list);
+                                    formModel.setDetais(list);
                                 }
                                 else{
                                     ArrayList<FormTableModel> list = new ArrayList<>();
-                                    formModel.setForm_detail(list);
+                                    formModel.setDetais(list);
                                 }
                                 // Resurvey Form
                                 dataBaseHelper.insertResurveyMapForm(userid,lat,lon,Utility.convertFormModelToString(formModel),"","");
@@ -366,7 +349,6 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
-
 
         // Forgot Password -------------------------------------------
         if(responseCode == URL_Utility.ResponseCode.WS_FORGOT_PASSWORD){

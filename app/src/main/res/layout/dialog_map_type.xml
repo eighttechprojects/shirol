@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:gravity="center"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="20dp"
+        android:background="@color/white"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:background="@color/white"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:layout_marginTop="6dp"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@color/white">
+                <ImageButton
+                    android:id="@+id/bt_close"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/ic_cancel"
+                    android:scaleType="fitXY"
+                    android:background="@android:color/transparent"
+                    tools:ignore="RtlHardcoded"
+                    android:contentDescription="@string/todo" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:gravity="center"
+                android:layout_gravity="center"
+                >
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Map Type"
+                    android:textSize="16sp"
+                    android:textColor="@color/black"
+                    android:gravity="center"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/bt_satellite"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Satellite"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_button" />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/bt_hybrid"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:textColor="@color/white"
+                    android:text="Hybrid"
+                    android:background="@drawable/bg_button" />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/bt_terrain"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Terrain"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_button" />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/bt_normal"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Normal"
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_button" />
+
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+</RelativeLayout>

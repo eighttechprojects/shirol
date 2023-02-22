@@ -12,11 +12,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -25,6 +22,8 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,10 +50,14 @@ import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormListModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
 import com.eighttechprojects.propertytaxshirol.Model.GeoJsonModel;
+import com.eighttechprojects.propertytaxshirol.Model.LastKeyModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
+import com.eighttechprojects.propertytaxshirol.WMSMap.WMSProvider;
+import com.eighttechprojects.propertytaxshirol.WMSMap.WMSTileProviderFactory;
 import com.eighttechprojects.propertytaxshirol.databinding.ActivityMapsBinding;
+import com.eighttechprojects.propertytaxshirol.volly.AndroidMultiPartEntity;
 import com.eighttechprojects.propertytaxshirol.volly.BaseApplication;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
@@ -76,22 +79,34 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.android.gms.maps.model.TileProvider;
 import com.google.android.gms.tasks.Task;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import uk.co.senab.photoview.PhotoViewAttacher;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnPolygonClickListener, View.OnClickListener, WSResponseInterface {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnPolygonClickListener, GoogleMap.OnMarkerClickListener, View.OnClickListener, WSResponseInterface {
 
     // TAG
     public static final String TAG = MapsActivity.class.getSimpleName();
-    public static final String TAG_GEO_JSON = "Shirol GeoJson";
     // Map
     GoogleMap mMap;
     // Binding
@@ -110,7 +125,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationRequest mRequest;
     private Location mCurrentLocation = null;
     private static final float DEFAULT_ZOOM = 20f;
-    private static final float DEFAULT_ZOOM_MAP = 19f;
     private boolean isGoToCurrentLocation = false;
     // Form
     private static final String selectYesOption = "होय";
@@ -122,15 +136,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<FormDBModel> formDBModelList = new ArrayList<>();
 
     private ArrayList<FormDBModel> formSyncList = new ArrayList<>();
+
+    private ArrayList<LastKeyModel> lastKeysList = new ArrayList<>();
+
+    private LastKeyModel lastKeyModel;
     private FormDBModel formDBModel;
 
     // File Upload
     public long totalSize = 0;
-    private String unique_number ="", datetime = "";
     public static final String TYPE_FILE   = "file";
     public static final String TYPE_CAMERA = "cameraUploader";
     public static boolean isFileUpload   = true;
     public static boolean isCameraUpload = true;
+    public static boolean isLastKeyUpload = true;
+    public static boolean isFormUpload = true;
+    private ArrayList<Marker> geoJsonMarkerList = new ArrayList<>();
+    private HashMap<String,Polygon> geoJsonPolygonLists = new HashMap<>();
+    boolean isMultipleForm = false;
+    boolean isMarkerVisible = false;
+    private static final String droneLayer = "http://173.249.24.149:8080/geoserver/shirol/wms?service=WMS&version=1.1.0&request=GetMap&layers=shirol%3AShirol_Base&bbox=74.58111479319136%2C16.72872028532293%2C74.62853852632936%2C16.76589925517693&width=768&height=602&srs=EPSG%3A4326&styles=&format=application/openlayers";
 
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
 
@@ -148,8 +172,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         baseApplication = (BaseApplication) getApplication();
         // FusedLocationProviderClient
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(mActivity);
-        // logout 24hr
-        LogoutAfter24hr();
+//        // logout 24hr
+//        LogoutAfter24hr();
         // Map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         assert mapFragment != null;
@@ -161,21 +185,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 for (Location loc : locationResult.getLocations()) {
                     mCurrentLocation = loc;
                     if(mCurrentLocation != null){
-                        if(!isGoToCurrentLocation){
-                            isGoToCurrentLocation = true;
+                        if(isGoToCurrentLocation){
+                            isGoToCurrentLocation = false;
                             // Current LatLon
                             LatLng latLng = new LatLng(16.751075235,74.587887456);
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
-//                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),DEFAULT_ZOOM));
-                           // Log.e(TAG,"Current Location: " + mCurrentLocation.getLatitude() + " , " + mCurrentLocation.getLongitude());
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
                         }
                     }
                 }
             }
         };
         LocationPermission();
-
-        registerReceiver();
 
     }
 
@@ -197,34 +217,71 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         mMap.setMyLocationEnabled(true);
         // set Map
-        mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         // Map Click Listener
         mMap.setOnMapClickListener(this);
         // Polygon Click Listener
         mMap.setOnPolygonClickListener(this);
+        // Marker Click Listener
+        mMap.setOnMarkerClickListener(this);
         // setOnClickListener
         setOnClickListener();
-        // show All Form Data
-        //showAllForm();
-
-        // Database Contains Some Data or not
-        if(isFormDataNotSync()){
-            Utility.showSyncYourDataAlert(this);
-        }
-
         LatLng latLng = new LatLng(16.751075235,74.587887456);
         Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
+        // logout 24hr
+        LogoutAfter24hr();
 
-        // Show GeoJson Polygon
-        showAllGeoJsonPolygon();
+
+        //------------------------------------------------------- On Camera Idle ------------------------------------------------------------
+
+        mMap.setOnCameraIdleListener(() -> {
+                if(isMarkerVisible) {
+                try {
+                    ExecutorService service = Executors.newSingleThreadExecutor();
+                    Handler handler = new Handler(Looper.getMainLooper());
+                    service.execute(() -> handler.post(() -> {
+                        if (mMap != null) {
+                            float mapZoomLevel = mMap.getCameraPosition().zoom;
+                            if (mapZoomLevel < 19f) {
+                                Log.e(TAG, "Zoom < then required");
+                                if (geoJsonMarkerList != null) {
+                                    if (geoJsonMarkerList.size() > 0) {
+                                        for (Marker m : geoJsonMarkerList) {
+                                            m.setVisible(false);
+                                        }
+                                    }
+                                }
+
+                            } else {
+                                if (geoJsonMarkerList != null) {
+                                    if (geoJsonMarkerList.size() > 0) {
+                                        for (Marker m : geoJsonMarkerList) {
+                                            m.setVisible(true);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }));
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        });
+
+        //------------------------------------------------------- On Camera Move Started ------------------------------------------------------------
+
+        mMap.setOnCameraMoveStartedListener(i -> {});
 
 
+        addWMSLayer(droneLayer);
     }
 
 //------------------------------------------------------- setOnClickListener ------------------------------------------------------------------------------------------------------------------------------------------------
 
     private void setOnClickListener(){
         binding.imgMyLocation.setOnClickListener(this);
+        binding.rlMapType.setOnClickListener(this);
     }
 
 //------------------------------------------------------- Menu ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -288,30 +345,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         alertDialog.show();
     }
 
-    private void reDirectToLoginPage(){
-        String date = Utility.getSavedData(mActivity,Utility.OLD_DATE);
-        Utility.clearData(this);
-        Utility.saveData(mActivity,Utility.OLD_DATE,date);
-        // Database Clear
-        dataBaseHelper.logout();
-        dismissProgressBar();
-        startActivity(new Intent(this, SplashActivity.class));
-    }
-
     private void LogoutSync(){
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
+        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getAllForms();
+        ArrayList<LastKeyModel> lastKeys    = dataBaseHelper.getAllGenerateID();
 
-        if(formDBModels.size() == 0){
+        if(formDBModels.size() == 0 && lastKeys.size() == 0){
             reDirectToLoginPage();
             Log.e(TAG,"Logout No Data Found in Local DataBase");
         }
         else{
-            Log.e(TAG, "Logout DataBase Contain some Data");
-
+            Log.e(TAG, "Logout Sync DataBase Contain some Data");
             if(formDBModels.size() > 0){
                 Log.e(TAG, "Logout Sync Form On");
-                formDBModelList = dataBaseHelper.getMapFormLocalDataList();
+                formDBModelList = dataBaseHelper.getAllForms();
                 LogoutSyncFormDetails();
+            }
+            else{
+                isFormUpload = true;
+            }
+
+            if(lastKeys.size() > 0){
+                Log.e(TAG,"Logout Sync LastKey On");
+                lastKeysList = dataBaseHelper.getAllGenerateID();
+                LogoutSyncLastKeyDetails();
+            }
+            else{
+                isLastKeyUpload = true;
             }
 
         }
@@ -319,14 +378,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void LogoutSyncFormDetails(){
         if(formDBModelList != null && formDBModelList.size() > 0){
+            isFormUpload = false;
+            isFileUpload = true;
+            isCameraUpload = true;
             formDBModel = formDBModelList.get(0);
             formDBModelList.remove(0);
             LogoutSyncFormDataToServer(formDBModel);
         }
         else{
-            Log.e(TAG, "Logout Sync Form Off");
-            Log.e(TAG,  "Logout Sync Successfully");
-            reDirectToLoginPage();
+            isFormUpload = true;
+            isFileUpload = true;
+            isCameraUpload = true;
+            if(isLastKeyUpload){
+                Log.e(TAG, "Logout Sync Form Off");
+                Log.e(TAG, "Logout Sync lastKey Off");
+                Log.e(TAG,  "Logout Sync Successfully");
+                reDirectToLoginPage();
+            }
+        }
+    }
+
+    private void LogoutSyncLastKeyDetails(){
+        if(lastKeysList != null && lastKeysList.size() > 0){
+            isLastKeyUpload = false;
+            lastKeyModel = lastKeysList.get(0);
+            lastKeysList.remove(0);
+            SyncLastKeyToServer(lastKeyModel);
+        }
+        else{
+            isLastKeyUpload = true;
+            if(isFormUpload){
+                Log.e(TAG, "Logout Sync Form Off");
+                Log.e(TAG, "Logout Sync lastKey Off");
+                Log.e(TAG,  "Logout Sync Successfully");
+                reDirectToLoginPage();
+            }
+
         }
     }
 
@@ -344,6 +431,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(!Utility.isEmptyString(date)){
             if(date.equals(currentDate)){
                 Log.e(TAG, "true");
+                showAllGeoJsonPolygon();
             }
             else {
                 Log.e(TAG, "false");
@@ -353,8 +441,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         }
+        else{
+            showAllGeoJsonPolygon();
+        }
         Utility.saveData(mActivity,Utility.OLD_DATE, currentDate);
 
+    }
+    private void reDirectToLoginPage(){
+        String date = Utility.getSavedData(mActivity,Utility.OLD_DATE);
+        Utility.clearData(this);
+        Utility.saveData(mActivity,Utility.OLD_DATE,date);
+        // Database Clear
+        dataBaseHelper.logout();
+        dismissProgressBar();
+        startActivity(new Intent(this, SplashActivity.class));
     }
 
 //------------------------------------------------------- ProgressBar Show/ Dismiss ------------------------------------------------------------------------------------------------------
@@ -365,7 +465,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             progressDialog = null;
         }
     }
-
     private void showProgressBar() {
         if (progressDialog == null) {
             progressDialog = new ProgressDialog(this);
@@ -385,11 +484,112 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+//------------------------------------------------------- Sync ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    private void Sync() {
+        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getAllForms();
+        ArrayList<LastKeyModel> lastKeys    = dataBaseHelper.getAllGenerateID();
+
+        if(formDBModels.size() == 0 && lastKeys.size() == 0){
+            dismissProgressBar();
+            Log.e(TAG, "Sync Local Database Contain no Data");
+            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
+        }
+        else{
+            if(SystemPermission.isInternetConnected(mActivity)){
+                showProgressBar("Sync...");
+                Log.e(TAG, "Sync Database Contain some Data");
+
+                if(formDBModels.size() > 0){
+                    Log.e(TAG, "Sync Service Form On");
+                    formSyncList = dataBaseHelper.getAllForms();
+                    Log.e(TAG, "Sync Form Size: "+ formSyncList.size());
+                    SyncFormDetails();
+                }
+                else{
+                    isFormUpload = true;
+                }
+                // Last Keys
+                if(lastKeys.size() > 0){
+                    Log.e(TAG,"Sync Service last Keys On");
+                    lastKeysList = dataBaseHelper.getAllGenerateID();
+                    SyncLastKeyDetails();
+                }
+                else{
+                    isLastKeyUpload = true;
+                }
+            }
+
+        }
+    }
+
+    private void SyncLastKeyDetails(){
+        if(lastKeysList != null && lastKeysList.size() > 0){
+            isLastKeyUpload = false;
+            lastKeyModel = lastKeysList.get(0);
+            lastKeysList.remove(0);
+            SyncLastKeyToServer(lastKeyModel);
+        }
+        else{
+           isLastKeyUpload = true;
+           if(isFormUpload){
+               Log.e(TAG, "Sync Service Form Off");
+               Log.e(TAG, "Sync Service lastKey Off");
+               Log.e(TAG,  "Data Sync Successfully");
+               dismissProgressBar();
+               Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
+           }
+        }
+    }
+
+    private void SyncLastKeyToServer(LastKeyModel lastKeyModel){
+        Map<String, String> params = new HashMap<>();
+//        //poly_id, counter
+        params.put("data",Utility.convertlastKeyModelToString(lastKeyModel));
+        Log.e(TAG, "Last key  Uploaded -> " + params.toString());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_SET_COUNTER, URL_Utility.WS_SET_COUNTER, params, false, false);
+    }
+
+    private void SyncFormDetails(){
+        if(formSyncList != null && formSyncList.size() > 0){
+            isFormUpload = false;
+            isFileUpload = true;
+            isCameraUpload = true;
+            formDBModel = formSyncList.get(0);
+            formSyncList.remove(0);
+            SyncFormDataToServer(formDBModel);
+        }
+        else{
+            isFormUpload = true;
+            isFileUpload = true;
+            isCameraUpload = true;
+            if(isLastKeyUpload){
+                Log.e(TAG, "Sync Service Form Off");
+                Log.e(TAG, "Sync Service lastKey Off");
+                Log.e(TAG,  "Data Sync Successfully");
+                dismissProgressBar();
+                Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
+            }
+        }
+    }
+
+    private void SyncFormDataToServer(FormDBModel formDBModel){
+        Log.e(TAG, "Upload to Server.........!");
+        Map<String, String> params = new HashMap<>();
+        params.put("data", formDBModel.getFormData());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
+    }
+
+    private boolean isFormDataNotSync(){
+        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getAllForms();
+        return formDBModels.size() > 0;
+    }
+
 //------------------------------------------------------- onSuccessResponse -----------------------------------------------------------------------------------------------------------------------------------------
 
     @Override
     public void onSuccessResponse(URL_Utility.ResponseCode responseCode, String response) {
-        // Form
+        // Form Logout
         if(responseCode == URL_Utility.ResponseCode.WS_FORM){
             if(!response.equals("")){
                 try {
@@ -398,48 +598,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.e(TAG, "Logout Form Status : " + status);
                     // Status -> Success
                     if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
-                        if (formDBModel != null && formDBModel.getId() != null) {
-                            // then
-                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
-                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+
+                        if(formDBModel != null){
+                            boolean isFile = false;
+                            boolean isCamera = false;
+
+                            FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
+                            String unique_number =  formModel.getForm().getUnique_number();
+
+                            if(!Utility.isEmptyString(formDBModel.getFilePath())){
+                                Log.e(TAG,"Logout Form Contains File Path");
+                                isFile = true;
                             }
-                            LogoutSyncFormDetails();
-                        }
-                    }
-                    // Status -> Fail
-                    else{
-                        dismissProgressBar();
-                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                    }
-                }
-                catch (JSONException e){
-                    dismissProgressBar();
-                    Log.e(TAG,"Logout Sync Json Error: "+ e.getMessage());
-                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                }
-            }
-            else{
-                dismissProgressBar();
-                Log.e(TAG, "Logout Sync Response Empty");
-                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-            }
-        }
-        // Sync Form
-        if(responseCode == URL_Utility.ResponseCode.WS_FORM_SYNC){
-            if(!response.equals("")){
-                try {
-                    JSONObject mObj = new JSONObject(response);
-                    String status = mObj.optString(URL_Utility.STATUS);
-                    Log.e(TAG, "Sync Form Status : " + status);
-                    // Status -> Success
-                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
-                        if (formDBModel != null && formDBModel.getId() != null) {
-                            // then
-                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
-                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
-                                dataBaseHelper.updateMapData(formDBModel.getToken(),"f");
+                            if(!Utility.isEmptyString(formDBModel.getCameraPath())){
+                                Log.e(TAG,"Logout Form Contains Camera Path");
+                                isCamera = true;
                             }
-                            SyncFormDetails();
+
+                            if(isFile || isCamera){
+
+                                if(isFile){
+                                    new FileUploadServerLogout(new StringBuilder(formDBModel.getFilePath()),"",unique_number,TYPE_FILE,false).execute();
+                                }
+                                else{
+                                    isFileUpload = true;
+                                }
+
+                                if(isCamera){
+                                    new FileUploadServerLogout(new StringBuilder(formDBModel.getCameraPath()),"",unique_number, TYPE_CAMERA,true).execute();
+                                }
+                                else{
+                                    isCameraUpload = true;
+                                }
+
+                            }
+                            else{
+                                // Only Form Contains
+                                Log.e(TAG,"Logout User Upload only Form not Camera File or File");
+                                if (formDBModel != null && formDBModel.getId() != null) {
+                                    // then
+                                    if (dataBaseHelper.getAllForms().size() > 0) {
+                                        dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                    }
+                                    LogoutSyncFormDetails();
+                                }
+                            }
                         }
                     }
                     // Status -> Fail
@@ -460,6 +663,116 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
+        // Sync Form
+        if(responseCode == URL_Utility.ResponseCode.WS_FORM_SYNC){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "Sync Form Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+
+                        if(formDBModel != null){
+                            boolean isFile   = false;
+                            boolean isCamera = false;
+
+                            FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
+                            String unique_number =  formModel.getForm().getUnique_number();
+
+                            if(!Utility.isEmptyString(formDBModel.getFilePath())){
+                                Log.e(TAG,"Form Contains File Path");
+                                isFile = true;
+                            }
+                            if(!Utility.isEmptyString(formDBModel.getCameraPath())){
+                                Log.e(TAG,"Form Contains Camera Path");
+                                isCamera = true;
+                            }
+
+                            if(isFile || isCamera){
+
+                                if(isFile){
+                                    new FileUploadServer(new StringBuilder(formDBModel.getFilePath()),"",unique_number,TYPE_FILE,false).execute();
+                                }
+                                else{
+                                    isFileUpload = true;
+                                }
+
+                                if(isCamera){
+                                    new FileUploadServer(new StringBuilder(formDBModel.getCameraPath()),"",unique_number, TYPE_CAMERA,true).execute();
+                                }
+                                else{
+                                    isCameraUpload = true;
+                                }
+
+                            }
+                            else{
+                                // Only Form Contains
+                                Log.e(TAG,"User Upload only Form not Camera File or File");
+                                Log.e(TAG,"Form Upload to Server SuccessFully");
+                                if (formDBModel != null && formDBModel.getId() != null) {
+                                    // then
+                                    if (dataBaseHelper.getAllForms().size() > 0) {
+                                        dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                    }
+                                    SyncFormDetails();
+                                }
+                            }
+                        }
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    dismissProgressBar();
+                    Log.e(TAG,"Sync Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                dismissProgressBar();
+                Log.e(TAG, "Sync Response Empty");
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
+
+        if(responseCode == URL_Utility.ResponseCode.WS_SET_COUNTER){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "SET Counter Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+                        if (lastKeyModel != null && lastKeyModel.getId() != null) {
+                            // then
+                            if (dataBaseHelper.getAllGenerateID().size() > 0) {
+                                dataBaseHelper.deleteGenerateID(lastKeyModel.getId());
+                            }
+                            SyncLastKeyDetails();
+                        }
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    Log.e(TAG,"Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+            }
+            else{
+                Log.e(TAG, "SET Counter Response Empty");
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
     }
 
 //------------------------------------------------------- onErrorResponse -----------------------------------------------------------------------------------------------------------------------------------------
@@ -470,53 +783,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
         Log.e(TAG, "Logout Error Response Code: "+responseCode);
         Log.e(TAG, "Logout Error Message: "+error.getMessage());
-    }
-
-//------------------------------------------------------- Sync ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    private void Sync() {
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
-        if(formDBModels.size() == 0){
-            dismissProgressBar();
-            Log.e(TAG, "Sync Local Database Contain no Data");
-            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
-        }
-        else{
-            if(SystemPermission.isInternetConnected(mActivity)){
-                //baseApplication.startSyncService();
-                showProgressBar("Sync...");
-                Log.e(TAG, "Sync Database Contain some Data");
-                if(formDBModels.size() > 0){
-                    Log.e(TAG, "Sync Service Form On");
-                    formSyncList = dataBaseHelper.getMapFormLocalDataList();
-                    Log.e(TAG, "Sync Form Size: "+ formSyncList.size());
-                    SyncFormDetails();
-                }
-            }
-
-        }
-    }
-
-    private void SyncFormDetails(){
-        if(formSyncList != null && formSyncList.size() > 0){
-            formDBModel = formSyncList.get(0);
-            formSyncList.remove(0);
-            SyncFormDataToServer(formDBModel);
-        }
-        else{
-            Log.e(TAG, "Sync Service Form Off");
-            Log.e(TAG,  "Data Sync Successfully");
-            dismissProgressBar();
-            refreshFormData();
-            Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
-        }
-    }
-
-    private void SyncFormDataToServer(FormDBModel formDBModel){
-        Log.e(TAG, "Upload to Server.........!");
-        Map<String, String> params = new HashMap<>();
-        params.put("data", formDBModel.getFormData());
-        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
     }
 
 //------------------------------------------------------- onClick ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -533,38 +799,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 break;
 
+            case R.id.rlMapType:
+                Utility.showMapTypeDialog(mActivity, mapType -> {
+                    Utility.saveData(MapsActivity.this, Utility.BASE_MAP,mapType);
+                    Utility.setBaseMap(mActivity,mMap);
+                    Toast.makeText(mActivity, mapType + " Mode", Toast.LENGTH_SHORT).show();
+                });
+                break;
         }
 
-    }
-
-//------------------------------------------------------- onActivityResult ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Form Successfully Submit
-        if(requestCode == FORM_REQUEST_CODE && resultCode == RESULT_OK){
-            // mMap.clear();
-            // showAllForm();
-        }
     }
 
 //------------------------------------------------------- onMapClick ------------------------------------------------------------------------------------------------------------------------------------------------
 
     @Override
-    public void onMapClick(@NonNull LatLng latLng) {
-
-    }
-
+    public void onMapClick(@NonNull LatLng latLng) {}
 
 //------------------------------------------------------- Form ------------------------------------------------------------------------------------------------------------------------------------------------
-    private void viewFormDialogBox(String ID,String polygonID,String FID){
+    private void viewFormDialogBox(String ID){
         try{
-            FormDBModel formDBModel = dataBaseHelper.getFormByPolygonIDAndID(polygonID,ID);
+            FormDBModel formDBModel = dataBaseHelper.getFormByPolygonIDAndID(ID);
             // Form Model
             FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
             // Form Fields
             FormFields bin = formModel.getForm();
+           // formDBModel.setFilePath(Utility.getStringValue(bin.getPlan_attachment()));
+         //   formDBModel.setCameraPath(Utility.getStringValue(bin.getProperty_images()));
+
             // Dialog Box
             Dialog fDB = new Dialog(this);
             fDB.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -593,8 +854,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             LinearLayout ll_30 = fDB.findViewById(R.id.ll_30);
 
             // init Text View ----------------------------------------
-            TextView tv_form_property_id                 = fDB.findViewById(R.id.db_form_property_id);
-            TextView tv_form_property_number             = fDB.findViewById(R.id.db_form_property_number);
 
             TextView tv_form_owner_name                  = fDB.findViewById(R.id.db_form_owner_name);
             TextView tv_form_old_property_no             = fDB.findViewById(R.id.db_form_old_property_no);
@@ -610,7 +869,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             TextView tv_form_mobile                      = fDB.findViewById(R.id.db_form_mobile);
             TextView tv_form_email                       = fDB.findViewById(R.id.db_form_email);
             TextView tv_form_aadhar_no                   = fDB.findViewById(R.id.db_form_aadhar_no);
-            TextView tv_form_grid_no                     = fDB.findViewById(R.id.db_form_grid_no);
             TextView tv_form_gis_id                      = fDB.findViewById(R.id.db_form_gis_id);
             TextView tv_form_sp_property_type            = fDB.findViewById(R.id.db_form_sp_property_type);
             TextView tv_form_no_of_floors                = fDB.findViewById(R.id.db_form_no_of_floor);
@@ -634,10 +892,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             TextView tv_form_total_area                  = fDB.findViewById(R.id.db_form_total_area);
 
             // Set Text -------------------------------
-            // 0
-            tv_form_property_id.setText(Utility.getStringValue(polygonID));
-            // 01
-            tv_form_property_number.setText(Utility.getStringValue(FID));
             // 1
             tv_form_owner_name.setText(Utility.getStringValue(bin.getOwner_name()));
             // 2
@@ -666,8 +920,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             tv_form_email.setText(Utility.getStringValue(bin.getEmail()));
             // 14
             tv_form_aadhar_no.setText(Utility.getStringValue(bin.getAadhar_no()));
-            // 15
-            tv_form_grid_no.setText(Utility.getStringValue(bin.getGrid_no()));
             // 16
             tv_form_gis_id.setText(Utility.getStringValue(bin.getGis_id()));
             // 17
@@ -779,6 +1031,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Uri uri = Uri.parse(imagePath);
                         Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imgCaptured);
                     }
+
+                    // Click on Camera Image
+                    imgCaptured.setOnClickListener(view -> {
+                        Dialog dialog = new Dialog(mActivity);
+                        dialog.setContentView(R.layout.image_zoom_view_layout);
+                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                        ImageView imageView = dialog.findViewById(R.id.dialogbox_image);
+
+                        PhotoViewAttacher photoViewAttacher = new PhotoViewAttacher(imageView);
+                        // Image Load!
+                        try{
+                            // String imagePath = formDBModel.getCameraPath().split("#")[1];
+                            if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
+                                Glide.with(mActivity).load(imagePath).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                               photoViewAttacher.update();
+                            }
+                            else{
+                                Uri uri = Uri.parse(imagePath);
+                                Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                                photoViewAttacher.update();
+
+                            }
+                        }
+                        catch (Exception e){
+                            Log.e(TAG, e.getMessage());
+                            imageView.setImageResource(R.drawable.ic_no_image);
+                        }
+                        dialog.show();
+                    });
+
                 }
                 catch (Exception e){
                     Log.e(TAG, e.getMessage());
@@ -789,31 +1071,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // When No Image Found
                 imgCaptured.setImageResource(R.drawable.ic_no_image);
             }
-            // Click on Camera Image
-            imgCaptured.setOnClickListener(view -> {
-                Dialog dialog = new Dialog(mActivity);
-                dialog.setContentView(R.layout.image_zoom_view_layout);
-                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                ImageView imageView = dialog.findViewById(R.id.dialogbox_image);
-                PhotoViewAttacher photoViewAttacher = new PhotoViewAttacher(imageView);
-                // Image Load!
-                try{
-                    String imagePath = formDBModel.getCameraPath().split("#")[1];
-                    if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
-                        Glide.with(mActivity).load(imagePath).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
-                    }
-                    else{
-                        Uri uri = Uri.parse(imagePath);
-                        Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
-                    }
-                }
-                catch (Exception e){
-                    Log.e(TAG, e.getMessage());
-                    imageView.setImageResource(R.drawable.ic_no_image);
-                }
-                photoViewAttacher.update();
-                dialog.show();
-            });
+
 
             // File Upload View -------------------------
             ArrayList<FileUploadViewModel> fileUploadList = new ArrayList<>();
@@ -856,6 +1114,75 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void viewAllFormDialogBox(String polygonID){
+        ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
+
+        Dialog vfBox = new Dialog(this);
+            vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            vfBox.setCancelable(false);
+            vfBox.setContentView(R.layout.dialogbox_formlist_view);
+            vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+
+            // Button Exit
+            Button btExit = vfBox.findViewById(R.id.btExit);
+            btExit.setOnClickListener(view -> vfBox.dismiss());
+
+            // RecycleView
+            RecyclerView rvFormListView = vfBox.findViewById(R.id.rvFormListView);
+
+            AdapterFormListView adapterFormListView = new AdapterFormListView(mActivity, formList, formListModel -> {
+                    //vfBox.dismiss();
+                    if(!Utility.isEmptyString(polygonID)){
+                        viewFormDialogBox(formListModel.getId());
+                    }
+            });
+            Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
+
+            vfBox.show();
+
+    }
+
+    private void viewMultipleFormDialogBox(String gisID,String polygonID,DialogInterface dialogBox){
+            ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
+            dialogBox.dismiss();
+            Dialog vfBox = new Dialog(this);
+            vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            vfBox.setCancelable(false);
+            vfBox.setContentView(R.layout.dialogbox_multipleform_view);
+            vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+
+            // Add Form
+            Button btAddForm = vfBox.findViewById(R.id.btAddForm);
+
+            btAddForm.setOnClickListener(view -> {
+                    String key = dataBaseHelper.getGenerateID(polygonID);
+                    try{
+                        if(!Utility.isEmptyString(key)){
+                            reDirectToMultipleFormFunction(gisID,polygonID,Integer.parseInt(key));
+                        }
+                        else{
+                            Log.e(TAG, "Key Null");
+                        }
+                    }
+                    catch (Exception e){
+                        Log.e(TAG, e.getMessage());
+                    }
+                vfBox.dismiss();
+
+            });
+
+            // Exit Form
+            Button btExitForm = vfBox.findViewById(R.id.btExitForm);
+            btExitForm.setOnClickListener(view -> vfBox.dismiss());
+
+            // RecycleView
+            RecyclerView rvFormListView = vfBox.findViewById(R.id.rvFormListView);
+            AdapterFormListView adapterFormListView = new AdapterFormListView(mActivity, formList, formListModel -> {});
+            Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
+            vfBox.show();
+
+    }
+
     private void ViewFileUploadDialogBox(ArrayList<FileUploadViewModel> fileUploadViewModelArrayList){
         // DialogBox
         Dialog dialog = new Dialog(mActivity);
@@ -882,97 +1209,608 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         dialog.show();
     }
 
-    private void showAllForm(){
-        try {
-            ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormDataList();
-            if(formDBModels.size() > 0){
-                Log.e(TAG,"Total Form: " + formDBModels.size());
-                for(int i=0; i<formDBModels.size(); i++) {
-                    FormDBModel formDBModel = formDBModels.get(i);
-                    if(!Utility.isEmptyString(formDBModel.getLatitude()) && !Utility.isEmptyString(formDBModel.getLongitude())) {
-                        LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-                        Marker marker;
-                        if((formDBModels.get(i).isOnlineSave())){
-                            marker = Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_RED);
-                      }
-                      else{
-                          marker = Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_BLUE);
-                      }
-                        FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
-                        marker.setDraggable(false);
-                        marker.setTag(formModel);
+//------------------------------------------------------- Form Dialog Box Show ----------------------------------------------------------------------------------------------------------------------
+
+    private void showSelectedDialogBox(GeoJsonModel geoJsonModel){
+        ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(geoJsonModel.getPolygonID());
+        isMultipleForm = formList.size() > 0;
+        boolean isFormStatusCompleted = false;
+
+        if(formList.size() > 0){
+            for(int i=0; i<formList.size(); i++){
+                FormModel formModel = formList.get(i).getFormModel();
+                String status = formModel.getForm().getForm_status();
+                if(!Utility.isEmptyString(status) && status.equalsIgnoreCase(Utility.SurveyCompleted)){
+                    isFormStatusCompleted = true;
+                    break;
+                }
+            }
+        }
+
+        Utility.showSelectBox(mActivity, (item, dialogBox) -> {
+            switch (item){
+
+                case Utility.ITEM_SELECTED.SingleForm:
+                    isMultipleForm = false;
+                    dialogBox.dismiss();
+                    reDirectToSingleFormFunction(geoJsonModel,isMultipleForm);
+                    break;
+
+                case Utility.ITEM_SELECTED.MultipleForm:
+                    dialogBox.dismiss();
+                    isMultipleForm = true;
+                    // empty form then we have to create it!
+//                    if(!isMultipleForm){
+//                        reDirectToSingleFormFunction(geoJsonModel,isMultipleForm);
+//                    }
+//                    else{
+                        viewMultipleFormDialogBox(geoJsonModel.getGisID(),geoJsonModel.getPolygonID(),dialogBox);
+//                    }
+                    break;
+
+                case Utility.ITEM_SELECTED.VIEW:
+                    if(formList.size() > 0){
+                        viewAllFormDialogBox(geoJsonModel.getPolygonID());
+                        dialogBox.dismiss();
                     }
                     else{
-                        Log.e(TAG,"Lat Lon Data null Found in Some Forms");
+                        Utility.showToast(mActivity,"No Form Found");
+                    }
+                    break;
+
+            }
+        },isMultipleForm,isFormStatusCompleted);
+
+    }
+
+    private void reDirectToSingleFormFunction(GeoJsonModel geoJsonModel, boolean isMultipleForm){
+        Intent intentSingleForm = new Intent(MapsActivity.this, FormActivity.class);
+        intentSingleForm.putExtra(Utility.PASS_GIS_ID,geoJsonModel.getGisID());
+        intentSingleForm.putExtra(Utility.PASS_POLYGON_ID,geoJsonModel.getPolygonID());
+        intentSingleForm.putExtra(Utility.PASS_IS_MULTIPLE, isMultipleForm);
+        startActivityForResult(intentSingleForm,FORM_REQUEST_CODE);
+    }
+
+    private void reDirectToMultipleFormFunction(String gisID, String polygonID,int lastKey){
+        Intent intentMultipleForm = new Intent(MapsActivity.this, FormActivity.class);
+        intentMultipleForm.putExtra(Utility.PASS_GIS_ID,gisID);
+        intentMultipleForm.putExtra(Utility.PASS_POLYGON_ID,polygonID);
+        intentMultipleForm.putExtra(Utility.PASS_IS_MULTIPLE, true);
+        intentMultipleForm.putExtra(Utility.PASS_LAST_KEY,lastKey);
+        startActivityForResult(intentMultipleForm,FORM_REQUEST_CODE);
+    }
+
+
+
+//------------------------------------------------------- Resurvey Form ----------------------------------------------------------------------------------------------------------------------
+
+
+//------------------------------------------------------- Resurvey Form Dialog Box ----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+//------------------------------------------------------- onActivityResult ------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        // Form Successfully Submit
+        if(requestCode == FORM_REQUEST_CODE && resultCode == RESULT_OK){
+            if(data != null){
+                String polygonID = data.getStringExtra(Utility.PASS_POLYGON_ID);
+                Log.e(TAG,"Form Submit PolygonID -> "+polygonID);
+                if(!Utility.isEmptyString(polygonID)) {
+                    Polygon polygon = geoJsonPolygonLists.get(polygonID);
+                    if(polygon != null){
+                        GeoJsonModel geoJsonModel = dataBaseHelper.getPolygonByPolygonId(polygonID);
+                        if(!Utility.isEmptyString(geoJsonModel.getPolygonStatus())){
+                            String status = geoJsonModel.getPolygonStatus();
+                            Log.e(TAG,"Polygon Status -> " + status);
+                            if(status.equalsIgnoreCase(Utility.SurveyCompleted)){
+                                polygon.setStrokeColor(Color.parseColor(Utility.COLOR_CODE.GREEN));
+                            }
+                            else if(status.equalsIgnoreCase(Utility.SurveyNotComplete)){
+                                polygon.setStrokeColor(Color.parseColor(Utility.COLOR_CODE.RED));
+                            }
+                            else{
+                                polygon.setStrokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
+                            }
+                        }
                     }
                 }
             }
-            else{
-                Log.e(TAG,"Form Not Contains in Database");
+        }
+    }
+
+//------------------------------------------------------- onPolygonClick ----------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onPolygonClick(@NonNull Polygon polygon) {
+
+        if(polygon.getTag() instanceof GeoJsonModel){
+            //Log.e(TAG,"Polygon instance of GeoJsonModel");
+            GeoJsonModel geoJsonModel = (GeoJsonModel) polygon.getTag();
+
+            if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
+                Log.e(TAG, "Polygon ID: -> "+Utility.getStringValue(geoJsonModel.getPolygonID()));
+                showSelectedDialogBox(geoJsonModel);
             }
+            else{
+                Log.e(TAG,"Polygon ID is Empty");
+            }
+        }
+        else{
+            Log.e(TAG,"Polygon not instance of GeoJsonModel");
+        }
+
+    }
+
+//------------------------------------------------------- Fetch GeoJson File ----------------------------------------------------------------------------------------------------------------------
+
+    private void showAllGeoJsonPolygon(){
+
+        showProgressBar("Loading Polygons.....");
+
+        ArrayList<ArrayList<LatLng>> geoJsonLatLonLists = new ArrayList<>();
+        ArrayList<GeoJsonModel> geoJsonModelLists = new ArrayList<>();
+
+        try{
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        service.execute(() -> {
+
+            // To Do In Background
+            ArrayList<GeoJsonModel> geoJsonModels = dataBaseHelper.getAllGeoJsonPolygon();
+            //Log.e(TAG,"Geo-Json Polygon Size: "+ geoJsonModels.size());
+            try{
+                if(geoJsonModels.size() > 0){
+                    for(int i=0; i<geoJsonModels.size(); i++){
+                        GeoJsonModel geoJsonModel = geoJsonModels.get(i);
+                        if(!Utility.isEmptyString(geoJsonModel.getLatLon())){
+                            ArrayList<ArrayList<LatLng>> geoJsonLatLonList = Utility.convertStringToListOfPolygon(geoJsonModel.getLatLon());
+                            if(geoJsonLatLonList.size() > 0){
+                                for(int j=0; j<geoJsonLatLonList.size(); j++){
+                                    ArrayList<LatLng> latLngs = geoJsonLatLonList.get(j);
+                                    if(latLngs.size() > 0){
+                                        geoJsonLatLonLists.add(latLngs);
+                                        geoJsonModelLists.add(geoJsonModel);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else{
+                    Log.e(TAG, "Geo-Json Polygon Empty");
+                    dismissProgressBar();
+                }
+            }
+            catch (Exception e){
+                dismissProgressBar();
+                Log.e(TAG, "Error: "+e.getMessage());
+            }
+
+            // Post ----------------------------------------
+            handler.post(() -> {
+                if(geoJsonMarkerList.size() > 0){
+                    for(Marker m : geoJsonMarkerList){
+                        if(m != null){
+                            m.remove();
+                        }
+                    }
+                    geoJsonModelLists.clear();
+                }
+                if(geoJsonLatLonLists.size() > 0){
+                    for(int i=0; i<geoJsonLatLonLists.size(); i++){
+                        PolygonOptions polygonOptions = new PolygonOptions();
+                        polygonOptions.clickable(true);
+                        polygonOptions.addAll(geoJsonLatLonLists.get(i));
+                        polygonOptions.strokeWidth(4);
+                        polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
+
+                        if(!Utility.isEmptyString(geoJsonModelLists.get(i).getPolygonStatus())){
+                            String status = geoJsonModelLists.get(i).getPolygonStatus();
+                            Log.e(TAG,"Polygon Status -> " + status);
+                            if(status.equalsIgnoreCase(Utility.SurveyCompleted)){
+                                polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.GREEN));
+                            }
+                            else if(status.equalsIgnoreCase(Utility.SurveyNotComplete)){
+                                polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.RED));
+                            }
+                            else{
+                                polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
+                            }
+                        }
+                        Marker marker = Utility.addGeoJsonPolygonMarker(mActivity,mMap,Utility.getPolygonCenterPoint(geoJsonLatLonLists.get(i)),geoJsonModelLists.get(i).getPolygonID(),1);
+                        marker.setFlat(true);
+                        marker.setTag(geoJsonModelLists.get(i));
+
+                        Polygon polygon = mMap.addPolygon(polygonOptions);
+                        polygon.setTag(geoJsonModelLists.get(i));
+                        polygon.setVisible(true);
+                        polygon.setZIndex(3);
+                        geoJsonPolygonLists.put(geoJsonModelLists.get(i).getPolygonID(),polygon);
+                        geoJsonMarkerList.add(marker);
+                    }
+                }
+                dismissProgressBar();
+                // Database Contains Some Data or not
+                if(isFormDataNotSync()){
+                    Utility.showSyncYourDataAlert(this);
+                }
+                isGoToCurrentLocation = true;
+                isMarkerVisible = true;
+
+            });
+        });
+
         }
         catch (Exception e){
             Log.e(TAG, e.getMessage());
         }
     }
 
-    private void viewAllFormDialogBox(String polygonID,DialogInterface dialogBox){
-        ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
-        if(formList.size() > 0){
-            dialogBox.dismiss();
-            Dialog vfBox = new Dialog(this);
-            vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            vfBox.setCancelable(false);
-            vfBox.setContentView(R.layout.dialogbox_formlist_view);
-            vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-            // Button
-            Button btExit = vfBox.findViewById(R.id.btExit);
-            btExit.setOnClickListener(view -> vfBox.dismiss());
-            // RecycleView
-            RecyclerView rvFormListView = vfBox.findViewById(R.id.rvFormListView);
+//------------------------------------------------------- onMarkerClick ----------------------------------------------------------------------------------------------------------------------
 
-            AdapterFormListView adapterFormListView = new AdapterFormListView(mActivity, formList, formListModel -> {
-                vfBox.dismiss();
-                if(!Utility.isEmptyString(polygonID)){
-                    viewFormDialogBox(formListModel.getId(),polygonID,formListModel.getFid());
-                }
-            });
-            Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
-            vfBox.show();
+    @Override
+    public boolean onMarkerClick(@NonNull Marker marker) {
+        Log.e(TAG,"marker");
+
+        if(marker.getTag() instanceof GeoJsonModel){
+            Log.e(TAG,"Marker instance of GeoJsonModel");
+            GeoJsonModel geoJsonModel = (GeoJsonModel) marker.getTag();
+            if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
+                Log.e(TAG, "Polygon ID: -> "+Utility.getStringValue(geoJsonModel.getPolygonID()));
+                showSelectedDialogBox(geoJsonModel);
+            }
+            else{
+                Log.e(TAG,"Polygon ID is Empty");
+            }
         }
         else{
-            Log.e(TAG,"Form Not Found");
-            Utility.showToast(mActivity,"Form Not Found");
+            Log.e(TAG,"Marker not instance of GeoJsonModel");
+        }
+        return false;
+    }
+
+//------------------------------------------------- File Upload ------------------------------------------------------------------------------------------------------------------------
+
+    private class FileUploadServer extends AsyncTask<Void, Integer, String> {
+        StringBuilder filePathData;
+        String form_id;
+        String unique_number;
+        String type;
+        boolean isCameraFileUpload = false;
+
+
+        public FileUploadServer(StringBuilder filePathData, String form_id, String unique_number,String type, boolean isCameraFileUpload) {
+            this.filePathData = filePathData;
+            this.form_id = form_id;
+            this.unique_number = unique_number;
+            this.type = type;
+            this.isCameraFileUpload = isCameraFileUpload;
+
+            if(type.equals(TYPE_FILE)){
+                Log.e(TAG, "File Type ");
+                isFileUpload = false;
+            }
+            else if(type.equals(TYPE_CAMERA) ){
+                Log.e(TAG, "Camera Type ");
+                isCameraUpload = false;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+        }
+        @Override
+        protected String doInBackground(Void... params) {
+            return uploadFile();
+        }
+        @SuppressWarnings("deprecation")
+        private String uploadFile(){
+            String responseString = null;
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost(URL_Utility.WS_FORM_FILE_UPLOAD);
+            Log.e(TAG,"File-Upload API -> " + URL_Utility.WS_FORM_FILE_UPLOAD);
+
+            try {
+                if(filePathData != null){
+                    if(!Utility.isEmptyString(filePathData.toString())){
+                        // File Path!
+                        String[] path = filePathData.toString().split(",");
+                        Log.e(TAG, "path: "+ filePathData.toString());
+                        for (String filepath : path) {
+                            File sourceFile = new File(filepath.split("#")[1]);
+                            String data = "";
+                            JSONObject params = new JSONObject();
+                            try {
+                                if(isCameraFileUpload){
+                                    params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PROPERTY_IMAGES);
+                                }
+                                else{
+                                    params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PLAN_ATTACHMENT);
+                                }
+                                params.put(Utility.PASS_UNIQUE_NUMBER, unique_number);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            // Encrypt Data!
+                            data = params.toString();
+                            AndroidMultiPartEntity entity = new AndroidMultiPartEntity(num -> publishProgress((int) ((num / (float) totalSize) * 100)));
+                            entity.addPart(URL_Utility.PARAM_FILE_UPLOAD, new FileBody(sourceFile));
+                            entity.addPart("data", new StringBody(data));
+                            Log.e(TAG, "File-Upload Data -> "+ data);
+
+                            totalSize = entity.getContentLength();
+                            httppost.setEntity(entity);
+                            HttpResponse response = httpclient.execute(httppost);
+                            HttpEntity r_entity = response.getEntity();
+                            int statusCode = response.getStatusLine().getStatusCode();
+
+                            if (statusCode == 200) {
+                                responseString = EntityUtils.toString(r_entity);
+                            } else {
+                                dismissProgressBar();
+                                responseString = "Error occurred! Http Status Code: " + statusCode;
+                                Log.e(TAG, responseString);
+                                // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG,"filePathData is Empty");
+                    }
+                }
+                else{
+                    Log.e(TAG,"filePathData null");
+                    isFormUpload = true;
+                    //  Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+
+            } catch (IOException e) {
+                dismissProgressBar();
+                isFormUpload= true;
+                // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                Log.e(TAG, e.getMessage());
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+                dismissProgressBar();
+                isFormUpload = true;
+                // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+            }
+            return responseString;
+        }
+        @Override
+        protected void onPostExecute(String result) {
+            String response = result;
+            Log.e(TAG, response);
+            if(!response.equals("")){
+                try {
+                    JSONObject mLoginObj = new JSONObject(response);
+                    String status = mLoginObj.optString("status");
+                    if (status.equalsIgnoreCase("Success")){
+
+                        switch (type) {
+                            case TYPE_FILE:
+                                Log.e(TAG, "File Upload Successfully");
+                                isFileUpload = true;
+                                break;
+
+                            case TYPE_CAMERA:
+                                Log.e(TAG, "Camera File Upload Successfully");
+                                isCameraUpload = true;
+                                break;
+                        }
+
+                        if((isCameraUpload && isFileUpload )){
+
+                            if (formDBModel != null && formDBModel.getId() != null) {
+                                // then
+                                if (dataBaseHelper.getAllForms().size() > 0) {
+                                    dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                }
+                                SyncFormDetails();
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG,status);
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+
+                } catch (JSONException e) {
+                    Log.e(TAG,e.getMessage());
+                    dismissProgressBar();
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                Log.e(TAG, response);
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+            super.onPostExecute(result);
         }
     }
 
-    private boolean isFormDataNotSync(){
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
-        return formDBModels.size() > 0;
+    private class FileUploadServerLogout extends AsyncTask<Void, Integer, String> {
+        StringBuilder filePathData;
+        String form_id;
+        String unique_number;
+        String type;
+        boolean isCameraFileUpload = false;
+
+
+        public FileUploadServerLogout(StringBuilder filePathData, String form_id, String unique_number,String type, boolean isCameraFileUpload) {
+            this.filePathData = filePathData;
+            this.form_id = form_id;
+            this.unique_number = unique_number;
+            this.type = type;
+            this.isCameraFileUpload = isCameraFileUpload;
+
+            if(type.equals(TYPE_FILE)){
+                Log.e(TAG, "File Type ");
+                isFileUpload = false;
+            }
+            else if(type.equals(TYPE_CAMERA) ){
+                Log.e(TAG, "Camera Type ");
+                isCameraUpload = false;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+        }
+        @Override
+        protected String doInBackground(Void... params) {
+            return uploadFile();
+        }
+        @SuppressWarnings("deprecation")
+        private String uploadFile(){
+            String responseString = null;
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost(URL_Utility.WS_FORM_FILE_UPLOAD);
+            Log.e(TAG,"File-Upload API -> " + URL_Utility.WS_FORM_FILE_UPLOAD);
+
+            try {
+                if(filePathData != null){
+                    if(!Utility.isEmptyString(filePathData.toString())){
+                        // File Path!
+                        String[] path = filePathData.toString().split(",");
+                        Log.e(TAG, "path: "+ filePathData.toString());
+                        for (String filepath : path) {
+                            File sourceFile = new File(filepath.split("#")[1]);
+                            String data = "";
+                            JSONObject params = new JSONObject();
+                            try {
+                                if(isCameraFileUpload){
+                                    params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PROPERTY_IMAGES);
+                                }
+                                else{
+                                    params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PLAN_ATTACHMENT);
+                                }
+                                params.put(Utility.PASS_UNIQUE_NUMBER, unique_number);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            // Encrypt Data!
+                            data = params.toString();
+                            AndroidMultiPartEntity entity = new AndroidMultiPartEntity(num -> publishProgress((int) ((num / (float) totalSize) * 100)));
+                            entity.addPart(URL_Utility.PARAM_FILE_UPLOAD, new FileBody(sourceFile));
+                            entity.addPart("data", new StringBody(data));
+                            Log.e(TAG, "File-Upload Data -> "+ data);
+
+                            totalSize = entity.getContentLength();
+                            httppost.setEntity(entity);
+                            HttpResponse response = httpclient.execute(httppost);
+                            HttpEntity r_entity = response.getEntity();
+                            int statusCode = response.getStatusLine().getStatusCode();
+
+                            if (statusCode == 200) {
+                                responseString = EntityUtils.toString(r_entity);
+                            } else {
+                                dismissProgressBar();
+                                responseString = "Error occurred! Http Status Code: " + statusCode;
+                                Log.e(TAG, responseString);
+                                // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG,"filePathData is Empty");
+                    }
+                }
+                else{
+                    Log.e(TAG,"filePathData null");
+                    //  Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+
+            } catch (IOException e) {
+                dismissProgressBar();
+                // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                Log.e(TAG, e.getMessage());
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+                dismissProgressBar();
+                // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+            }
+            return responseString;
+        }
+        @Override
+        protected void onPostExecute(String result) {
+            String response = result;
+            Log.e(TAG, response);
+            if(!response.equals("")){
+                try {
+                    JSONObject mLoginObj = new JSONObject(response);
+                    String status = mLoginObj.optString("status");
+                    if (status.equalsIgnoreCase("Success")){
+
+                        switch (type) {
+                            case TYPE_FILE:
+                                Log.e(TAG, "File Upload Successfully");
+                                isFileUpload = true;
+                                break;
+
+                            case TYPE_CAMERA:
+                                Log.e(TAG, "Camera File Upload Successfully");
+                                isCameraUpload = true;
+                                break;
+                        }
+
+                        if((isCameraUpload && isFileUpload )){
+
+                            if (formDBModel != null && formDBModel.getId() != null) {
+                                // then
+                                if (dataBaseHelper.getAllForms().size() > 0) {
+                                    dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+                                }
+                                LogoutSyncFormDetails();
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG,status);
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+
+                } catch (JSONException e) {
+                    Log.e(TAG,e.getMessage());
+                    dismissProgressBar();
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                Log.e(TAG, response);
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+            super.onPostExecute(result);
+        }
     }
 
-//------------------------------------------------------- Dialog Box Show ----------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------- addWMSLayer ------------------------------------------------------------------------------------------------------------------------
 
-    private void showSelectedDialogBox(String polygonID){
-        Utility.showSelectBox(mActivity, (item, dialogBox) -> {
-            switch (item){
-
-                case Utility.ITEM_SELECTED.ADD:
-                    dialogBox.dismiss();
-                    Intent intent = new Intent(MapsActivity.this, FormActivity.class);
-                    intent.putExtra(Utility.PASS_FORM_ID,"");
-                    intent.putExtra(Utility.PASS_POLYGON_ID,polygonID);
-                    startActivityForResult(intent,FORM_REQUEST_CODE);
-                    break;
-
-                case Utility.ITEM_SELECTED.VIEW:
-                    //dialogBox.dismiss();
-
-                    viewAllFormDialogBox(polygonID,dialogBox);
-                    break;
-            }
-        },false);
-
+    private void addWMSLayer(String wmsLayerURl){
+        TileProvider tileProvider = WMSTileProviderFactory.getWMSTileProvider(WMSProvider.getWMSLayer(wmsLayerURl));
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(tileProvider));
     }
 
 //---------------------------------------------- Location Permission ------------------------------------------------------------------------------------------------------------------------
@@ -1015,14 +1853,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
-//---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
     @Override
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
     }
 
-//---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();
@@ -1033,457 +1871,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onBackPressed() {
-            super.onBackPressed();
-
-//        if(isFormClick){
-//            Utility.showOKCancelDialogBox(mActivity, "Alert", "There are unsaved changes. Discard anyway ?", dialog -> {
-//                 clearForm();
-//                 dialog.dismiss();
-//            });
-//        }
-//        else{
-//            super.onBackPressed();
-//        }
-
+        super.onBackPressed();
     }
-
-    private void refreshFormData(){
-        mMap.clear();
-        showAllForm();
-    }
-
-//------------------------------------------------------- BoardCast Receiver ----------------------------------------------------------------------------------------------------------------
-
-    private final BroadcastReceiver syncReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String data = intent.getStringExtra("sync");
-            if(data.equalsIgnoreCase("on")){
-                refreshFormData();
-            }
-        }
-    };
-
-    private void registerReceiver(){
-        registerReceiver(syncReceiver, new IntentFilter(Utility.SyncServiceOn));
-    }
-
-    private void unregisterReceiver(){
-        try{
-            unregisterReceiver(syncReceiver);
-        }catch (IllegalArgumentException e){
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver();
-    }
-
-//------------------------------------------------------- onPolygonClick ----------------------------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onPolygonClick(@NonNull Polygon polygon) {
-
-        if(polygon.getTag() instanceof GeoJsonModel){
-            //Log.e(TAG,"Polygon instance of GeoJsonModel");
-            GeoJsonModel geoJsonModel = (GeoJsonModel) polygon.getTag();
-            if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
-                Log.e(TAG, "Polygon ID: -> "+Utility.getStringValue(geoJsonModel.getPolygonID()));
-                showSelectedDialogBox(geoJsonModel.getPolygonID());
-            }
-            else{
-                Log.e(TAG,"Polygon ID is Empty");
-            }
-        }
-        else{
-            Log.e(TAG,"Polygon not instance of GeoJsonModel");
-        }
-
-    }
-
-//------------------------------------------------------- Fetch GeoJson File ----------------------------------------------------------------------------------------------------------------------
-
-    private void showAllGeoJsonPolygon(){
-        //showProgressBar("Loading Wards.....");
-                ArrayList<GeoJsonModel> geoJsonModels = dataBaseHelper.getAllGeoJsonPolygon();
-                Log.e(TAG,"Geo-Json Polygon Size: "+ geoJsonModels.size());
-                try{
-                    if(geoJsonModels.size() > 0){
-                        for(int i=0; i<geoJsonModels.size(); i++){
-
-                            GeoJsonModel geoJsonModel = geoJsonModels.get(i);
-                            if(!Utility.isEmptyString(geoJsonModel.getLatLon())){
-                                ArrayList<ArrayList<LatLng>> geoJsonLatLonList = Utility.convertStringToListOfPolygon(geoJsonModel.getLatLon());
-                                if(geoJsonLatLonList.size() > 0){
-
-                                    for(int j=0; j<geoJsonLatLonList.size(); j++){
-                                        ArrayList<LatLng> latLngs = geoJsonLatLonList.get(j);
-                                        if(latLngs.size() > 0){
-                                            PolygonOptions polygonOptions = new PolygonOptions()
-                                                    .clickable(true)
-                                                    .addAll(latLngs)
-                                                    .strokeWidth(4)
-                                                    .strokeColor(Color.parseColor("#04faee"));
-                                            Polygon polygon = mMap.addPolygon(polygonOptions);
-                                            polygon.setTag(geoJsonModel);
-                                            //   public Marker addGeoJsonPolygonMarker(final Context context, final GoogleMap map, final LatLng location, final String text, final int padding) {
-                                           // Marker marker = Utility.addGeoJsonPolygonMarker(mActivity,mMap,Utility.getPolygonCenterPoint(latLngs),geoJsonModel.getPolygonID(),1);
-                                        }
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else{
-                        Log.e(TAG, "Geo-Json Polygon Empty");
-                        dismissProgressBar();
-                    }
-                }
-                catch (Exception e){
-                    dismissProgressBar();
-                    Log.e(TAG, "Error: "+e.getMessage());
-                }
-
-
-      //  dismissProgressBar();
-
-
-
-    }
-
 }
-
-//    private void fetchGeoJsonFile(){
-//        Log.e(TAG_GEO_JSON, "GeoJson");
-//        ArrayList<ShirolGeoModel> listArrayList = new ArrayList<>();
-//        showProgressBar("Loading....");
-////        ExecutorService service = Executors.newSingleThreadExecutor();
-////        service.execute(new Runnable() {
-////
-////            @Override
-////            public void run() {
-////                // On PreExecute Method
-////                runOnUiThread(new Runnable() {
-////                    @Override
-////                    public void run() {
-////                        showProgressBar("Loading....");
-////                    }
-////                });
-////
-////                // On Background Method
-////                try{
-////                    InputStream inputStream = getAssets().open("shirol.json");
-////                    int size = inputStream.available();
-////                    byte[] buffer = new byte[size];
-////                    inputStream.read(buffer);
-////                    inputStream.close();
-////                    String json = new String(buffer,"UTF-8");
-////                    java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
-////                    GeoJson geoJson =  new Gson().fromJson(json, Type);
-////                    int n = geoJson.getFeatures().size();
-////
-////                    ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
-////
-////                    ArrayList<Feature> features = geoJson.getFeatures();
-////                    // Features Loops
-////                    for(int i=0; i<n; i++){
-////                        Geometry geometry = features.get(i).getGeometry();
-////                        String gisid = features.get(i).getProperties().getGISID();
-////
-////                        coordinates = geometry.getCoordinates();
-////                        if(coordinates.size() > 0){
-////                            int coo_size = coordinates.get(0).get(0).size();
-////                            ArrayList<LatLng> latLngs = new ArrayList<>();
-////                            for(int j=0; j<coo_size; j++){
-////                                latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
-////                            }
-////                            listArrayList.add(new ShirolGeoModel(gisid,latLngs));
-////                        }
-////                    }
-//////            String json = new String(buffer,"UTF-8");
-//////            JSONArray jsonArray = new JSONArray(json);
-//////
-//////            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
-//////            for(int i=0; i<jsonArray.length(); i++){
-//////                JSONObject object = jsonArray.getJSONObject(i);
-//////                String GISID = object.getString("GISID");
-////
-////                    //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
-////                    //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
-////
-//////                if(!Utility.isEmptyString(GISID)){
-//////                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-//////                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
-//////                    shirolModelArrayList.add(s);
-//////                    Log.e(TAG,"GISID: " + s.getGISID());
-//////                    if(s.getCoordinates().size() > 0){
-//////                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
-//////                    }
-//////                    else{
-//////                        Log.e(TAG, "Coordinate Size: ");
-//////                    }
-//////                }
-////
-//////                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-//////                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
-//////
-//////                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
-////
-////                    // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
-////                    //}
-////
-////                    // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-////                    //               Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
-////                }
-////                catch (IOException e){
-////                    dismissProgressBar();
-////                    Log.e(TAG, "Error: "+e.getMessage());
-////                }
-////
-////                // On PostExecute Method
-////                runOnUiThread(() -> {
-////                    try{
-////                        for(int i=0; i<listArrayList.size(); i++){
-////                            ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
-////                            PolygonOptions polygonOptions = new PolygonOptions()
-////                                    .clickable(true)
-////                                    .addAll(latLngs)
-////                                    .strokeWidth(3)
-////                                    .strokeColor(Color.YELLOW);
-////                            Polygon polygon =  mMap.addPolygon(polygonOptions);
-////                            polygon.setTag(listArrayList.get(i));
-////                        }
-////                        dismissProgressBar();
-////                    }
-////                    catch (Exception e){
-////                        dismissProgressBar();
-////                        Log.e(TAG, e.getMessage());
-////                    }
-////                });
-////            }
-////        });
-//
-//        new AsyncTask<Void,Void,Void>(){
-//            @Override
-//            protected Void doInBackground(Void... voids) {
-//                try{
-//                    InputStream inputStream = getAssets().open("shirol.json");
-//                    int size = inputStream.available();
-//                    byte[] buffer = new byte[size];
-//                    inputStream.read(buffer);
-//                    inputStream.close();
-//                    String json = new String(buffer,"UTF-8");
-//                    java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
-//                    GeoJson geoJson =  new Gson().fromJson(json, Type);
-//                    int n = geoJson.getFeatures().size();
-//
-//                    ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
-//
-//                    ArrayList<Feature> features = geoJson.getFeatures();
-//                    // Features Loops
-//                    for(int i=0; i<n; i++){
-//                        Geometry geometry = features.get(i).getGeometry();
-//                        String gisid = features.get(i).getProperties().getGISID();
-//
-//                        coordinates = geometry.getCoordinates();
-//                        if(coordinates.size() > 0){
-//                            int coo_size = coordinates.get(0).get(0).size();
-//                            ArrayList<LatLng> latLngs = new ArrayList<>();
-//                            for(int j=0; j<coo_size; j++){
-//                                latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
-//                            }
-//                            listArrayList.add(new ShirolGeoModel(gisid,latLngs));
-//                        }
-//                    }
-////            String json = new String(buffer,"UTF-8");
-////            JSONArray jsonArray = new JSONArray(json);
-////
-////            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
-////            for(int i=0; i<jsonArray.length(); i++){
-////                JSONObject object = jsonArray.getJSONObject(i);
-////                String GISID = object.getString("GISID");
-//
-//                    //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
-//                    //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
-//
-////                if(!Utility.isEmptyString(GISID)){
-////                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-////                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
-////                    shirolModelArrayList.add(s);
-////                    Log.e(TAG,"GISID: " + s.getGISID());
-////                    if(s.getCoordinates().size() > 0){
-////                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
-////                    }
-////                    else{
-////                        Log.e(TAG, "Coordinate Size: ");
-////                    }
-////                }
-//
-////                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-////                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
-////
-////                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
-//
-//                    // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
-//                    //}
-//
-//                    // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-//     //               Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
-//                }
-//                catch (IOException e){
-//                    dismissProgressBar();
-//                    Log.e(TAG, "Error: "+e.getMessage());
-//                }
-//                return null;
-//            }
-//
-//            @Override
-//            protected void onPostExecute(Void unused) {
-//                super.onPostExecute(unused);
-//                for(int i=0; i<listArrayList.size(); i++){
-//                    ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
-//                    PolygonOptions polygonOptions = new PolygonOptions()
-//                            .clickable(true)
-//                            .addAll(latLngs)
-//                            .strokeWidth(3)
-//                            .strokeColor(Color.YELLOW);
-//                    Polygon polygon =  mMap.addPolygon(polygonOptions);
-//                    polygon.setTag(listArrayList.get(i));
-//                }
-//                dismissProgressBar();
-//            }
-//        }.execute();
-//
-//
-//
-////        try{
-////            InputStream inputStream = getAssets().open("shirol.json");
-////            int size = inputStream.available();
-////            byte[] buffer = new byte[size];
-////            inputStream.read(buffer);
-////            inputStream.close();
-////            String json = new String(buffer,"UTF-8");
-////
-////            java.lang.reflect.Type Type = new TypeToken<GeoJson>() {}.getType();
-////            GeoJson geoJson =  new Gson().fromJson(json, Type);
-////            int n = geoJson.getFeatures().size();
-////
-////            ArrayList<ArrayList<ArrayList<ArrayList<Double>>>> coordinates;
-////
-////            ArrayList<ShirolGeoModel> listArrayList = new ArrayList<>();
-////
-////            ArrayList<Feature> features = geoJson.getFeatures();
-////            // Features Loops
-////            for(int i=0; i<n; i++){
-////                Geometry geometry = features.get(i).getGeometry();
-////                String gisid = features.get(i).getProperties().getGISID();
-////
-////                coordinates = geometry.getCoordinates();
-////                if(coordinates.size() > 0){
-////                    int coo_size = coordinates.get(0).get(0).size();
-////                    ArrayList<LatLng> latLngs = new ArrayList<>();
-////                    for(int j=0; j<coo_size; j++){
-////                        latLngs.add(new LatLng(coordinates.get(0).get(0).get(j).get(1), coordinates.get(0).get(0).get(j).get(0)));
-////                    }
-////
-////                    listArrayList.add(new ShirolGeoModel(gisid,latLngs));
-////                }
-////            }
-////
-//////            String json = new String(buffer,"UTF-8");
-//////            JSONArray jsonArray = new JSONArray(json);
-//////
-//////            ArrayList<ShirolModel> shirolModelArrayList = new ArrayList<>();
-//////            for(int i=0; i<jsonArray.length(); i++){
-//////                JSONObject object = jsonArray.getJSONObject(i);
-//////                String GISID = object.getString("GISID");
-////
-////                //                JSONArray coordinatesJsonArray = new JSONArray(object.getString("Coordinates"));
-////                //ArrayList<ArrayList<LatLng>> latLngs = new ArrayList<>();
-////
-//////                if(!Utility.isEmptyString(GISID)){
-//////                    java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-//////                    ShirolModel s =  new Gson().fromJson(object.toString(), Type);
-//////                    shirolModelArrayList.add(s);
-//////                    Log.e(TAG,"GISID: " + s.getGISID());
-//////                    if(s.getCoordinates().size() > 0){
-//////                        Log.e(TAG, "Coordinate Size: "+ s.getCoordinates().get(0).size());
-//////                    }
-//////                    else{
-//////                        Log.e(TAG, "Coordinate Size: ");
-//////                    }
-//////                }
-////
-//////                java.lang.reflect.Type Type = new TypeToken<ShirolModel>() {}.getType();
-//////                ArrayList<ArrayList<LatLng>> latLngs =  new Gson().fromJson(coordinatesJsonArray.toString(), Type);
-//////
-//////                ShirolModel shirolModel = new ShirolModel(GISID,latLngs);
-////
-////               // Log.e(TAG,"Coordinate: " + shirolModel.getCoordinates().size());
-////            //}
-////
-////                // LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-////
-////
-////            Log.e(TAG_GEO_JSON, "Size of Data: " + listArrayList.size());
-////            for(int i=0; i<listArrayList.size(); i++){
-////                    ArrayList<LatLng> latLngs = listArrayList.get(i).getLatLngs();
-//////                    StringBuilder sb = new StringBuilder();
-//////                    for(int j=0; j<latLngs.size(); j++){
-//////                        sb.append(latLngs.get(j).latitude +","+ latLngs.get(j).longitude+" $ ");
-//////                    }
-//////                    Log.e(TAG_GEO_JSON,"Latlon: " + sb.toString());
-//////                    Log.e(TAG_GEO_JSON,"Inside Size : "+ latLngs.size());
-////////                    LatLng latLng = new LatLng(latLngs.get(0).latitude,latLngs.get(0).longitude);
-//////                    Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
-////
-////                    PolygonOptions polygonOptions = new PolygonOptions()
-////                            .clickable(true)
-////                            .addAll(latLngs)
-////                            .strokeWidth(3)
-////                            .strokeColor(Color.YELLOW);
-////                  Polygon polygon =  mMap.addPolygon(polygonOptions);
-////                  polygon.setTag(listArrayList.get(i));
-////
-////            }
-//////
-//////            }
-//////
-////
-////        }
-////        catch (IOException e){
-////            Log.e(TAG, "Error: "+e.getMessage());
-////        }
-//
-////        catch (IOException | JSONException e){
-////            Log.e(TAG, "Error: "+e.getMessage());
-////        }
-//    }
-//
-//    private void showShirolGeoJson(){
-//
-//        try {
-//            GeoJsonLayer layer = new GeoJsonLayer(mMap, R.raw.shirol, mActivity);
-//
-//            layer.addLayerToMap();
-//         //   layer.getDefaultPolygonStyle().setFillColor(Color.BLUE);
-//            layer.getDefaultPolygonStyle().setStrokeColor(Color.YELLOW);
-//
-//            layer.setOnFeatureClickListener(feature -> {
-//                // Log
-//                Log.i(TAG, "Feature GISID       : " + feature.getProperty("GISID"));
-//            //    Log.i(TAG, "Feature Geom Type: " + feature.getGeometry().getGeometryType());
-//            //    Log.i(TAG, "Feature LatLon   : " + feature.getGeometry().getGeometryObject());
-//                //layer.removeFeature((GeoJsonFeature) feature);
-//            });
-//
-//        }
-//        catch (IOException | JSONException e) {
-//            Log.e(TAG, e.getMessage());
-//
-//        }
-//    }

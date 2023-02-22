@@ -27,6 +27,7 @@ import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
 import com.eighttechprojects.propertytaxshirol.R;
+import com.eighttechprojects.propertytaxshirol.Utilities.ImageFileUtils;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
 import com.eighttechprojects.propertytaxshirol.databinding.ActivityResurveyFormBinding;
@@ -35,6 +36,8 @@ import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,6 +68,8 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     private String selectedIsStreetlightAvailable = "";
     private String selectedIsWaterLineAvailable   = "";
     private String selectedTotalWaterLine         = "";
+    private String selectedTotalWaterLine2         = "";
+
     private String selectedWaterUseType           = "";
     private String selectedSolarPanelAvailable    = "";
     private String selectedSolarPanelType         = "";
@@ -85,6 +90,23 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     String db_form_sp_building_use_type = "";
 
     private String polygonID = "";
+
+    // Camera
+    private File cameraDestFileTemp;
+    ImageFileUtils imageFileUtils;
+
+    StringBuilder sbCameraImagePathLocal = new StringBuilder();
+    StringBuilder sbCameraImagePath = new StringBuilder();
+
+    // File
+    StringBuilder sbFilePath = new StringBuilder();
+    StringBuilder sbFilePathLocal = new StringBuilder();
+
+    public static final String TYPE_FILE   = "file";
+    public static final String TYPE_CAMERA = "cameraUploader";
+    public static boolean isFileUpload   = true;
+    public static boolean isCameraUpload = true;
+
 
 //------------------------------------------------------- onCreate ----------------------------------------------------------------------------------------------------------------------
 
@@ -115,22 +137,25 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         initSpinner();
         // init Form Table Recycle View
         initFormTable();
+
     }
 
 //------------------------------------------------------- initExtra ----------------------------------------------------------------------------------------------------------------------
 
     private void initExtra(){
         Intent intent = getIntent();
-        // Latitude Contain or not
-        if(intent.getExtras().containsKey(Utility.PASS_LAT)){
-            latitude = intent.getStringExtra(Utility.PASS_LAT);
-            Log.e(TAG,"Resurvey Form DB Lat:  "+latitude);
-        }
-        // Longitude Contains or not
-        if(intent.getExtras().containsKey(Utility.PASS_LONG)) {
-            longitude = intent.getStringExtra(Utility.PASS_LONG);
-            Log.e(TAG, "Resurvey Form DB Long: "+longitude);
-        }
+
+//        // Latitude Contain or not
+//        if(intent.getExtras().containsKey(Utility.PASS_LAT)){
+//            latitude = intent.getStringExtra(Utility.PASS_LAT);
+//            Log.e(TAG,"Resurvey Form DB Lat:  "+latitude);
+//        }
+//        // Longitude Contains or not
+//        if(intent.getExtras().containsKey(Utility.PASS_LONG)) {
+//            longitude = intent.getStringExtra(Utility.PASS_LONG);
+//            Log.e(TAG, "Resurvey Form DB Long: "+longitude);
+//        }
+
         // Polygon ID Contains or not
         if(intent.getExtras().containsKey(Utility.PASS_POLYGON_ID)) {
             polygonID = intent.getStringExtra(Utility.PASS_LONG);
@@ -143,7 +168,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "Resurvey Form DB ID: " + resurveyID);
             FormDBModel formDBModel = dataBaseHelper.getResurveyMapFormByID(resurveyID);
             formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
-            bin = formModel.getFormFields();
+            bin = formModel.getForm();
             formID = bin.getForm_id();
             Log.e(TAG,"Resurvey Form ID: "+formID);
         }
@@ -166,7 +191,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             binding.formMobile.setText(Utility.getStringValue(bin.getMobile()));
             binding.formEmail.setText(Utility.getStringValue(bin.getEmail()));
             binding.formAadharNo.setText(Utility.getStringValue(bin.getAadhar_no()));
-            binding.formGridNo.setText(Utility.getStringValue(bin.getGrid_no()));
             binding.formGisId.setText(Utility.getStringValue(bin.getGis_id()));
             binding.formPropertyReleaseDate.setText(Utility.getStringValue(bin.getProperty_release_date()));
             binding.formTotalToilet.setText(Utility.getStringValue(bin.getTotal_toilet()));
@@ -181,7 +205,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             // 27.1
             binding.formTotalWaterLine1.setText(Utility.getStringValue(bin.getTotal_water_line1()));
             // 27.2
-            binding.formTotalWaterLine2.setText(Utility.getStringValue(bin.getTotal_water_line2()));
+        //    binding.formTotalWaterLine2.setText(Utility.getStringValue(bin.getTotal_water_line2()));
         }
     }
 
@@ -502,35 +526,31 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             public void onNothingSelected(AdapterView<?> adapterView) {}});
 
 
-//        // 27 - Spinner -----------------------------------------------------------------------------
-//        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
-//        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        binding.formSpTotalWaterLine.setAdapter(adapterTotalWaterLine);
-//        // set Data
-//        if(bin != null) {
-//            if (!Utility.isEmptyString(bin.getTotal_water_line())) {
-//                switch (bin.getTotal_water_line()) {
-//                    case "१/२”":
-//                        binding.formSpTotalWaterLine.setSelection(0);
-//                        break;
-//
-////                    case "२”":
-////                        binding.formSpTotalWaterLine.setSelection(1);
-////                        break;
-//
-//                    case "१”":
-//                        binding.formSpTotalWaterLine.setSelection(1);
-//                        break;
-//                }
-//            }
-//        }
-//        binding.formSpTotalWaterLine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
-//                selectedTotalWaterLine = parent.getItemAtPosition(position).toString();
-//            }
-//            @Override
-//            public void onNothingSelected(AdapterView<?> adapterView) {}});
+        // 27 - Spinner -----------------------------------------------------------------------------
+        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
+        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.formTotalWaterLine2.setAdapter(adapterTotalWaterLine);
+        // set Data
+        if(bin != null) {
+            if (!Utility.isEmptyString(bin.getTotal_water_line2())) {
+                switch (bin.getTotal_water_line2()) {
+                    case "१/२”":
+                        binding.formTotalWaterLine2.setSelection(0);
+                        break;
+
+                    case "१”":
+                        binding.formTotalWaterLine2.setSelection(1);
+                        break;
+                }
+            }
+        }
+        binding.formTotalWaterLine2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
+                selectedTotalWaterLine2 = parent.getItemAtPosition(position).toString();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}});
 
 
 
@@ -667,8 +687,8 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
 
     private void initFormTable(){
         if(formModel != null){
-            if(formModel.getForm_detail().size() > 0){
-                formTableModels.addAll(formModel.getForm_detail());
+            if(formModel.getDetais().size() > 0){
+                formTableModels.addAll(formModel.getDetais());
             }
         }
     }
@@ -813,7 +833,9 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             // Form Fields
             bin.setOwner_name(Utility.getEditTextValue(binding.formOwnerName));
             bin.setOld_property_no(Utility.getEditTextValue(binding.formOldPropertyNo));
-            bin.setNew_property_no(Utility.getEditTextValue(binding.formNewPropertyNo));
+            // 3
+            bin.setNew_property_no(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
+
             bin.setProperty_name(Utility.getEditTextValue(binding.formPropertyName));
             bin.setProperty_address(Utility.getEditTextValue(binding.formPropertyAddress));
             bin.setProperty_user_type(Utility.getStringValue(selectedPropertyUserType));
@@ -825,10 +847,11 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setMobile(Utility.getEditTextValue(binding.formMobile));
             bin.setEmail(Utility.getEditTextValue(binding.formEmail));
             bin.setAadhar_no(Utility.getEditTextValue(binding.formAadharNo));
-            bin.setGrid_no(Utility.getEditTextValue(binding.formGridNo));
-            bin.setGis_id(Utility.getEditTextValue(binding.formGisId));
-            bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
 
+            // 15
+            bin.setGis_id(Utility.getStringValue(binding.formGisId.getText().toString()));
+
+            bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
             bin.setNo_of_floor(Utility.getEditTextValue(binding.formNoOfFloors));
 
             bin.setProperty_release_date(Utility.getEditTextValue(binding.formPropertyReleaseDate));
@@ -842,7 +865,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setIs_water_line_available(Utility.getStringValue(selectedIsWaterLineAvailable));
 
             bin.setTotal_water_line1(Utility.getEditTextValue(binding.formTotalWaterLine1));
-            bin.setTotal_water_line2(Utility.getEditTextValue(binding.formTotalWaterLine2));
+            bin.setTotal_water_line2(Utility.getStringValue(selectedTotalWaterLine2));
 
             bin.setWater_use_type(Utility.getStringValue(selectedWaterUseType));
             bin.setSolar_panel_available(Utility.getStringValue(selectedSolarPanelAvailable));
@@ -854,7 +877,9 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setTotal_area(Utility.getEditTextValue(binding.formTotalArea));
 
             // Form
-            formModel = new FormModel(bin,adapterFormTable.getFormTableModels());
+            formModel.setForm(bin);
+            formModel.setDetais(adapterFormTable.getFormTableModels());
+//            formModel = new FormModel(bin,adapterFormTable.getFormTableModels());
             // Upload Form
             if(SystemPermission.isInternetConnected(mActivity)){
                 SaveFormToServe(formModel);
@@ -877,27 +902,31 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
 
     private void SaveFormToDatabase(FormModel formModel){
         String token = String.valueOf(Utility.getToken());
-        dataBaseHelper.insertMapForm(
-                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                polygonID,
-                formID,
-                latitude,
-                longitude,
-                Utility.convertFormModelToString(formModel),
-                "t",
-                token,"",""
-        );
 
-        dataBaseHelper.insertMapFormLocal(
-                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                latitude,
-                longitude,
-                Utility.convertFormModelToString(formModel),
-                token,"",""
-        );
+        dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
+        dataBaseHelper.insertGeoJsonPolygonFormLocal(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
+
+//        dataBaseHelper.insertMapForm(
+//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                polygonID,
+//                formID,
+//                latitude,
+//                longitude,
+//                Utility.convertFormModelToString(formModel),
+//                "t",
+//                token,"",""
+//        );
+//
+//        dataBaseHelper.insertMapFormLocal(
+//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                latitude,
+//                longitude,
+//                Utility.convertFormModelToString(formModel),
+//                token,"",""
+//        );
 
         // Delete Resurvey Form Data by ID
-        dataBaseHelper.deleteResurveyMapFormData(resurveyID);
+//        dataBaseHelper.deleteResurveyMapFormData(resurveyID);
 
         Log.e(TAG,"Form Save To Local Database");
         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {

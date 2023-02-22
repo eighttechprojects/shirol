@@ -15,7 +15,7 @@ public class URL_Utility {
 
 	// new API
 	public static final String COMMON_API = "http://173.249.24.149/shirol/api/";
-
+	//http://173.249.24.149/shirol/api
 
 // ########################################## COMMON PARAM ###########################################################################################################################
 
@@ -37,7 +37,11 @@ public class URL_Utility {
 	public static final String PARAM_UNIQUE_NUMBER    = "unique_number";
 
 	public static final String PARAM_IMAGE_DATA       = "imageData";
+
+	public static final String PARAM_FILE_UPLOAD      = "file_upload";
 	public static final String PARAM_IMAGE            = "property_images";
+	public static final String PARAM_PROPERTY_IMAGES  = "property_images";
+
 	public static final String PARAM_PLAN_ATTACHMENT  = "plan_attachment";
 
 // ########################################## NEW API ###########################################################################################################################
@@ -50,12 +54,16 @@ public class URL_Utility {
 	public static final String WS_FORGOT_PASSWORD = COMMON_API + "forgot-password";
 	// Form Upload
 	public static final String WS_FORM            = COMMON_API + "save-form";
-	public static final String WS_FORM_SYNC       = COMMON_API + "save-form";
 
+	public static final String WS_FORM_FILE_UPLOAD = COMMON_API + "upload-file";
+
+	public static final String WS_FORM_SYNC       = COMMON_API + "save-form";
 	// Resurvey
 	public static final String WS_RESURVEY_FORM   = COMMON_API + "login";
 
-	public static final String WS_FORM_FILE_UPLOAD = COMMON_API + "upload-file";
+	public static final String WS_SET_COUNTER     = COMMON_API + "set-counter";
+
+	public static final String WS_SET_COUNTER1     = COMMON_API + "set-counter";
 
 // ########################################## Response Code ####################################################################################################################
 
@@ -65,7 +73,9 @@ public class URL_Utility {
 		WS_FORM,
 		WS_RESURVEY_FORM,
 		WS_FORM_SYNC,
-		WS_GEOJSON
+		WS_GEOJSON,
+		WS_SET_COUNTER,
+		WS_SET_COUNTER1
 	}
 
 }

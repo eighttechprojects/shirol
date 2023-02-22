@@ -51,11 +51,20 @@
                 android:layout_gravity="center">
 
                 <Button
-                    android:id="@+id/btAddForm"
+                    android:id="@+id/btSingleAddForm"
                     android:layout_marginTop="10dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Add"
+                    android:text="Single Form"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_button" />
+
+                <Button
+                    android:id="@+id/btMultipleForm"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Multiple Form"
                     android:textColor="@color/white"
                     android:background="@drawable/bg_button" />
 
@@ -77,6 +86,7 @@
                     android:text="Edit"
                     android:textColor="@color/white"
                     android:background="@drawable/bg_button" />
+
 
                 <Button
                     android:id="@+id/btCancelForm"

@@ -1,7 +1,6 @@
 package com.eighttechprojects.propertytaxshirol.Activity.Form;
 
 import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,10 +9,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
-import android.hardware.Camera;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -29,7 +28,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.Toast;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
@@ -37,6 +35,7 @@ import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
+import com.eighttechprojects.propertytaxshirol.Model.LastKeyModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.eighttechprojects.propertytaxshirol.Utilities.ImageFileUtils;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
@@ -55,12 +54,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.mikelau.croperino.Croperino;
 import com.mikelau.croperino.CroperinoConfig;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -71,7 +67,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,6 +109,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     private String selectedSolarPanelType         = "";
     private String selectedRaniWaterHarvesting    = "";
 
+    private String selectedTotalWaterLine2        = "";
+
     // Form Table Model List
     ArrayList<FormTableModel> formTableModels = new ArrayList<>();
     // Adapter
@@ -134,10 +131,13 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     StringBuilder sbCameraImagePathLocal = new StringBuilder();
     StringBuilder sbCameraImagePath = new StringBuilder();
+    StringBuilder sbCameraImageName = new StringBuilder();
 
     // File
     StringBuilder sbFilePath = new StringBuilder();
+    StringBuilder sbFileName = new StringBuilder();
     StringBuilder sbFilePathLocal = new StringBuilder();
+
     // File Upload
     public long totalSize = 0;
     private String unique_number ="";
@@ -149,6 +149,15 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     public static boolean isCameraUpload = true;
 
     public String polygonID = "";
+    public String gisID     = "";
+
+    public String generatePropertyIDKey = "";
+
+    public boolean isMultipleForm = false;
+    FormFields bin;
+    public int lastKey;
+
+    private boolean isSurveyComplete = false;
 
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
 
@@ -208,17 +217,49 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initExtra(){
         Intent intent = getIntent();
-        // Form ID Contains or not
-        if(intent.getExtras().containsKey(Utility.PASS_FORM_ID)) {
-            formID= intent.getStringExtra(Utility.PASS_FORM_ID);
-            Log.e(TAG, "Form ID: "+ formID);
-        }
+
         // Polygon ID Contains or not
         if(intent.getExtras().containsKey(Utility.PASS_POLYGON_ID)) {
             polygonID = intent.getStringExtra(Utility.PASS_POLYGON_ID);
-            binding.formPropertyId.setText(Utility.getStringValue(polygonID));
-            Log.e(TAG, "Polygon ID: "+ polygonID);
+            Log.e(TAG, "Polygon-ID: "+ polygonID);
         }
+
+        // GIS-ID Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_GIS_ID)) {
+            gisID= intent.getStringExtra(Utility.PASS_GIS_ID);
+            Log.e(TAG, "GIS-ID: "+ gisID);
+            binding.formGisId.setText(Utility.getStringValue(gisID));
+        }
+
+        // Is Multiple Form Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_IS_MULTIPLE)) {
+            isMultipleForm = intent.getBooleanExtra(Utility.PASS_IS_MULTIPLE,false);
+            Log.e(TAG, "Is Multiple Form: "+ isMultipleForm);
+        }
+
+        // Last Key Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_LAST_KEY)) {
+            lastKey = intent.getIntExtra(Utility.PASS_LAST_KEY,0);
+            Log.e(TAG, "last key: "+ lastKey);
+        }
+
+        // Generate Property ID
+        binding.formNewPropertyNo.setText(Utility.getStringValue(generatePropertyID(polygonID,isMultipleForm,lastKey)));
+
+    }
+
+    private String generatePropertyID(String polygonID,boolean isMultipleForm,int lastKey){
+
+        String key = "";
+        // Single Form then
+        if(!isMultipleForm){
+            key = polygonID + "/"+ 1;
+        }
+        // Multiple Form then
+        else{
+            key = polygonID + "/"+ (lastKey + 1);
+        }
+        return key;
     }
 
 //------------------------------------------------------- initSpinner ----------------------------------------------------------------------------------------------------------------------
@@ -387,17 +428,17 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             public void onNothingSelected(AdapterView<?> adapterView) {}});
 
 
-//        // 27 - Spinner -----------------------------------------------------------------------------
-//        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
-//        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        binding.formSpTotalWaterLine.setAdapter(adapterTotalWaterLine);
-//        binding.formSpTotalWaterLine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
-//                selectedTotalWaterLine = parent.getItemAtPosition(position).toString();
-//            }
-//            @Override
-//            public void onNothingSelected(AdapterView<?> adapterView) {}});
+        // 27 - Spinner -----------------------------------------------------------------------------
+        ArrayAdapter<CharSequence> adapterTotalWaterLine = ArrayAdapter.createFromResource(mActivity, R.array.sp_total_water_line,android.R.layout.simple_spinner_item);
+        adapterTotalWaterLine.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.formTotalWaterLine2.setAdapter(adapterTotalWaterLine);
+        binding.formTotalWaterLine2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
+                selectedTotalWaterLine2 = parent.getItemAtPosition(position).toString();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}});
 
         // 28 - Spinner -----------------------------------------------------------------------------
         ArrayAdapter<CharSequence> adapterWaterUseType = ArrayAdapter.createFromResource(mActivity, R.array.sp_water_use_type,android.R.layout.simple_spinner_item);
@@ -539,7 +580,36 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()){
 
             case R.id.btSubmit:
-                onFormSubmit();
+                // Context context,String title,String str, DialogBoxYesClick dialogBoxYesClick, DialogBoxNoClick dialogBoxNoCl
+                // Form
+                formModel = new FormModel();
+                // 1 -----------------------------
+                bin = new FormFields();
+                // Default Fields
+
+                // Single Form
+                if(!isMultipleForm){
+                    bin.setForm_status(Utility.SurveyCompleted);
+                    bin.setPolygon_status(Utility.SurveyCompleted);
+                    isSurveyComplete = true;
+                    onFormSubmit();
+                }
+                // Multiple Form
+                else{
+                    Utility.showYesNoDialogBox(mActivity, "Info", "Survey Complete or Not?", yesDialogBox -> {
+                        yesDialogBox.dismiss();
+                        bin.setForm_status(Utility.SurveyCompleted);
+                        bin.setPolygon_status(Utility.SurveyCompleted);
+                        isSurveyComplete = true;
+                        onFormSubmit();
+                    }, noDialogBox -> {
+                        noDialogBox.dismiss();
+                        isSurveyComplete = false;
+                        bin.setForm_status(Utility.SurveyNotComplete);
+                        bin.setPolygon_status(Utility.SurveyNotComplete);
+                        onFormSubmit();
+                    });
+                }
                 break;
 
             case R.id.btExit:
@@ -678,27 +748,52 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 //------------------------------------------------------- Submit ----------------------------------------------------------------------------------------------------------------------
 
     private void onFormSubmit(){
+
         // Geom Array not Null
-        if(!Utility.isEmptyString(polygonID) && !Utility.isEmptyString(binding.formPropertyName.getText().toString())){
+        if(!Utility.isEmptyString(polygonID)){
 
             unique_number = String.valueOf(Utility.getToken());
             datetime      = Utility.getDateTime();
-            // Form
-            formModel = new FormModel();
-            // 1 -----------------------------
-            FormFields bin = new FormFields();
-            // Default Fields
-            bin.setFid(Utility.getEditTextValue(binding.formPropertyName));
+
+//            // Form
+//            formModel = new FormModel();
+//            // 1 -----------------------------
+//            bin = new FormFields();
+//            // Default Fields
+//
+//            // Single Form
+//            if(!isMultipleForm){
+//                bin.setForm_status(Utility.SurveyCompleted);
+//            }
+//            // Multiple Form
+//            else{
+//                Utility.showYesNoDialogBox(mActivity, "Info", "Survey Complete or Not?", yesDialogBox -> {
+//                    yesDialogBox.dismiss();
+//                    bin.setForm_status(Utility.SurveyCompleted);
+//                }, noDialogBox -> {
+//                    noDialogBox.dismiss();
+//                    bin.setForm_status(Utility.SurveyNotComplete);
+//                });
+//            }
+
+            bin.setUnique_number(unique_number);
+            bin.setForm_number(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
+            bin.setFid(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()).split("/")[1]);
+        //    bin.setLastKey(dataBaseHelper.getGenerateID(polygonID));
             bin.setPolygon_id(polygonID);
             bin.setForm_id(formID);
             bin.setUser_id(Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
             bin.setLatitude(latitude);
             bin.setLongitude(longitude);
             bin.setCreated_on(Utility.getDateTime());
+
             // Form Fields
             bin.setOwner_name(Utility.getEditTextValue(binding.formOwnerName));
             bin.setOld_property_no(Utility.getEditTextValue(binding.formOldPropertyNo));
-            bin.setNew_property_no(Utility.getEditTextValue(binding.formNewPropertyNo));
+
+            // 3
+            bin.setNew_property_no(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
+
             bin.setProperty_name(Utility.getEditTextValue(binding.formPropertyName));
             bin.setProperty_address(Utility.getEditTextValue(binding.formPropertyAddress));
             bin.setProperty_user_type(Utility.getStringValue(selectedPropertyUserType));
@@ -710,10 +805,11 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setMobile(Utility.getEditTextValue(binding.formMobile));
             bin.setEmail(Utility.getEditTextValue(binding.formEmail));
             bin.setAadhar_no(Utility.getEditTextValue(binding.formAadharNo));
-            bin.setGrid_no(Utility.getEditTextValue(binding.formGridNo));
-            bin.setGis_id(Utility.getEditTextValue(binding.formGisId));
-            bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
 
+            // 15
+            bin.setGis_id(Utility.getStringValue(binding.formGisId.getText().toString()));
+
+            bin.setProperty_type(Utility.getStringValue(selectedPropertyType));
             bin.setNo_of_floor(Utility.getEditTextValue(binding.formNoOfFloors));
 
             bin.setProperty_release_date(Utility.getEditTextValue(binding.formPropertyReleaseDate));
@@ -727,7 +823,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setIs_water_line_available(Utility.getStringValue(selectedIsWaterLineAvailable));
 
             bin.setTotal_water_line1(Utility.getStringValue(Utility.getEditTextValue(binding.formTotalWaterLine1)));
-            bin.setTotal_water_line2(Utility.getStringValue(Utility.getEditTextValue(binding.formTotalWaterLine2)));
+            bin.setTotal_water_line2(Utility.getStringValue(Utility.getStringValue(selectedTotalWaterLine2)));
 
             bin.setWater_use_type(Utility.getStringValue(selectedWaterUseType));
             bin.setSolar_panel_available(Utility.getStringValue(selectedSolarPanelAvailable));
@@ -737,6 +833,23 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setPlot_area(Utility.getEditTextValue(binding.formPlotArea));
             bin.setProperty_area(Utility.getEditTextValue(binding.formPropertyArea));
             bin.setTotal_area(Utility.getEditTextValue(binding.formTotalArea));
+
+//            if(!Utility.isEmptyString(sbCameraImageName.toString())){
+//                bin.setProperty_images(sbCameraImageName.toString());
+//            }
+//            else{
+//                bin.setProperty_images("");
+//            }
+//
+//            if(!Utility.isEmptyString(sbFileName.toString())){
+//                bin.setPlan_attachment(sbFileName.toString());
+//            }
+//            else{
+//                bin.setPlan_attachment("");
+//            }
+
+                bin.setProperty_images("");
+                bin.setPlan_attachment("");
 
             formModel.setForm(bin);
             formModel.setDetais(adapterFormTable.getFormTableModels());
@@ -757,45 +870,72 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
 //------------------------------------------------------- SaveFormToServe/Local ----------------------------------------------------------------------------------------------------------------------
 
+    private void submitForm(){
+        dismissProgressBar();
+        String generateID = dataBaseHelper.getGenerateID(polygonID);
+        if(!Utility.isEmptyString(generateID)){
+            dataBaseHelper.updateGenerateID(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
+        }
+        else{
+            dataBaseHelper.insertGenerateID(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
+        }
+
+        if(isSurveyComplete){
+            dataBaseHelper.updateGeoJsonPolygon(polygonID,Utility.SurveyCompleted);
+        }
+        else{
+            dataBaseHelper.updateGeoJsonPolygon(polygonID,Utility.SurveyNotComplete);
+        }
+
+        Intent intent = new Intent();
+        intent.putExtra(Utility.PASS_POLYGON_ID,polygonID);
+        setResult(RESULT_OK,intent);
+        finish();
+    }
+
     private void SaveFormToServe(FormModel formModel){
         showProgressBar("Form Uploading...");
         Map<String, String> params = new HashMap<>();
         params.put("data", Utility.convertFormModelToString(formModel));
+        Log.e(TAG, "Form -> " + Utility.convertFormModelToString(formModel));
         BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM, URL_Utility.WS_FORM, params, false, false);
+    }
+
+    private void processUploadLastKeyToServer(String polygonID, String lastKey){
+        showProgressBar("Form Uploading...");
+        Map<String, String> params = new HashMap<>();
+//        //poly_id, counter
+        LastKeyModel lastKeyModel = new LastKeyModel();
+        lastKeyModel.setCounter(lastKey);
+        lastKeyModel.setPoly_id(polygonID);
+        params.put("data",Utility.convertlastKeyModelToString(lastKeyModel));
+       // params.put("data",);
+        Log.e(TAG, "Last key  Uploaded -> " + params.toString());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_SET_COUNTER, URL_Utility.WS_SET_COUNTER, params, false, false);
+    }
+
+    private void processUploadLastKeyToServer1(String polygonID, String lastKey){
+        showProgressBar("Form Uploading...");
+        Map<String, String> params = new HashMap<>();
+//        //poly_id, counter
+        LastKeyModel lastKeyModel = new LastKeyModel();
+        lastKeyModel.setCounter(lastKey);
+        lastKeyModel.setPoly_id(polygonID);
+        params.put("data",Utility.convertlastKeyModelToString(lastKeyModel));
+        // params.put("data",);
+        Log.e(TAG, "Last key  Uploaded -> " + params.toString());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_SET_COUNTER1, URL_Utility.WS_SET_COUNTER1, params, false, false);
     }
 
     private void SaveFormToDatabase(FormModel formModel){
        // String token = String.valueOf(Utility.getToken());
         dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
         dataBaseHelper.insertGeoJsonPolygonFormLocal(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
-
-//        dataBaseHelper.insertMapForm(
-//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-//                polygonID,
-//                formID,
-//                latitude,
-//                longitude,
-//                Utility.convertFormModelToString(formModel),
-//                "t",
-//                unique_number,
-//                sbFilePathLocal.toString(),
-//                sbCameraImagePathLocal.toString()
-//        );
-//        dataBaseHelper.insertMapFormLocal(
-//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-//                latitude,
-//                longitude,
-//                Utility.convertFormModelToString(formModel),
-//                unique_number,
-//                sbFilePath.toString(),
-//                sbCameraImagePath.toString()
-//        );
-
         Log.e(TAG,"Form Save To Local Database");
+        dismissProgressBar();
         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
             okDialogBox.dismiss();
-            setResult(RESULT_OK);
-            finish();
+            submitForm();
         });
     }
 
@@ -804,6 +944,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onSuccessResponse(URL_Utility.ResponseCode responseCode, String response) {
         Log.e(TAG,"Response: " + response);
+        // Form
         if(responseCode == URL_Utility.ResponseCode.WS_FORM){
             if(!response.equals("")){
                 try {
@@ -812,7 +953,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     Log.e(TAG, "Form Status : " + status);
                     // Status -> Success
                     if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
-                        Log.e(TAG,"Form Upload to Server SuccessFully");
 
                         // Changes
                         boolean isFile   = false;
@@ -850,28 +990,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         // When User Select Only Form
                         else{
                             Log.e(TAG,"User Upload only Form not Camera File or File");
-                            dismissProgressBar();
-                            if(formModel != null)
-                            {
-                                dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"t","","");
-//                                dataBaseHelper.insertMapForm(
-//                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-//                                        polygonID,
-//                                        formID,
-//                                        latitude,
-//                                        longitude,
-//                                        Utility.convertFormModelToString(formModel),
-//                                        "f",
-//                                        unique_number,
-//                                        "",
-//                                        ""
-//                                );
-                            }
-                            Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
-                                okDialogBox.dismiss();
-                                setResult(RESULT_OK);
-                                finish();
-                            });
+                            Log.e(TAG,"Form Upload to Server SuccessFully");
+                            processUploadLastKeyToServer1(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
                         }
 
                     }
@@ -889,6 +1009,80 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             }
             else{
                 Log.e(TAG, "Form Response Empty");
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
+        // Set Counter
+        if(responseCode == URL_Utility.ResponseCode.WS_SET_COUNTER){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "SET Counter Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+                            dismissProgressBar();
+                            Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
+                                okDialogBox.dismiss();
+                                if(formModel != null){
+                                    dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"t",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
+                                }
+                                submitForm();
+                            });
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    Log.e(TAG,"Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+            }
+            else{
+                Log.e(TAG, "SET Counter Response Empty");
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
+
+        // Set Counter 1
+        if(responseCode == URL_Utility.ResponseCode.WS_SET_COUNTER1){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "SET Counter Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+                        dismissProgressBar();
+                        Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
+                            okDialogBox.dismiss();
+                            if(formModel != null)
+                            {
+                                dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"t","","");
+                            }
+                            submitForm();
+                        });
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    Log.e(TAG,"Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+            }
+            else{
+                Log.e(TAG, "SET Counter Response Empty");
                 dismissProgressBar();
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
@@ -947,48 +1141,16 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         // Camera Photo/Image Request
         if(requestCode == Utility.REQUEST_TAKE_PHOTO){
             if(resultCode == Activity.RESULT_OK){
-                Croperino.runCropImage(cameraDestFileTemp, mActivity, true, 1, 1, R.color.colorAccent, R.color.colorPrimary);
-//                try{
-//                    binding.txtGeoTag.setText(getGeoTagData());
-//                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(cameraDestFileTemp));
-//                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
-//                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
-//                    binding.imgPreview.setImageBitmap(bitmapPreview);
-//                    updatePreviewUI(true);
-//
-//                    new Handler().postDelayed(() -> {
-//                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
-//                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
-//                            Log.e("Picture", "screenshot capture success");
-//                        } else {
-//                            destFile = destFileTemp2;
-//                            Log.e("Picture", "screenshot capture failed");
-//                        }
-//                        sbCameraImagePath.append(destFile.getPath());
-//                        updatePreviewUI(false);
-//                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
-//                        // Set Image
-//                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
-//                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
-//                    }, 400);
-//                }
-//                catch (Exception e){
-//                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
-//                    Log.e(TAG, e.getMessage());
-//                }
-            }
-        }
-        // Crop Camera Photo/Image Request
-        else if(requestCode == CroperinoConfig.REQUEST_CROP_PHOTO){
-            //try {
+                //Croperino.runCropImage(cameraDestFileTemp, mActivity, true, 1, 1, R.color.colorAccent, R.color.colorPrimary);
                 try{
                     sbCameraImagePath = new StringBuilder();
                     sbCameraImagePathLocal = new StringBuilder();
-                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
-                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
+                    sbCameraImageName = new StringBuilder();
+//                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+//                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
 
                     binding.txtGeoTag.setText(getGeoTagData());
-                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(destFile1));
+                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(cameraDestFileTemp));
                     File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
                     ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
                     binding.imgPreview.setImageBitmap(bitmapPreview);
@@ -1004,9 +1166,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         sbCameraImagePath.append(destFile.getPath());
                         sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
-                        if(formModel != null){
-                            formModel.getForm().setProperty_images(destFile.getName());
-                        }
+                        sbCameraImageName.append(destFile.getName());
                         updatePreviewUI(false);
                         Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
                         // Set Image
@@ -1015,10 +1175,52 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     }, 400);
                 }
                 catch (Exception e){
-                    formModel.getForm().setProperty_images("");
                     Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
                     Log.e(TAG, e.getMessage());
                 }
+            }
+        }
+        // Crop Camera Photo/Image Request
+        else if(requestCode == CroperinoConfig.REQUEST_CROP_PHOTO){
+            //try {
+//                try{
+//                    sbCameraImagePath = new StringBuilder();
+//                    sbCameraImagePathLocal = new StringBuilder();
+//                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+//                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
+//
+//                    binding.txtGeoTag.setText(getGeoTagData());
+//                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(destFile1));
+//                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
+//                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
+//                    binding.imgPreview.setImageBitmap(bitmapPreview);
+//                    updatePreviewUI(true);
+//
+//                    new Handler().postDelayed(() -> {
+//                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+//                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
+//                            Log.e("Picture", "screenshot capture success");
+//                        } else {
+//                            destFile = destFileTemp2;
+//                            Log.e("Picture", "screenshot capture failed");
+//                        }
+//                        sbCameraImagePath.append(destFile.getPath());
+//                        sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
+//                        if(formModel != null){
+//                            formModel.getForm().setProperty_images(destFile.getName());
+//                        }
+//                        updatePreviewUI(false);
+//                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
+//                        // Set Image
+//                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
+//                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+//                    }, 400);
+//                }
+//                catch (Exception e){
+//                    formModel.getForm().setProperty_images("");
+//                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
+//                    Log.e(TAG, e.getMessage());
+//                }
                 //listFormDetailsData.get(positionCaptureImagePojo).setValue(destFile.getAbsolutePath());
 //            } catch (Exception e) {
 //                e.printStackTrace();
@@ -1038,7 +1240,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         Uri multipleUri = data.getClipData().getItemAt(i).getUri();
                         multipleFileList.add(multipleUri);
                     }
-                    StringBuilder sbFileName = new StringBuilder();
+                    sbFileName = new StringBuilder();
                     sbFilePath = new StringBuilder();
                     sbFilePathLocal = new StringBuilder();
                     for(int i=0; i<multipleFileList.size(); i++){
@@ -1062,9 +1264,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                             }
                         }
                     }
-                    if(formModel != null){
-                        formModel.getForm().setPlan_attachment(sbFileName.toString());
-                    }
+
+                    binding.tvFileUploadName.setText("File Selected");
 
                 }
                 // Single File Selected
@@ -1081,13 +1282,13 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     if(destFile != null){
+                        sbFileName = new StringBuilder();
                         sbFilePath = new StringBuilder();
                         sbFilePathLocal = new StringBuilder();
                         sbFilePath.append(destFile.getPath());
+                        sbFileName.append(destFile.getName());
                         sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
-                        if(formModel != null){
-                            formModel.getForm().setPlan_attachment(destFile.getName());
-                        }
+                        binding.tvFileUploadName.setText("File Selected");
                     }
                 }
 
@@ -1141,6 +1342,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             String responseString = null;
             HttpClient httpclient = new DefaultHttpClient();
             HttpPost httppost = new HttpPost(URL_Utility.WS_FORM_FILE_UPLOAD);
+            Log.e(TAG,"File-Upload API -> " + URL_Utility.WS_FORM_FILE_UPLOAD);
 
             try {
                 if(filePathData != null){
@@ -1153,22 +1355,23 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                                 String data = "";
                                 JSONObject params = new JSONObject();
                                 try {
-                                    params.put(Utility.PASS_USER_ID,Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
-                                    params.put(Utility.PASS_POLYGON_ID,polygonID);
-                                    params.put("unique_number", unique_number);
+                                    if(isCameraFileUpload){
+                                       params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PROPERTY_IMAGES);
+                                    }
+                                    else{
+                                        params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PLAN_ATTACHMENT);
+                                    }
+                                    params.put(Utility.PASS_UNIQUE_NUMBER, unique_number);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
                                 // Encrypt Data!
                                 data = params.toString();
                                 AndroidMultiPartEntity entity = new AndroidMultiPartEntity(num -> publishProgress((int) ((num / (float) totalSize) * 100)));
-                                if(isCameraFileUpload){
-                                    entity.addPart(URL_Utility.PARAM_IMAGE, new FileBody(sourceFile));
-                                }
-                                else{
-                                    entity.addPart(URL_Utility.PARAM_PLAN_ATTACHMENT, new FileBody(sourceFile));
-                                }
+                                entity.addPart(URL_Utility.PARAM_FILE_UPLOAD, new FileBody(sourceFile));
                                 entity.addPart("data", new StringBody(data));
+                                Log.e(TAG, "File-Upload Data -> "+ data);
+
                                 totalSize = entity.getContentLength();
                                 httppost.setEntity(entity);
                                 HttpResponse response = httpclient.execute(httppost);
@@ -1177,62 +1380,39 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
                                 if (statusCode == 200) {
                                     responseString = EntityUtils.toString(r_entity);
-                                    String res = (responseString);
-                                    if (!res.equals("")) {
-                                        try {
-                                            JSONObject mLoginObj = new JSONObject(res);
-                                            String status = mLoginObj.optString("status");
-                                            Log.e(TAG, status);
-                                            if (status.equalsIgnoreCase("Success")) {
-
-                                            }
-                                            else {
-                                                dismissProgressBar();
-                                                Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
-                                            }
-                                        } catch (JSONException e) {
-                                            dismissProgressBar();
-                                            Log.e(TAG, e.getMessage());
-                                            Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
-                                        }
-                                    } else {
-                                        dismissProgressBar();
-                                        Log.e(TAG,"response null");
-                                        Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
-                                    }
                                 } else {
                                     dismissProgressBar();
                                     responseString = "Error occurred! Http Status Code: " + statusCode;
                                     Log.e(TAG, responseString);
-                                    Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                                   // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
                                 }
                             }
                     }
                     else{
                         Log.e(TAG,"filePathData is Empty");
                     }
-
                 }
                 else{
                     Log.e(TAG,"filePathData null");
-                    Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+                  //  Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
                     dismissProgressBar();
                 }
 
             } catch (IOException e) {
                 dismissProgressBar();
-                Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+               // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
                 Log.e(TAG, e.getMessage());
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
                 dismissProgressBar();
-                Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+               // Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
             }
             return responseString;
         }
         @Override
         protected void onPostExecute(String result) {
             String response = result;
+            Log.e(TAG, response);
             if(!response.equals("")){
                 try {
                     JSONObject mLoginObj = new JSONObject(response);
@@ -1253,27 +1433,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
                         if((isCameraUpload && isFileUpload )){
                             Log.e(TAG,"Save File Successfully");
-                            dismissProgressBar();
-                            if(formModel != null){
-                                dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"t",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
-//                                dataBaseHelper.insertMapForm(
-//                                        Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-//                                        polygonID,
-//                                        formID,
-//                                        latitude,
-//                                        longitude,
-//                                        Utility.convertFormModelToString(formModel),
-//                                        "t",
-//                                        unique_number,
-//                                        sbFilePathLocal.toString(),
-//                                        sbCameraImagePathLocal.toString()
-//                                );
-                            }
-                            Utility.showOKDialogBox(mActivity, "Save Successfully", dialog -> {
-                                dialog.dismiss();
-                                setResult(RESULT_OK);
-                                finish();
-                            });
+                            processUploadLastKeyToServer(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
                         }
                     }
                     else{
@@ -1296,7 +1456,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             super.onPostExecute(result);
         }
     }
-
 
 //---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
 

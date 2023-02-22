@@ -16,6 +16,7 @@
                 android:id="@+id/menuResurvey"
                 android:title="@string/resurvey"
                 android:icon="@drawable/ic_file"
+                android:visible="false"
                 app:showAsAction="ifRoom" />
 
             <item

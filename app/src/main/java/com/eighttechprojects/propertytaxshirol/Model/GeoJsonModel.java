@@ -2,11 +2,12 @@ package com.eighttechprojects.propertytaxshirol.Model;
 
 public class GeoJsonModel {
 
+    private String polygonStatus;
     private String id;
     private String polygonID;
+    private String gisID;
     private String LatLon;
     private String Form;
-
     private boolean isOnlineSave = false;
 
 
@@ -21,6 +22,10 @@ public class GeoJsonModel {
         return polygonID;
     }
 
+    public String getGisID() {
+        return gisID;
+    }
+
     public String getLatLon() {
         return LatLon;
     }
@@ -31,6 +36,10 @@ public class GeoJsonModel {
 
     public boolean isOnlineSave() {
         return isOnlineSave;
+    }
+
+    public String getPolygonStatus() {
+        return polygonStatus;
     }
 
     //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
@@ -44,6 +53,10 @@ public class GeoJsonModel {
         this.polygonID = polygonID;
     }
 
+    public void setGisID(String gisID) {
+        this.gisID = gisID;
+    }
+
     public void setLatLon(String latLon) {
         LatLon = latLon;
     }
@@ -54,5 +67,9 @@ public class GeoJsonModel {
 
     public void setOnlineSave(boolean onlineSave) {
         isOnlineSave = onlineSave;
+    }
+
+    public void setPolygonStatus(String polygonStatus) {
+        this.polygonStatus = polygonStatus;
     }
 }

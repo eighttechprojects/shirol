@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.Toast;
 import com.eighttechprojects.propertytaxshirol.Activity.GoogleMap.MapsActivity;
 import com.eighttechprojects.propertytaxshirol.R;
+import com.eighttechprojects.propertytaxshirol.Utilities.PermissionUtils;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
 

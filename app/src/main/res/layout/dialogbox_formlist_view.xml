@@ -11,7 +11,6 @@
 
     <!-- ############################## Form Layout ###################################### -->
 
-
         <!-- label -->
         <LinearLayout
             android:id="@+id/tvLabel"
@@ -51,19 +50,55 @@
         android:gravity="center"
         android:orientation="horizontal">
 
+        <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/ll_multipleFormView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btAddForm"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:text="Add"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_margin="5dp"
+                style="?android:attr/buttonBarButtonStyle" />
+
+            <Button
+                android:id="@+id/btExitForm"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:text="@string/exit"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_margin="5dp"
+                style="?android:attr/buttonBarButtonStyle" />
+
+        </LinearLayout>
 
         <Button
+            android:visibility="visible"
             android:id="@+id/btExit"
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1"
             android:background="@color/formColor"
-            android:text="@string/exit"
+            android:text="Close"
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
-            style="?android:attr/buttonBarButtonStyle"
-            />
+            style="?android:attr/buttonBarButtonStyle" />
+
+
 
     </LinearLayout>
 

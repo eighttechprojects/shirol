@@ -5,10 +5,13 @@ import java.util.ArrayList;
 public class FormFields {
 
     // default fields-----------------
+    private String polygon_status;
     private String form_number;
     private String fid;
     private String polygon_id;
 
+    private String lastKey;
+    private String unique_number;
     private String form_id;
     private String user_id;
     private String latitude;
@@ -54,6 +57,9 @@ public class FormFields {
     private String solar_panel_type;
     private String rain_water_harvesting;
 
+    private String form_status;
+
+    private String form_comment;
     private String plot_area;
     private String property_area;
     private String total_area;
@@ -63,6 +69,26 @@ public class FormFields {
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public String getPolygon_status() {
+        return polygon_status;
+    }
+
+    public String getLastKey() {
+        return lastKey;
+    }
+
+    public String getUnique_number() {
+        return unique_number;
+    }
+
+    public String getForm_status() {
+        return form_status;
+    }
+
+    public String getForm_comment() {
+        return form_comment;
+    }
 
     public ArrayList<FormTableModel> getDetais() {
         return detais;
@@ -258,6 +284,26 @@ public class FormFields {
 
 //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public void setPolygon_status(String polygon_status) {
+        this.polygon_status = polygon_status;
+    }
+
+    public void setLastKey(String lastKey) {
+        this.lastKey = lastKey;
+    }
+
+    public void setUnique_number(String unique_number) {
+        this.unique_number = unique_number;
+    }
+
+    public void setForm_status(String form_status) {
+        this.form_status = form_status;
+    }
+
+    public void setForm_comment(String form_comment) {
+        this.form_comment = form_comment;
+    }
 
     public void setDetais(ArrayList<FormTableModel> detais) {
         this.detais = detais;
