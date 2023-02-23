@@ -32,6 +32,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
@@ -150,6 +151,8 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     public int lastKey;
     private String polygonID = "";
     public String gisID     = "";
+
+    public String ward_no   = "";
     private String unique_number ="";
     private String datetime = "";
 
@@ -231,6 +234,13 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "Resurvey From GIS ID: "+gisID);
         }
 
+        // Ward No Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_WARD_NO)) {
+            ward_no = intent.getStringExtra(Utility.PASS_WARD_NO);
+            Log.e(TAG, "Resurvey From Ward No: "+ward_no);
+        }
+
+
         // Id
         if(intent.getExtras().containsKey(Utility.PASS_ID)) {
             String id = intent.getStringExtra(Utility.PASS_ID);
@@ -292,14 +302,18 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                 switch (bin.getProperty_user_type()) {
                     case "स्वत":
                         binding.formSpPropertyUserType.setSelection(0);
+                        binding.ll7.setVisibility(View.GONE);
                         break;
 
                     case "भाडेकरू":
                         binding.formSpPropertyUserType.setSelection(1);
+                        binding.ll7.setVisibility(View.GONE);
                         break;
 
-                    case "भोगवटदर":
+                    case "भोगवटादार":
                         binding.formSpPropertyUserType.setSelection(2);
+                        binding.ll7.setVisibility(View.VISIBLE);
+
                         break;
                 }
             }
@@ -308,6 +322,17 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
                 selectedPropertyUserType = parent.getItemAtPosition(position).toString();
+                if(selectedPropertyUserType.equalsIgnoreCase("भोगवटादार")){
+                    binding.ll7.setVisibility(View.VISIBLE);
+                }
+                else if(selectedPropertyUserType.equalsIgnoreCase("भोगवटादार")){
+                    binding.ll7.setVisibility(View.GONE);
+                    binding.formPropertyUser.setText("");
+                }
+                else{
+                    binding.ll7.setVisibility(View.GONE);
+                    binding.formPropertyUser.setText("");
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}});
@@ -631,7 +656,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         if(bin != null) {
             if (!Utility.isEmptyString(bin.getProperty_user_type())) {
                 switch (bin.getWater_use_type()) {
-                    case "रहिवास":
+                    case "रहिवासी":
                         binding.formSpWaterUseType.setSelection(0);
                         break;
 
@@ -1149,6 +1174,9 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         // Exit Button
         Button btExit = fDB.findViewById(R.id.dbExit);
         btExit.setOnClickListener(view -> fDB.dismiss());
+        // Linear Layout
+        LinearLayout ll_table6     = fDB.findViewById(R.id.ll_table6);
+
         // Init Edit Text
         EditText sr_no            = fDB.findViewById(R.id.form_table_sr_no);
         EditText floor            = fDB.findViewById(R.id.form_table_floor);
@@ -1161,6 +1189,17 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         // Spinner
         Spinner building_type     = fDB.findViewById(R.id.form_sp_building_type);
         Spinner building_use_type = fDB.findViewById(R.id.form_sp_building_use_type);
+
+
+
+        if(selectedPropertyUserType.equalsIgnoreCase("भाडेकरू")){
+            ll_table6.setVisibility(View.VISIBLE);
+        }
+        else{
+            ll_table6.setVisibility(View.GONE);
+            annual_rent.setText("");
+        }
+
 
         // Building Type Spinner -----------------------------------------------------------------------------
         ArrayAdapter<CharSequence> adapterBuildingType = ArrayAdapter.createFromResource(mActivity, R.array.sp_building_type,android.R.layout.simple_spinner_item);
@@ -1249,7 +1288,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             bin.setResurvey_no(Utility.getEditTextValue(binding.formResurveyNo));
             bin.setGat_no(Utility.getEditTextValue(binding.formGatNo));
             bin.setZone(Utility.getEditTextValue(binding.formZone));
-            bin.setWard(Utility.getEditTextValue(binding.formWard));
+            bin.setWard(ward_no);
             bin.setMobile(Utility.getEditTextValue(binding.formMobile));
             bin.setEmail(Utility.getEditTextValue(binding.formEmail));
             bin.setAadhar_no(Utility.getEditTextValue(binding.formAadharNo));

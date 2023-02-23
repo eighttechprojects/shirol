@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
@@ -106,7 +107,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     private String selectedSolarPanelAvailable    = "";
     private String selectedSolarPanelType         = "";
     private String selectedRaniWaterHarvesting    = "";
-
     private String selectedTotalWaterLine2        = "";
 
     // Form Table Model List
@@ -149,6 +149,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     public String polygonID = "";
     public String gisID     = "";
 
+    public String ward_no = "";
     public String generatePropertyIDKey = "";
 
     public boolean isMultipleForm = false;
@@ -229,6 +230,13 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             binding.formGisId.setText(Utility.getStringValue(gisID));
         }
 
+        // Ward No Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_WARD_NO)) {
+            ward_no= intent.getStringExtra(Utility.PASS_WARD_NO);
+            Log.e(TAG, "Ward No: "+ ward_no);
+            binding.formWard.setText(Utility.getStringValue(ward_no));
+        }
+
         // Is Multiple Form Contains or not
         if(intent.getExtras().containsKey(Utility.PASS_IS_MULTIPLE)) {
             isMultipleForm = intent.getBooleanExtra(Utility.PASS_IS_MULTIPLE,false);
@@ -268,10 +276,27 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         ArrayAdapter<CharSequence> adapterPropertyUserType = ArrayAdapter.createFromResource(mActivity, R.array.sp_property_user_type,android.R.layout.simple_spinner_item);
         adapterPropertyUserType.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.formSpPropertyUserType.setAdapter(adapterPropertyUserType);
+
+
         binding.formSpPropertyUserType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long l) {
                 selectedPropertyUserType = parent.getItemAtPosition(position).toString();
+
+                // 7 visible
+                if(selectedPropertyUserType.equalsIgnoreCase("भोगवटादार")){
+                    binding.ll7.setVisibility(View.VISIBLE);
+                }
+                // Table 6 visible else not
+                else if(selectedPropertyUserType.equalsIgnoreCase("भाडेकरू")){
+                    binding.ll7.setVisibility(View.GONE);
+                    binding.formPropertyUser.setText("");
+                }
+                else{
+                    binding.ll7.setVisibility(View.GONE);
+                    binding.formPropertyUser.setText("");
+                }
+
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}});
@@ -679,6 +704,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         // Exit Button
         Button btExit       = fDB.findViewById(R.id.dbExit);
         btExit.setOnClickListener(view -> fDB.dismiss());
+        // Linear Layout
+        LinearLayout ll_table6     = fDB.findViewById(R.id.ll_table6);
         // Init Edit Text
         EditText sr_no             = fDB.findViewById(R.id.form_table_sr_no);
         EditText floor             = fDB.findViewById(R.id.form_table_floor);
@@ -691,6 +718,15 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         // Spinner
         Spinner building_type     = fDB.findViewById(R.id.form_sp_building_type);
         Spinner building_use_type = fDB.findViewById(R.id.form_sp_building_use_type);
+
+        if(selectedPropertyUserType.equalsIgnoreCase("भाडेकरू")){
+            ll_table6.setVisibility(View.VISIBLE);
+        }
+        else{
+            ll_table6.setVisibility(View.GONE);
+            annual_rent.setText("");
+        }
+
 
         // Building Type Spinner -----------------------------------------------------------------------------
         ArrayAdapter<CharSequence> adapterBuildingType = ArrayAdapter.createFromResource(mActivity, R.array.sp_building_type,android.R.layout.simple_spinner_item);
@@ -778,7 +814,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             bin.setResurvey_no(Utility.getEditTextValue(binding.formResurveyNo));
             bin.setGat_no(Utility.getEditTextValue(binding.formGatNo));
             bin.setZone(Utility.getEditTextValue(binding.formZone));
-            bin.setWard(Utility.getEditTextValue(binding.formWard));
+            bin.setWard(ward_no);
             bin.setMobile(Utility.getEditTextValue(binding.formMobile));
             bin.setEmail(Utility.getEditTextValue(binding.formEmail));
             bin.setAadhar_no(Utility.getEditTextValue(binding.formAadharNo));
@@ -1252,6 +1288,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
                     binding.tvFileUploadName.setText("File Selected");
 
+                    binding.tvformTotalNoFileSelected.setText("Total File Upload : " + multipleFileList.size() );
+
                 }
                 // Single File Selected
                 else{
@@ -1274,6 +1312,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                         sbFileName.append(destFile.getName());
                         sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
                         binding.tvFileUploadName.setText("File Selected");
+                        binding.tvformTotalNoFileSelected.setText("Total File Upload : 1");
                     }
                 }
 

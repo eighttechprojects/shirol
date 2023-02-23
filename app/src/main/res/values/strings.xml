@@ -67,7 +67,7 @@
     <string-array name="sp_property_user_type">
         <item>स्वत:</item>
         <item>भाडेकरू</item>
-        <item>भोगवटदर</item>
+        <item>भोगवटादार</item>
     </string-array>
     <!-- 17 -->
     <string-array name="sp_property_type">
@@ -105,7 +105,7 @@
 
     <!-- 28 -->
     <string-array name="sp_water_use_type">
-        <item>रहिवास</item>
+        <item>रहिवासी</item>
         <item>व्यवसायिक</item>
         <item>औद्योगिक</item>
     </string-array>

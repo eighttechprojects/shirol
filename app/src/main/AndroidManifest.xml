@@ -33,6 +33,10 @@
         android:required="true" />
     <!-- -->
     <!-- -->
+    <queries>
+        <!-- Explicit apps you know in advance about: -->
+        <package android:name="com.example.this.app"/>
+    </queries>
 
     <application
         android:name=".volly.BaseApplication"

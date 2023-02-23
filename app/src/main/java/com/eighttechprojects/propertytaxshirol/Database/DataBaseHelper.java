@@ -23,9 +23,9 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	// Context
 	Context ctx;
 	// DataBase Name
-	public static final String DATABASE_NAME = "PropertyTaxShirol2.db";
+	public static final String DATABASE_NAME = "PropertyTaxShirol3.db";
 	// DataBase Version
-	public static final int DATABASE_VERSION = 10;
+	public static final int DATABASE_VERSION = 12;
 
 	// param
 	public static final String keyParamID           = "id";
@@ -45,6 +45,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	public static final String keyParamFormLastID =  "last_id";
 	public static final String keyParamPolygonStatus = "polygon_status";
 
+	public static final String keyParamWardNo        = "ward_no";
+
 
 	// Table Name
 	private static final String TABLE_GEO_JSON_POLYGON      = "GeoJsonPolygon";
@@ -59,7 +61,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
 
 	// GeoJson Polygon Data  ----------------------------------------------------------------------------
-	public static final String CREATE_TABLE_GEO_JSON_POLYGON = "CREATE TABLE " + TABLE_GEO_JSON_POLYGON +"(id INTEGER PRIMARY KEY AUTOINCREMENT, gis_id VARCHAR(100), polygon_id VARCHAR(100), geojsonlatlong TEXT, polygon_status TEXT)";
+	public static final String CREATE_TABLE_GEO_JSON_POLYGON = "CREATE TABLE " + TABLE_GEO_JSON_POLYGON +"(id INTEGER PRIMARY KEY AUTOINCREMENT, gis_id VARCHAR(100), polygon_id VARCHAR(100), geojsonlatlong TEXT, polygon_status TEXT, ward_no TEXT)";
 	public static final String DROP_TABLE_GEO_JSON_POLYGON   = "DROP TABLE "   + TABLE_GEO_JSON_POLYGON;
 	public static final String DELETE_TABLE_GEO_JSON_POLYGON = "DELETE FROM "  + TABLE_GEO_JSON_POLYGON;
 	public static final String GET_GEO_JSON_POLYGON          = "SELECT * FROM "+ TABLE_GEO_JSON_POLYGON;
@@ -185,13 +187,14 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
 	//---------------------------------------------------------- Insert Geo Json Polygon -------------------------------------------------------
 
-	public void insertGeoJsonPolygon(String gisID, String polygonID, String LatLong, String polygonStatus){
+	public void insertGeoJsonPolygon(String gisID, String polygonID, String LatLong, String polygonStatus,String ward_no){
 		open();
 		ContentValues cv = new ContentValues();
 		cv.put(keyParamGISID,gisID);
 		cv.put(keyParamPolygonID,polygonID);
 		cv.put(keyParamGeoJsonLatLon,LatLong);
 		cv.put(keyParamPolygonStatus,polygonStatus);
+		cv.put(keyParamWardNo,ward_no);
 		db.insert(TABLE_GEO_JSON_POLYGON, null, cv);
 		close();
 	}
@@ -317,6 +320,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 				bin.setGisID(cv.getString(cv.getColumnIndex(keyParamGISID)));
 				bin.setLatLon(cv.getString(cv.getColumnIndex(keyParamGeoJsonLatLon)));
 				bin.setPolygonStatus(cv.getString(cv.getColumnIndex(keyParamPolygonStatus)));
+				bin.setWardNo(cv.getString(cv.getColumnIndex(keyParamWardNo)));
 				list.add(bin);
 				cv.moveToNext();
 			}
@@ -337,6 +341,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 			bin.setGisID(cv.getString(cv.getColumnIndex(keyParamGISID)));
 			bin.setLatLon(cv.getString(cv.getColumnIndex(keyParamGeoJsonLatLon)));
 			bin.setPolygonStatus(cv.getString(cv.getColumnIndex(keyParamPolygonStatus)));
+			bin.setWardNo(cv.getString(cv.getColumnIndex(keyParamWardNo)));
 		}
 		close();
 		return bin;

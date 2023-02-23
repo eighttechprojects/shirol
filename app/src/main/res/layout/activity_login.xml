@@ -34,7 +34,7 @@
                     android:layout_width="150dp"
                     android:layout_height="150dp"
                     android:layout_gravity="top|center"
-                    android:background="@drawable/app_icon"
+                    android:background="@drawable/pdf_logo"
                     android:layout_marginBottom="10dp"
                     android:contentDescription="@string/todo" />
 

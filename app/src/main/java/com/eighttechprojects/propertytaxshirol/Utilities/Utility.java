@@ -119,6 +119,8 @@ public class Utility {
     public static final String PASS_POLYGON_ID = "polygon_id";
     public static final String PASS_FID        = "f_id";
     public static final String PASS_GIS_ID     = "gis_id";
+
+    public static final String PASS_WARD_NO    = "ward_no";
     public static final String PASS_ID         = "id";
     public static final String PASS_USER_ID    = "user_id";
     public static final String PASS_IS_MULTIPLE = "is-multiple-form";

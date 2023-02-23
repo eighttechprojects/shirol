@@ -180,26 +180,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
+//
+//            // Location Call Back
+//            locationCallback = new LocationCallback() {
+//                @Override
+//                public void onLocationResult(@NonNull LocationResult locationResult) {
+//                    for (Location loc : locationResult.getLocations()) {
+//                        mCurrentLocation = loc;
+//                        if(mCurrentLocation != null){
+//                            if(isGoToCurrentLocation){
+//                                isGoToCurrentLocation = false;
+//                                // Current LatLon
+//
+//                            }
+//                        }
+//                    }
+//                }
+//            };
 
-            // Location Call Back
-            locationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(@NonNull LocationResult locationResult) {
-                    for (Location loc : locationResult.getLocations()) {
-                        mCurrentLocation = loc;
-                        if(mCurrentLocation != null){
-                            if(isGoToCurrentLocation){
-                                isGoToCurrentLocation = false;
-                                // Current LatLon
-                                LatLng latLng = new LatLng(16.751075235,74.587887456);
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
-                            }
-                        }
-                    }
-                }
-            };
-
-        LocationPermission();
+      //  LocationPermission();
 
     }
 
@@ -230,8 +229,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMarkerClickListener(this);
         // setOnClickListener
         setOnClickListener();
-        LatLng latLng = new LatLng(16.751075235,74.587887456);
-        Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
+
         // logout 24hr
         LogoutAfter24hr();
 
@@ -844,6 +842,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //------------------------------------------------------- Form ------------------------------------------------------------------------------------------------------------------------------------------------
     private void viewFormDialogBox(String ID){
         try{
+            boolean isSno6Selected = false;
             FormDBModel formDBModel = dataBaseHelper.getFormByPolygonIDAndID(ID);
             // Form Model
             FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
@@ -873,6 +872,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Button btExit = fDB.findViewById(R.id.btExit);
             btExit.setOnClickListener(view -> fDB.dismiss());
             // init Linear Layout ------------------------------
+            LinearLayout ll_7    = fDB.findViewById(R.id.ll_7);
             LinearLayout ll_17_1 = fDB.findViewById(R.id.ll_17_1);
             LinearLayout ll_20   = fDB.findViewById(R.id.ll_20);
             LinearLayout ll_23   = fDB.findViewById(R.id.ll_23);
@@ -934,8 +934,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             tv_form_property_address.setText(Utility.getStringValue(bin.getProperty_address()));
             // 6
             tv_form_sp_property_user_type.setText(Utility.getStringValue(bin.getProperty_user_type()));
-            // 7
-            tv_form_property_user.setText(Utility.getStringValue(bin.getProperty_user()));
+
+            if(bin.getProperty_user_type().equalsIgnoreCase("भोगवटादार")){
+                isSno6Selected = false;
+                ll_7.setVisibility(View.VISIBLE);
+                // 7
+                tv_form_property_user.setText(Utility.getStringValue(bin.getProperty_user()));
+            }
+            else if(bin.getProperty_user_type().equalsIgnoreCase("भाडेकरू")){
+                ll_7.setVisibility(View.GONE);
+                tv_form_property_user.setText("");
+                isSno6Selected = true;
+            }
+            else{
+                isSno6Selected = false;
+                ll_7.setVisibility(View.GONE);
+                tv_form_property_user.setText("");
+            }
+
             // 8
             tv_form_resurvey_no.setText(Utility.getStringValue(bin.getResurvey_no()));
             // 9
@@ -1035,7 +1051,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             RecyclerView rvForm = fDB.findViewById(R.id.db_rvFormTableView);
             if(formModel.getDetais().size() > 0){
                 rvForm.setVisibility(View.VISIBLE);
-                AdapterFormTable adapterFormTable = new AdapterFormTable(mActivity,formModel.getDetais(),true);
+                AdapterFormTable adapterFormTable = new AdapterFormTable(mActivity,formModel.getDetais(),true,isSno6Selected);
                 Utility.setToVerticalRecycleView(mActivity,rvForm,adapterFormTable);
             }
             else{
@@ -1170,7 +1186,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void viewMultipleFormDialogBox(String gisID,String polygonID,DialogInterface dialogBox){
+    private void viewMultipleFormDialogBox(String gisID,String polygonID, String wardNo,DialogInterface dialogBox){
             ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
             dialogBox.dismiss();
             Dialog vfBox = new Dialog(this);
@@ -1191,7 +1207,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 try{
                         if(!Utility.isEmptyString(key)){
-                            reDirectToMultipleFormFunction(gisID,polygonID,Integer.parseInt(key));
+                            reDirectToMultipleFormFunction(gisID,polygonID,wardNo,Integer.parseInt(key));
                         }
                         else{
                             Log.e(TAG, "Key Null");
@@ -1280,7 +1296,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                        reDirectToSingleFormFunction(geoJsonModel,isMultipleForm);
 //                    }
 //                    else{
-                        viewMultipleFormDialogBox(geoJsonModel.getGisID(),geoJsonModel.getPolygonID(),dialogBox);
+                        viewMultipleFormDialogBox(geoJsonModel.getGisID(),geoJsonModel.getPolygonID(), geoJsonModel.getWardNo(),dialogBox);
 //                    }
                     break;
 
@@ -1303,14 +1319,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intentSingleForm = new Intent(MapsActivity.this, FormActivity.class);
         intentSingleForm.putExtra(Utility.PASS_GIS_ID,geoJsonModel.getGisID());
         intentSingleForm.putExtra(Utility.PASS_POLYGON_ID,geoJsonModel.getPolygonID());
+        intentSingleForm.putExtra(Utility.PASS_WARD_NO,geoJsonModel.getWardNo());
         intentSingleForm.putExtra(Utility.PASS_IS_MULTIPLE, isMultipleForm);
         startActivityForResult(intentSingleForm,FORM_REQUEST_CODE);
     }
 
-    private void reDirectToMultipleFormFunction(String gisID, String polygonID,int lastKey){
+    private void reDirectToMultipleFormFunction(String gisID, String polygonID,String wardNo,int lastKey){
         Intent intentMultipleForm = new Intent(MapsActivity.this, FormActivity.class);
         intentMultipleForm.putExtra(Utility.PASS_GIS_ID,gisID);
         intentMultipleForm.putExtra(Utility.PASS_POLYGON_ID,polygonID);
+        intentMultipleForm.putExtra(Utility.PASS_WARD_NO,wardNo);
         intentMultipleForm.putExtra(Utility.PASS_IS_MULTIPLE, true);
         intentMultipleForm.putExtra(Utility.PASS_LAST_KEY,lastKey);
         startActivityForResult(intentMultipleForm,FORM_REQUEST_CODE);
@@ -1366,6 +1384,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent intentResurveyForm = new Intent(MapsActivity.this, ResurveyFormActivity.class);
         intentResurveyForm.putExtra(Utility.PASS_GIS_ID,geoJsonModel.getGisID());
         intentResurveyForm.putExtra(Utility.PASS_POLYGON_ID,geoJsonModel.getPolygonID());
+        intentResurveyForm.putExtra(Utility.PASS_WARD_NO,geoJsonModel.getWardNo());
         intentResurveyForm.putExtra(Utility.PASS_ID, ID);
         startActivityForResult(intentResurveyForm,FORM_REQUEST_CODE);
     }
@@ -1407,7 +1426,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void showAllGeoJsonPolygon(){
 
-        showProgressBar("Loading Polygons.....");
+        showProgressBar("Loading Property.....");
 
         ArrayList<ArrayList<LatLng>> geoJsonLatLonLists = new ArrayList<>();
         ArrayList<GeoJsonModel> geoJsonModelLists = new ArrayList<>();
@@ -1417,7 +1436,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Handler handler = new Handler(Looper.getMainLooper());
 
             service.execute(() -> {
-
                 // To Do In Background
                 ArrayList<GeoJsonModel> geoJsonModels = dataBaseHelper.getAllGeoJsonPolygon();
                 //Log.e(TAG,"Geo-Json Polygon Size: "+ geoJsonModels.size());
@@ -1506,6 +1524,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                     isGoToCurrentLocation = true;
                     isMarkerVisible = true;
+                        LatLng latLng = new LatLng(16.751075235,74.587887456);
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
 
                 });
             });
@@ -1934,11 +1954,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @SuppressLint("MissingPermission")
     protected void startLocationUpdates() {
-        fusedLocationProviderClient.requestLocationUpdates(mRequest, locationCallback, null);
+       // fusedLocationProviderClient.requestLocationUpdates(mRequest, locationCallback, null);
     }
 
     protected void stopLocationUpdates(){
-        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+     //   fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
     //---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------

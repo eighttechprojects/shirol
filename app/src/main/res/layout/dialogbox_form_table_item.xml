@@ -464,6 +464,7 @@
             </LinearLayout>
             <!-- 7 -->
             <LinearLayout
+                android:id="@+id/ll_table6"
                 android:padding="@dimen/formPadding"
                 android:layout_marginTop="5dp"
                 android:layout_width="match_parent"

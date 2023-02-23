@@ -1524,7 +1524,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="30. प्लॉटचे एकूण शेटफळ"
+                        android:text="30. प्लॉटचे एकूण क्षेत्रफळ (चौ.फु.)"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1588,7 +1588,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="31. तळ मजल्याचे बांधकाम शेटफळ"
+                        android:text="31. तळ मजल्याचे बांधकाम क्षेत्रफळ (चौ.फु.)"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
@@ -1652,7 +1652,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="32. तळ मजला उर्वरित मोकळी जागा"
+                        android:text="32. तळ मजला उर्वरित मोकळी जागा (चौ.फु.)"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>

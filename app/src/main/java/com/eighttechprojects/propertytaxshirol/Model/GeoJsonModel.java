@@ -6,6 +6,8 @@ public class GeoJsonModel {
     private String id;
     private String polygonID;
     private String gisID;
+
+    private String wardNo;
     private String LatLon;
     private String Form;
     private boolean isOnlineSave = false;
@@ -13,6 +15,10 @@ public class GeoJsonModel {
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public String getWardNo() {
+        return wardNo;
+    }
 
     public String getId() {
         return id;
@@ -44,6 +50,10 @@ public class GeoJsonModel {
 
     //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public void setWardNo(String wardNo) {
+        this.wardNo = wardNo;
+    }
 
     public void setId(String id) {
         this.id = id;

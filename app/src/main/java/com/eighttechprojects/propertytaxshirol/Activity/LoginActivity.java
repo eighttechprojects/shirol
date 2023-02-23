@@ -266,9 +266,10 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                                 String gisID            = formDataArray.getJSONObject(i).getString("gis_id");
                                 String counter          = formDataArray.getJSONObject(i).getString("counter");
                                 String polygonStatus    = formDataArray.getJSONObject(i).getString("polygon_status");
+                                String wardNo           = formDataArray.getJSONObject(i).getString("ward");
                                 JSONArray geoJsonLatLon = formDataArray.getJSONObject(i).getJSONArray("latlong");
 
-                                dataBaseHelper.insertGeoJsonPolygon(gisID,polygonID,geoJsonLatLon.toString(),polygonStatus);
+                                dataBaseHelper.insertGeoJsonPolygon(gisID,polygonID,geoJsonLatLon.toString(),polygonStatus,wardNo);
                                 dataBaseHelper.insertGenerateID(polygonID,counter);
 
                                 JSONArray geoJsonForm   = formDataArray.getJSONObject(i).getJSONArray("forms");

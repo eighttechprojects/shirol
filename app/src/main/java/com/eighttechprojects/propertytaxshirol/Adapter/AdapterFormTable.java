@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -28,6 +29,8 @@ public class AdapterFormTable extends RecyclerView.Adapter<AdapterFormTable.View
     ArrayList<FormTableModel> formTableModels;
     // boolean
     boolean isViewMode = false;
+    boolean isSno6Selected = false;
+
     String db_form_sp_building_type = "";
     String db_form_sp_building_use_type = "";
 
@@ -38,10 +41,11 @@ public class AdapterFormTable extends RecyclerView.Adapter<AdapterFormTable.View
         this.formTableModels = formTableModels;
     }
 
-    public AdapterFormTable(Activity mActivity, ArrayList<FormTableModel> formTableModels, boolean isViewMode) {
+    public AdapterFormTable(Activity mActivity, ArrayList<FormTableModel> formTableModels, boolean isViewMode, boolean isSno6Selected) {
         this.mActivity = mActivity;
         this.formTableModels = formTableModels;
         this.isViewMode = isViewMode;
+        this.isSno6Selected = isSno6Selected;
     }
 
 //------------------------------------------------------- onCreate ViewHolder -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -110,8 +114,17 @@ public class AdapterFormTable extends RecyclerView.Adapter<AdapterFormTable.View
         holder.area.setText(Utility.getStringValue(bin.getArea()));
         // Building Age
         holder.building_age.setText(Utility.getStringValue(bin.getBuilding_age()));
-        // Annual Rent
-        holder.annual_rent.setText(Utility.getStringValue(bin.getAnnual_rent()));
+
+        if(isSno6Selected){
+            holder.ll_table7.setVisibility(View.VISIBLE);
+            // Annual Rent
+            holder.annual_rent.setText(Utility.getStringValue(bin.getAnnual_rent()));
+        }
+        else{
+            holder.ll_table7.setVisibility(View.GONE);
+            holder.annual_rent.setText("");
+        }
+
         // Tag No
         holder.tag_no.setText(Utility.getStringValue(bin.getTag_no()));
     }
@@ -144,6 +157,8 @@ public class AdapterFormTable extends RecyclerView.Adapter<AdapterFormTable.View
         Button btRemoveItem;
         Button btEditItem;
 
+        LinearLayout ll_table7;
+
         ViewHolder(@NonNull View v) {
             super(v);
             // Text View
@@ -161,6 +176,8 @@ public class AdapterFormTable extends RecyclerView.Adapter<AdapterFormTable.View
             // Button
             btRemoveItem      = v.findViewById(R.id.btRemoveItem);
             btEditItem        = v.findViewById(R.id.btEditItem);
+            // Linear Layout
+            ll_table7         = v.findViewById(R.id.ll_table7);
 
         }
     }
