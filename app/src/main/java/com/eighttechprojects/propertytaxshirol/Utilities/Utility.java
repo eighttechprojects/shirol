@@ -66,10 +66,14 @@ import java.util.Random;
 
 public class Utility {
 
-    public static final String SurveyCompleted = "SurveyCompleted";
-    public static final String SurveyNotComplete = "SurveyNotCompleted";
-    public static final String ResurveyCompleted = "ResurveyCompleted";
+    public static final String SurveyCompleted = "Completed";
+    public static final String SurveyNotComplete = "Not Completed";
 
+
+    public static final String PolygonStatusCompleted = "Completed";
+    public static final String PolygonStatusNotComplete = "Not Completed";
+
+    public static final String ResurveyCompleted = "ResurveyCompleted";
     public static final String ResurveyNotCompleted = "ResurveyNotCompleted";
 
     public static final int GeoJsonPolygonStrokeColor = Color.YELLOW;
@@ -246,6 +250,37 @@ public class Utility {
             }
         }
 
+        dialog.show();
+    }
+
+    public static void showResurveyImageViewBox(Context context,onItemSelected onItemSelected){
+        Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.selectbox_view);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.setCancelable(false);
+        // Single Form
+        Button btSingleAddForm    = dialog.findViewById(R.id.btSingleAddForm);
+        btSingleAddForm.setVisibility(View.GONE);
+        // Multiple Form
+        Button btMultipleForm   = dialog.findViewById(R.id.btMultipleForm);
+        btMultipleForm.setVisibility(View.GONE);
+        // View Form
+        Button btViewForm   = dialog.findViewById(R.id.btViewForm);
+        btViewForm.setVisibility(View.VISIBLE);
+        btViewForm.setOnClickListener(view -> {
+            onItemSelected.selectedItem(ITEM_SELECTED.VIEW,dialog);
+        });
+        // Edit Form
+        Button btEditForm   = dialog.findViewById(R.id.btEditForm);
+        btEditForm.setVisibility(View.VISIBLE);
+        btEditForm.setOnClickListener(view -> {
+            onItemSelected.selectedItem(ITEM_SELECTED.EDIT,dialog);
+        });
+        // Cancel Form
+        Button btCancelForm = dialog.findViewById(R.id.btCancelForm);
+        btCancelForm.setOnClickListener(view -> dialog.dismiss());
+        // Dialog Box Show
         dialog.show();
     }
 

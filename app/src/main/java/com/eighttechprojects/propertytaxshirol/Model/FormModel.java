@@ -9,19 +9,10 @@ public class FormModel {
 
     private FormFields form;
     private ArrayList<FormTableModel> detais;
-//    private FormFields formFields;
-//    private ArrayList<FormTableModel> form_detail;
-
-    private CameraFileModel cameraFileModel;
-
-    private FileModel fileModel;
 
 //------------------------------------------------------- Constructor ---------------------------------------------------------------------------------------------------------------------------
 
     public FormModel() {}
-
-
-
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
@@ -35,15 +26,6 @@ public class FormModel {
     }
 
 
-    public FileModel getFileModel() {
-        return fileModel;
-    }
-
-    public CameraFileModel getCameraFileModel() {
-        return cameraFileModel;
-    }
-
-
 //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
 
@@ -53,15 +35,6 @@ public class FormModel {
 
     public void setDetais(ArrayList<FormTableModel> detais) {
         this.detais = detais;
-    }
-
-
-    public void setCameraFileModel(CameraFileModel cameraFileModel) {
-        this.cameraFileModel = cameraFileModel;
-    }
-
-    public void setFileModel(FileModel fileModel) {
-        this.fileModel = fileModel;
     }
 
 

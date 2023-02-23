@@ -1698,7 +1698,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="33. Property Photo"
+                        android:text="33. मिळकतीचे फोटो"
                         android:textSize="@dimen/formLabelSize"
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>

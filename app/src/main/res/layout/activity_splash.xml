@@ -6,12 +6,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
+    android:background="@color/white"
     tools:context=".Activity.SplashActivity">
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:contentDescription="@string/todo"
-        android:src="@drawable/app_icon"/>
+        android:src="@drawable/pdf_logo"/>
 
 </LinearLayout>

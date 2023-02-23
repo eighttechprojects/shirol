@@ -2,6 +2,7 @@ package com.eighttechprojects.propertytaxshirol.Adapter;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -178,6 +179,16 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         p2.setColor(Color.BLACK);
                         p2.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
 
+                        // Image Add To PDF!
+//                        BitmapFactory.Options options = new BitmapFactory.Options();
+//                        options.inScaled = false;
+                        Bitmap pdfLogoBitmap = BitmapFactory.decodeResource(mActivity.getResources(),R.drawable.pdf_logo4);
+//                        Bitmap bitmap = pdfLogoBitmap.copy(Bitmap.Config.ARGB_8888, true);
+//                        bitmap.setPixel(10,10, Color.TRANSPARENT);
+                        Bitmap scalePdfLogoBitmap = Bitmap.createScaledBitmap(pdfLogoBitmap,90,90,true);
+                        c.drawBitmap(scalePdfLogoBitmap,rectLeft - 5,20,null);
+
+                        c.drawBitmap(scalePdfLogoBitmap,rectRight - 80,20,null);
                         // main Header
                         int topHeight = 60;
                         String mainHeader = "शिरोळ नागरपरिषेद , शिरोळ";
@@ -645,16 +656,16 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         int lineVertical2 = rectLeft + 50;
 
                         // Sno. 1
-                        int snoT1Start = rectLeft + 10;
+                        int snoT1Start = rectLeft - 30 + 10;
                         c2.drawText("अ.क्र.",snoT1Start, fixHeight,p4);
 
                         // Draw Horizontal Line
                         int lineHeightT1 = fixHeight + 20 + 20;
-                        c2.drawLine(rectLeft,lineHeightT1,rectRight,lineHeightT1,p4);
-                        // Start Line
-                        int snoT1StartLine = rectLeft + 40;
-                        c2.drawLine(snoT1StartLine  ,subHeaderPage2 + 30,snoT1StartLine ,rectBottomHeight,p4);
+                        c2.drawLine(rectLeft - 30,lineHeightT1,rectRight + 30,lineHeightT1,p4);
 
+                        // Start Line
+                        int snoT1StartLine = rectLeft - 30 + 40;
+                        c2.drawLine(snoT1StartLine  ,subHeaderPage2 + 30,snoT1StartLine ,rectBottomHeight,p4);
 
                         // Sno. 2
                         int snoT2Start = snoT1Start + 40;
@@ -674,16 +685,16 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         String snoT3Str = "इमारत \n प्रकार";
                         int heightT3 = fixHeight;
                         for(String no3 : snoT3Str.split("\n")){
-                            c2.drawText(no3,snoT3Start, heightT3,p4);
+                            c2.drawText(no3,snoT3Start + 10, heightT3,p4);
                             heightT3 += p4.descent() - p4.ascent();
                         }
-                        int snoT3StartLine = snoT2StartLine + 50;
+                        int snoT3StartLine = snoT2StartLine + 50 + 30;
                         // Start Line
                         c2.drawLine(snoT3StartLine ,subHeaderPage2 + 30,snoT3StartLine,rectBottomHeight,p4);
 
 
                         // Sno. 4
-                        int snoT4Start = snoT3Start + 50;
+                        int snoT4Start = snoT3Start + 50 + 30;
                         String snoT4Str = "इमारत \n वापर";
                         int heightT4 = fixHeight;
                         for(String no4 : snoT4Str.split("\n")){
@@ -724,7 +735,6 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         int snoT53Start = snoT52Start + 50;
                         c2.drawText("क्षेत्रफळ",snoT53Start, fixHeight1,p4);
 
-
                         // Sno. 6
                         int snoT6Start = snoT5StartLine + 10;
                         String snoT6Str = "इमारतीचे \n वय";
@@ -754,11 +764,10 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         c2.drawText("शेरा",snoT8Start, fixHeight,p4);
 
 
-
                         int rectTopHeight =  lineHeightT1 + 60;
                         // Created 9 * 9 matrix
                         for(int i=0; i<9; i++){
-                            c2.drawLine(rectLeft,rectTopHeight,rectRight,rectTopHeight,p4);
+                            c2.drawLine(rectLeft - 30,rectTopHeight,rectRight + 30,rectTopHeight,p4);
                             rectTopHeight += 60;
                         }
                         Log.e(TAG, "Table Length -> "+ rectTopHeight);
@@ -766,7 +775,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         p4.setTextSize(10);
 
                         p3.setStyle(Paint.Style.STROKE);
-                        c2.drawRect(rectLeft,subHeaderPage2 + 30, rectRight,rectTopHeight,p3);
+                        c2.drawRect(rectLeft - 30,subHeaderPage2 + 30, rectRight + 30,rectTopHeight,p3);
 
                         // Fill Matrix Form!
                         if(details.size() > 0){
@@ -775,7 +784,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                                 if(i == 9){
                                     break;
                                 }
-                                String srNo = Utility.getStringValue(details.get(i).getSr_no());
+                                String srNo =  String.valueOf(i + 1);//Utility.getStringValue(details.get(i).getSr_no());
                                 String floor = Utility.getStringValue(details.get(i).getFloor());
                                 String buildingType = Utility.getStringValue(details.get(i).getBuilding_type());
                                 String buildingUseType = Utility.getStringValue(details.get(i).getBuilding_use_type());
@@ -785,17 +794,6 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                                 String buildingAge = Utility.getStringValue(details.get(i).getBuilding_age());
                                 String annualRent = Utility.getStringValue(details.get(i).getAnnual_rent());
                                 String tagNo = Utility.getStringValue(details.get(i).getTag_no());
-
-//                            String srNo = "Rahul Suthar";
-//                            String floor = "Rahul";
-//                            String buildingType = "Rahul";
-//                            String buildingUseType = "Rahul";
-//                            String length = "Rahul";
-//                            String height = "Rahul";
-//                            String area = "Rahul";
-//                            String buildingAge = "Rahul";
-//                            String annualRent ="Rahul";
-//                            String tagNo ="Rahul";
 
                                 // 1
                                 int heightRow1 = rectTopHeight1 - 40;
@@ -809,12 +807,55 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                                     c2.drawText(no,snoT2Start, heightRow2,p4);
                                     heightRow2 += p4.descent() - p4.ascent();
                                 }
+//                                 <item>आर.सी.सी. पद्धतीची इमारत</item>
+//                                <item>लोडबेरिंग</item>
+//                                <item>दगड विटांचे चनुा किंवा सिमेंट वापरून उभारलेली इमारत</item>
+//                                <item>दगड विटांचे मातीची इमारत</item>
+//                                <item>झोपडी किंवा मातीची इमारत</item>
+//                                <item>खुली जागा</item>
+//                                <item>मनोरा तळ</item>
+//
                                 // 3
-                                int heightRow3 = rectTopHeight1 - 40;
-                                for(String no : buildingType.split(" ")){
-                                    c2.drawText(no,snoT3Start, heightRow3,p4);
-                                    heightRow3 += p4.descent() - p4.ascent();
+                                if(buildingType.equalsIgnoreCase("आर.सी.सी. पद्धतीची इमारत")){
+                                    int heightRow3 = rectTopHeight1 - 40;
+                                    buildingType = "आर.सी.सी. \n पद्धतीची इमारत";
+                                    for(String no : buildingType.split("\n")){
+                                        c2.drawText(no,snoT3Start - 10, heightRow3,p4);
+                                        heightRow3 += p4.descent() - p4.ascent();
+                                    }
                                 }
+                                else if(buildingType.equalsIgnoreCase("दगड विटांचे चनुा किंवा सिमेंट वापरून उभारलेली इमारत")){
+                                    int heightRow3 = rectTopHeight1 - 40;
+                                    buildingType  = "दगड विटांचे \n चनुा किंवा \n सिमेंट वापरून \n उभारलेली इमारत";
+                                    for(String no : buildingType.split("\n")){
+                                        c2.drawText(no,snoT3Start - 5 , heightRow3,p4);
+                                        heightRow3 += p4.descent() - p4.ascent();
+                                    }
+                                }
+                                else if(buildingType.equalsIgnoreCase("दगड विटांचे मातीची इमारत")){
+                                    int heightRow3 = rectTopHeight1 - 40;
+                                    buildingType = "दगड विटांचे \n मातीची इमारत";
+                                    for(String no : buildingType.split("\n")){
+                                        c2.drawText(no,snoT3Start - 10, heightRow3,p4);
+                                        heightRow3 += p4.descent() - p4.ascent();
+                                    }
+                                }
+                                else if(buildingType.equalsIgnoreCase("झोपडी किंवा मातीची इमारत")){
+                                    int heightRow3 = rectTopHeight1 - 40;
+                                    buildingType = "झोपडी किंवा \n मातीची इमारत";
+                                    for(String no : buildingType.split("\n")){
+                                        c2.drawText(no,snoT3Start - 10, heightRow3,p4);
+                                        heightRow3 += p4.descent() - p4.ascent();
+                                    }
+                                }
+                                else{
+                                    int heightRow3 = rectTopHeight1 - 40;
+                                    for(String no : buildingType.split(" ")){
+                                        c2.drawText(no,snoT3Start - 10, heightRow3,p4);
+                                        heightRow3 += p4.descent() - p4.ascent();
+                                    }
+                                }
+
                                 // 4
                                 int heightRow4 = rectTopHeight1 - 40;
                                 for(String no : buildingUseType.split(" ")){
@@ -901,7 +942,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         c2.drawText("तळ मजल्याचे बांधकाम शेटफळ",snoT13Start, rectTopHeight + 30 ,p4);
 
                         // Value 3
-                        c2.drawText(Utility.getStringValue(bin.getProperty_area()),snoT11Start + 10 ,rectTopHeight + 80,p4);
+                        c2.drawText(Utility.getStringValue(bin.getProperty_area()),snoT13Start + 10 ,rectTopHeight + 80,p4);
 
                         // Sno. 4 =
                         int snoT14Start = snoT13Start + 160;
@@ -978,18 +1019,6 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
 
                         // सर्वेक्षण दिनांक :
                         c2.drawText("सर्वेक्षण दिनांक :     /     /   ",rectLeft + 10 , rectBottom - 20,p4);
-
-
-
-                        //   मेळकत धारक / प्रेतिनिधी  नाव व सही
-
-
-                        //  सर्वेक्षक अधिकाऱ्याचे नाव व सही
-
-
-                        //  वार्ड लिपिकाची नाव व सही
-
-                        //  सर्वेक्षण दिनांक :
 
                         // Close Page 2
                         pdfDocument.finishPage(page2);

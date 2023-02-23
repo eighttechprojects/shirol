@@ -1345,6 +1345,7 @@
                 <!-- 27.2  -->
                 <LinearLayout
                     android:id="@+id/ll_27_2"
+                    android:visibility="gone"
                     android:padding="@dimen/formPadding"
                     android:layout_marginTop="5dp"
                     android:layout_width="match_parent"
@@ -1886,7 +1887,7 @@
                             android:layout_weight="2">
 
                             <TextView
-                                android:id="@+id/tv_fileUploadName"
+                                android:id="@+id/tv_fileViewName"
                                 android:hint="File Upload"
                                 android:textColor="@color/black"
                                 android:layout_width="match_parent"
@@ -1895,8 +1896,8 @@
                         </LinearLayout>
 
                         <Button
-                            android:id="@+id/btFileUpload"
-                            android:text="Upload"
+                            android:id="@+id/btFileView"
+                            android:text="View"
                             android:background="@drawable/bg_button"
                             android:layout_width="wrap_content"
                             android:layout_height="40dp"

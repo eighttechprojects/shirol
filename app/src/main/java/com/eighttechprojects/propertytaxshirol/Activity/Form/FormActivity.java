@@ -9,7 +9,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
@@ -55,7 +54,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
-import com.mikelau.croperino.Croperino;
 import com.mikelau.croperino.CroperinoConfig;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -240,7 +238,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         // Last Key Contains or not
         if(intent.getExtras().containsKey(Utility.PASS_LAST_KEY)) {
             lastKey = intent.getIntExtra(Utility.PASS_LAST_KEY,0);
-            Log.e(TAG, "last key: "+ lastKey);
+            Log.e(TAG, "Form last key: "+ lastKey);
         }
 
         // Generate Property ID
@@ -590,7 +588,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                 // Single Form
                 if(!isMultipleForm){
                     bin.setForm_status(Utility.SurveyCompleted);
-                    bin.setPolygon_status(Utility.SurveyCompleted);
+                    bin.setPolygon_status(Utility.PolygonStatusCompleted);
                     isSurveyComplete = true;
                     onFormSubmit();
                 }
@@ -599,14 +597,14 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     Utility.showYesNoDialogBox(mActivity, "Info", "Survey Complete or Not?", yesDialogBox -> {
                         yesDialogBox.dismiss();
                         bin.setForm_status(Utility.SurveyCompleted);
-                        bin.setPolygon_status(Utility.SurveyCompleted);
+                        bin.setPolygon_status(Utility.PolygonStatusCompleted);
                         isSurveyComplete = true;
                         onFormSubmit();
                     }, noDialogBox -> {
                         noDialogBox.dismiss();
                         isSurveyComplete = false;
                         bin.setForm_status(Utility.SurveyNotComplete);
-                        bin.setPolygon_status(Utility.SurveyNotComplete);
+                        bin.setPolygon_status(Utility.PolygonStatusNotComplete);
                         onFormSubmit();
                     });
                 }
@@ -755,27 +753,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             unique_number = String.valueOf(Utility.getToken());
             datetime      = Utility.getDateTime();
 
-//            // Form
-//            formModel = new FormModel();
-//            // 1 -----------------------------
-//            bin = new FormFields();
-//            // Default Fields
-//
-//            // Single Form
-//            if(!isMultipleForm){
-//                bin.setForm_status(Utility.SurveyCompleted);
-//            }
-//            // Multiple Form
-//            else{
-//                Utility.showYesNoDialogBox(mActivity, "Info", "Survey Complete or Not?", yesDialogBox -> {
-//                    yesDialogBox.dismiss();
-//                    bin.setForm_status(Utility.SurveyCompleted);
-//                }, noDialogBox -> {
-//                    noDialogBox.dismiss();
-//                    bin.setForm_status(Utility.SurveyNotComplete);
-//                });
-//            }
-
             bin.setUnique_number(unique_number);
             bin.setForm_number(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
             bin.setFid(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()).split("/")[1]);
@@ -881,11 +858,12 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         if(isSurveyComplete){
-            dataBaseHelper.updateGeoJsonPolygon(polygonID,Utility.SurveyCompleted);
+            dataBaseHelper.updateGeoJsonPolygon(polygonID,Utility.PolygonStatusCompleted);
         }
         else{
-            dataBaseHelper.updateGeoJsonPolygon(polygonID,Utility.SurveyNotComplete);
+            dataBaseHelper.updateGeoJsonPolygon(polygonID,Utility.PolygonStatusNotComplete);
         }
+        Log.e(TAG, "is Survey Complete - >" + isSurveyComplete);
 
         Intent intent = new Intent();
         intent.putExtra(Utility.PASS_POLYGON_ID,polygonID);
@@ -928,11 +906,18 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void SaveFormToDatabase(FormModel formModel){
-       // String token = String.valueOf(Utility.getToken());
         dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
         dataBaseHelper.insertGeoJsonPolygonFormLocal(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
         Log.e(TAG,"Form Save To Local Database");
         dismissProgressBar();
+        String generateID = dataBaseHelper.getGenerateID(polygonID);
+        Log.e(TAG, "last Key ID - > "+generateID);
+        if(!Utility.isEmptyString(generateID) && !generateID.equals("0")){
+            dataBaseHelper.updateGenerateIDLocal(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
+        }
+        else{
+            dataBaseHelper.insertGenerateIDLocal(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
+        }
         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
             okDialogBox.dismiss();
             submitForm();

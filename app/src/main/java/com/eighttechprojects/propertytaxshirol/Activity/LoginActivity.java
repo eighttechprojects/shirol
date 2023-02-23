@@ -29,9 +29,7 @@ import com.android.volley.VolleyError;
 import com.eighttechprojects.propertytaxshirol.Activity.GoogleMap.MapsActivity;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.InternetConnection.ConnectivityReceiver;
-import com.eighttechprojects.propertytaxshirol.Model.FormDBModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
-import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
@@ -40,12 +38,9 @@ import com.eighttechprojects.propertytaxshirol.volly.BaseApplication;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
 import com.google.android.material.snackbar.Snackbar;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -281,7 +276,7 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                                     for(int j=0; j<geoJsonForm.length(); j++){
                                        // Log.e(TAG,"Form: -> " + geoJsonForm.getString(j));
                                         FormModel formModel = Utility.convertStringToFormModel(geoJsonForm.getString(j));
-                                        dataBaseHelper.insertGeoJsonPolygonForm(polygonID,geoJsonForm.getString(j),"t",formModel.getForm().getProperty_images(),formModel.getForm().getPlan_attachment());
+                                        dataBaseHelper.insertGeoJsonPolygonForm(polygonID,geoJsonForm.getString(j),"t",formModel.getForm().getPlan_attachment(),formModel.getForm().getProperty_images());
                                     }
                                 }
                                 else{
@@ -294,44 +289,43 @@ public class LoginActivity extends AppCompatActivity  implements View.OnClickLis
                             Log.e(TAG, "Form Empty");
                         }
 
-                        // Resurvey Form Data Fetch
-                        //resurvey_data
-                        JSONArray resurveyFormDataArray = new JSONArray(mLoginObj.getString("resurvey_data"));
-                        if(resurveyFormDataArray.length() > 0){
-                            for(int i=0; i<resurveyFormDataArray.length(); i++){
-                                FormModel formModel = new FormModel();
-                                // Form ------------------------
-                                JSONObject formObject = resurveyFormDataArray.getJSONObject(i).getJSONObject("form");
-                                String lat = formObject.optString("latitude");
-                                String lon = formObject.optString("longitude");
-                                formModel.setForm(Utility.convertStringToFormFields(formObject.toString()));
-                                // Form Details -----------
-                                JSONArray detailsArrays = resurveyFormDataArray.getJSONObject(i).getJSONArray("detais");
-                                if(detailsArrays.length() > 0){
-                                    ArrayList<FormTableModel> list = new ArrayList<>();
-                                    for(int j =0 ; j<detailsArrays.length(); j++){
-                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
-                                    }
-                                    formModel.setDetais(list);
-                                }
-                                else{
-                                    ArrayList<FormTableModel> list = new ArrayList<>();
-                                    formModel.setDetais(list);
-                                }
-                                // Resurvey Form
-                                dataBaseHelper.insertResurveyMapForm(userid,lat,lon,Utility.convertFormModelToString(formModel),"","");
-                            }
-                        }
-                        else{
-                            Log.e(TAG, "Resurvey Form Empty");
-                        }
+//
+//                        // Resurvey Form Data Fetch
+//                        //resurvey_data
+//                        JSONArray resurveyFormDataArray = new JSONArray(mLoginObj.getString("resurvey_data"));
+//                        if(resurveyFormDataArray.length() > 0){
+//                            for(int i=0; i<resurveyFormDataArray.length(); i++){
+//                                FormModel formModel = new FormModel();
+//                                // Form ------------------------
+//                                JSONObject formObject = resurveyFormDataArray.getJSONObject(i).getJSONObject("form");
+//                                String lat = formObject.optString("latitude");
+//                                String lon = formObject.optString("longitude");
+//                                formModel.setForm(Utility.convertStringToFormFields(formObject.toString()));
+//                                // Form Details -----------
+//                                JSONArray detailsArrays = resurveyFormDataArray.getJSONObject(i).getJSONArray("detais");
+//                                if(detailsArrays.length() > 0){
+//                                    ArrayList<FormTableModel> list = new ArrayList<>();
+//                                    for(int j =0 ; j<detailsArrays.length(); j++){
+//                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
+//                                    }
+//                                    formModel.setDetais(list);
+//                                }
+//                                else{
+//                                    ArrayList<FormTableModel> list = new ArrayList<>();
+//                                    formModel.setDetais(list);
+//                                }
+//                                // Resurvey Form
+//                               // dataBaseHelper.insertResurveyMapForm(userid,lat,lon,Utility.convertFormModelToString(formModel),"","");
+//                            }
+//                        }
+//                        else{
+//                            Log.e(TAG, "Resurvey Form Empty");
+//                        }
 
 //                         Progress Bar
                         dismissProgressBar();
-//                        // ReDirect To Map
+                        // ReDirect To Map
                         reDirectToMap();
-                        // Fetch GeoJson File
-                      //  processToFetchGeoJson();
                     }
                     else {
                         dismissProgressBar();

@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,11 +22,8 @@ import android.view.View;
 import android.widget.Toast;
 import com.android.volley.VolleyError;
 import com.eighttechprojects.propertytaxshirol.Activity.Form.ResurveyFormActivity;
-import com.eighttechprojects.propertytaxshirol.Activity.SplashActivity;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.Model.FormDBModel;
-import com.eighttechprojects.propertytaxshirol.Model.FormModel;
-import com.eighttechprojects.propertytaxshirol.Model.FormTableModel;
 import com.eighttechprojects.propertytaxshirol.R;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
@@ -51,7 +47,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.tasks.Task;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -170,11 +165,11 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
         // Marker Drag Listener
         mMap.setOnMarkerDragListener(this);
         // show All Resurvey Form
-        showAllResurveyForm();
-        // Database Contains Some Data or not
-        if(isFormDataNotSync()){
-            Utility.showSyncYourDataAlert(this);
-        }
+//        showAllResurveyForm();
+//        // Database Contains Some Data or not
+//        if(isFormDataNotSync()){
+//            Utility.showSyncYourDataAlert(this);
+//        }
     }
 
 //------------------------------------------------------- Menu ----------------------------------------------------------------------------------------------------------------------
@@ -199,7 +194,7 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
 
             case R.id.menuSync:
                 if(SystemPermission.isInternetConnected(mActivity)){
-                    Sync();
+                  //  Sync();
 
                 }
                 else{
@@ -218,7 +213,7 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
 
             case R.id.menuLogout:
                 if(SystemPermission.isInternetConnected(mActivity)){
-                    Logout();
+                 //   Logout();
                 }
                 else {
                     Utility.showOKDialogBox(mActivity, "Connection Error", "Need Internet Connection to Logout", DialogInterface::dismiss);
@@ -270,39 +265,39 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
 //        }
 //    }
 
-//------------------------------------------------------- Form ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    private void showAllResurveyForm(){
-        try{
-            ArrayList<FormDBModel> list = dataBaseHelper.getResurveyMapFormDataList();
-            if(list.size() > 0){
-                Log.e(TAG, "Total Resurvey Form: " + list.size());
-                for(int i=0; i < list.size(); i++){
-                    FormDBModel formDBModel = list.get(i);
-                    if(!Utility.isEmptyString(formDBModel.getLatitude()) && !Utility.isEmptyString(formDBModel.getLongitude())){
-                        LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
-                        Marker marker = Utility.addResurveyMapFormMarker(mMap, latLng);
-                        marker.setDraggable(false);
-                        marker.setTag(formDBModel);
-                    }
-                    else{
-                        Log.e(TAG,"Lat Lon Data null Found in Some Forms");
-                    }
-                }
-            }
-            else{
-                Log.e(TAG, "Not Resurvey Form Found");
-            }
-        }
-        catch (Exception e){
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
-    private boolean isFormDataNotSync(){
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
-        return formDBModels.size() > 0;
-    }
+////------------------------------------------------------- Form ------------------------------------------------------------------------------------------------------------------------------------------------
+//
+//    private void showAllResurveyForm(){
+//        try{
+//            ArrayList<FormDBModel> list = dataBaseHelper.getResurveyMapFormDataList();
+//            if(list.size() > 0){
+//                Log.e(TAG, "Total Resurvey Form: " + list.size());
+//                for(int i=0; i < list.size(); i++){
+//                    FormDBModel formDBModel = list.get(i);
+//                    if(!Utility.isEmptyString(formDBModel.getLatitude()) && !Utility.isEmptyString(formDBModel.getLongitude())){
+//                        LatLng latLng = new LatLng(Double.parseDouble(formDBModel.getLatitude()), Double.parseDouble(formDBModel.getLongitude()));
+//                        Marker marker = Utility.addResurveyMapFormMarker(mMap, latLng);
+//                        marker.setDraggable(false);
+//                        marker.setTag(formDBModel);
+//                    }
+//                    else{
+//                        Log.e(TAG,"Lat Lon Data null Found in Some Forms");
+//                    }
+//                }
+//            }
+//            else{
+//                Log.e(TAG, "Not Resurvey Form Found");
+//            }
+//        }
+//        catch (Exception e){
+//            Log.e(TAG, e.getMessage());
+//        }
+//    }
+//
+//    private boolean isFormDataNotSync(){
+//        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
+//        return formDBModels.size() > 0;
+//    }
 
 //------------------------------------------------------- onMapClick ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -348,7 +343,7 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
         if(requestCode == FORM_REQUEST_CODE && resultCode == RESULT_OK){
             Log.e(TAG, "Resurvey Form Submit Successfully");
             mMap.clear();
-            showAllResurveyForm();
+           // showAllResurveyForm();
         }
     }
 
@@ -438,206 +433,206 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
         binding.zoomMapLayout.setVisibility(View.GONE);
         binding.zoomMapMarkerLayout.setVisibility(View.GONE);
     }
-
-//------------------------------------------------------- LogOut ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    private void Logout(){
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(mActivity);
-        alertDialog.setMessage("Are you sure want to Logout?");
-        alertDialog.setPositiveButton("Logout", (dialog, which) -> {
-            dialog.dismiss();
-            showProgressBar();
-            LogoutSync();
-        });
-        alertDialog.setNegativeButton("Cancel", null);
-        alertDialog.setCancelable(false);
-        alertDialog.show();
-    }
-
-    private void reDirectToLoginPage(){
-        String date = Utility.getSavedData(mActivity,Utility.OLD_DATE);
-        Utility.clearData(this);
-        Utility.saveData(mActivity,Utility.OLD_DATE,date);
-        // Database Clear
-        dataBaseHelper.logout();
-        dismissProgressBar();
-        startActivity(new Intent(this, SplashActivity.class));
-    }
-
-    private void LogoutSync(){
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
-        if(formDBModels.size() == 0){
-            reDirectToLoginPage();
-            Log.e(TAG,"Logout No Data Found in Local DataBase");
-        }
-        else{
-            Log.e(TAG, "Logout DataBase Contain some Data");
-
-            if(formDBModels.size() > 0){
-                Log.e(TAG, "Logout Sync Form On");
-                formDBModelList = dataBaseHelper.getMapFormLocalDataList();
-                LogoutSyncFormDetails();
-            }
-
-        }
-    }
-
-    private void LogoutSyncFormDetails(){
-        if(formDBModelList != null && formDBModelList.size() > 0){
-            formDBModel = formDBModelList.get(0);
-            formDBModelList.remove(0);
-            LogoutSyncFormDataToServer(formDBModel);
-        }
-        else{
-            Log.e(TAG, "Logout Sync Form Off");
-            Log.e(TAG,  "Logout Sync Successfully");
-            reDirectToLoginPage();
-        }
-    }
-
-    private void LogoutSyncFormDataToServer(FormDBModel formDBModel){
-        Map<String, String> params = new HashMap<>();
-        params.put("data", formDBModel.getFormData());
-        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM, URL_Utility.WS_FORM, params, false, false);
-    }
+//
+////------------------------------------------------------- LogOut ------------------------------------------------------------------------------------------------------------------------------------------------
+//
+//    private void Logout(){
+//        AlertDialog.Builder alertDialog = new AlertDialog.Builder(mActivity);
+//        alertDialog.setMessage("Are you sure want to Logout?");
+//        alertDialog.setPositiveButton("Logout", (dialog, which) -> {
+//            dialog.dismiss();
+//            showProgressBar();
+//            LogoutSync();
+//        });
+//        alertDialog.setNegativeButton("Cancel", null);
+//        alertDialog.setCancelable(false);
+//        alertDialog.show();
+//    }
+//
+//    private void reDirectToLoginPage(){
+//        String date = Utility.getSavedData(mActivity,Utility.OLD_DATE);
+//        Utility.clearData(this);
+//        Utility.saveData(mActivity,Utility.OLD_DATE,date);
+//        // Database Clear
+//        dataBaseHelper.logout();
+//        dismissProgressBar();
+//        startActivity(new Intent(this, SplashActivity.class));
+//    }
+//
+//    private void LogoutSync(){
+//        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
+//        if(formDBModels.size() == 0){
+//            reDirectToLoginPage();
+//            Log.e(TAG,"Logout No Data Found in Local DataBase");
+//        }
+//        else{
+//            Log.e(TAG, "Logout DataBase Contain some Data");
+//
+//            if(formDBModels.size() > 0){
+//                Log.e(TAG, "Logout Sync Form On");
+//                formDBModelList = dataBaseHelper.getMapFormLocalDataList();
+//                LogoutSyncFormDetails();
+//            }
+//
+//        }
+//    }
+//
+//    private void LogoutSyncFormDetails(){
+//        if(formDBModelList != null && formDBModelList.size() > 0){
+//            formDBModel = formDBModelList.get(0);
+//            formDBModelList.remove(0);
+//            LogoutSyncFormDataToServer(formDBModel);
+//        }
+//        else{
+//            Log.e(TAG, "Logout Sync Form Off");
+//            Log.e(TAG,  "Logout Sync Successfully");
+//            reDirectToLoginPage();
+//        }
+//    }
+//
+//    private void LogoutSyncFormDataToServer(FormDBModel formDBModel){
+//        Map<String, String> params = new HashMap<>();
+//        params.put("data", formDBModel.getFormData());
+//        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM, URL_Utility.WS_FORM, params, false, false);
+//    }
 
 //------------------------------------------------------- onSuccessResponse -----------------------------------------------------------------------------------------------------------------------------------------
 
     @Override
     public void onSuccessResponse(URL_Utility.ResponseCode responseCode, String response) {
 
-        // Form
-        if(responseCode == URL_Utility.ResponseCode.WS_FORM){
-            if(!response.equals("")){
-                try {
-                    JSONObject mObj = new JSONObject(response);
-                    String status = mObj.optString(URL_Utility.STATUS);
-                    Log.e(TAG, "Logout Form Status : " + status);
-                    // Status -> Success
-                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
-                        if (formDBModel != null && formDBModel.getId() != null) {
-                            // then
-                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
-                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
-                            }
-                            LogoutSyncFormDetails();
-                        }
-                    }
-                    // Status -> Fail
-                    else{
-                        dismissProgressBar();
-                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                    }
-                }
-                catch (JSONException e){
-                    dismissProgressBar();
-                    Log.e(TAG,"Logout Sync Json Error: "+ e.getMessage());
-                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                }
-            }
-            else{
-                dismissProgressBar();
-                Log.e(TAG, "Logout Sync Response Empty");
-                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-            }
-        }
-        // Resurvey Form
-        if (responseCode == URL_Utility.ResponseCode.WS_RESURVEY_FORM) {
-            // Decrypt Response
-            Log.e(TAG,"Resurvey Response: "+response);
-            if(!response.equals("")) {
-                try {
-                    JSONObject mLoginObj = new JSONObject(response);
-                    String status = mLoginObj.optString(URL_Utility.STATUS);
-                    Log.e(TAG,"Resurvey Status: "+status);
-                    if (status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
-                        // Form Data
-                        JSONArray formDataArray = new JSONArray(mLoginObj.getString("form_data"));
-                        if(formDataArray.length() > 0){
-                            for(int i=0; i<formDataArray.length(); i++){
-                                FormModel formModel = new FormModel();
-                                // Form ------------------------
-                                JSONObject formObject = formDataArray.getJSONObject(i).getJSONObject("form");
-                                String lat = formObject.optString("latitude");
-                                String lon = formObject.optString("longitude");
-                                formModel.setForm(Utility.convertStringToFormFields(formObject.toString()));
-                                // Form Details -----------
-                                JSONArray detailsArrays = formDataArray.getJSONObject(i).getJSONArray("detais");
-                                if(detailsArrays.length() > 0){
-                                    ArrayList<FormTableModel> list = new ArrayList<>();
-                                    for(int j =0 ; j<detailsArrays.length(); j++){
-                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
-                                    }
-                                    formModel.setDetais(list);
-                                }
-                                else{
-                                    ArrayList<FormTableModel> list = new ArrayList<>();
-                                    formModel.setDetais(list);
-                                }
-                                // Clear Resurvey DataBase
-                                dataBaseHelper.clearResurveyDatabaseTable();
-                                // Resurvey Form
-                                dataBaseHelper.insertResurveyMapForm(Utility.getSavedData(mActivity,Utility.LOGGED_USERID),lat,lon,Utility.convertFormModelToString(formModel),"","");
-                            }
-                            // Clear Resurvey Map
-                            mMap.clear();
-                            // Show All Data
-                            showAllResurveyForm();
-                        }
-                        dismissProgressBar();
-                    }
-                    else {
-                        dismissProgressBar();
-                        Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
-                    }
-                } catch (JSONException e) {
-                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                    Log.e(TAG, e.getMessage());
-                    dismissProgressBar();
-                }
-            }
-            else{
-                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                Log.e(TAG, "Resurvey Response Empty");
-                dismissProgressBar();
-            }
-        }
-        // Sync Form
-        if(responseCode == URL_Utility.ResponseCode.WS_FORM_SYNC){
-            if(!response.equals("")){
-                try {
-                    JSONObject mObj = new JSONObject(response);
-                    String status = mObj.optString(URL_Utility.STATUS);
-                    Log.e(TAG, "Sync Form Status : " + status);
-                    // Status -> Success
-                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
-                        if (formDBModel != null && formDBModel.getId() != null) {
-                            // then
-                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
-                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
-                                dataBaseHelper.updateMapData(formDBModel.getToken(),"f");
-                            }
-                            SyncFormDetails();
-                        }
-                    }
-                    // Status -> Fail
-                    else{
-                        dismissProgressBar();
-                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                    }
-                }
-                catch (JSONException e){
-                    dismissProgressBar();
-                    Log.e(TAG,"Sync Json Error: "+ e.getMessage());
-                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-                }
-            }
-            else{
-                dismissProgressBar();
-                Log.e(TAG, "Sync Response Empty");
-                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
-            }
-        }
+//        // Form
+//        if(responseCode == URL_Utility.ResponseCode.WS_FORM){
+//            if(!response.equals("")){
+//                try {
+//                    JSONObject mObj = new JSONObject(response);
+//                    String status = mObj.optString(URL_Utility.STATUS);
+//                    Log.e(TAG, "Logout Form Status : " + status);
+//                    // Status -> Success
+//                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+//                        if (formDBModel != null && formDBModel.getId() != null) {
+//                            // then
+//                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
+//                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+//                            }
+//                            LogoutSyncFormDetails();
+//                        }
+//                    }
+//                    // Status -> Fail
+//                    else{
+//                        dismissProgressBar();
+//                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//                    }
+//                }
+//                catch (JSONException e){
+//                    dismissProgressBar();
+//                    Log.e(TAG,"Logout Sync Json Error: "+ e.getMessage());
+//                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//                }
+//            }
+//            else{
+//                dismissProgressBar();
+//                Log.e(TAG, "Logout Sync Response Empty");
+//                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//            }
+//        }
+//        // Resurvey Form
+//        if (responseCode == URL_Utility.ResponseCode.WS_RESURVEY_FORM) {
+//            // Decrypt Response
+//            Log.e(TAG,"Resurvey Response: "+response);
+//            if(!response.equals("")) {
+//                try {
+//                    JSONObject mLoginObj = new JSONObject(response);
+//                    String status = mLoginObj.optString(URL_Utility.STATUS);
+//                    Log.e(TAG,"Resurvey Status: "+status);
+//                    if (status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+//                        // Form Data
+//                        JSONArray formDataArray = new JSONArray(mLoginObj.getString("form_data"));
+//                        if(formDataArray.length() > 0){
+//                            for(int i=0; i<formDataArray.length(); i++){
+//                                FormModel formModel = new FormModel();
+//                                // Form ------------------------
+//                                JSONObject formObject = formDataArray.getJSONObject(i).getJSONObject("form");
+//                                String lat = formObject.optString("latitude");
+//                                String lon = formObject.optString("longitude");
+//                                formModel.setForm(Utility.convertStringToFormFields(formObject.toString()));
+//                                // Form Details -----------
+//                                JSONArray detailsArrays = formDataArray.getJSONObject(i).getJSONArray("detais");
+//                                if(detailsArrays.length() > 0){
+//                                    ArrayList<FormTableModel> list = new ArrayList<>();
+//                                    for(int j =0 ; j<detailsArrays.length(); j++){
+//                                        list.add(Utility.convertStringToFormTable(detailsArrays.get(j).toString()));
+//                                    }
+//                                    formModel.setDetais(list);
+//                                }
+//                                else{
+//                                    ArrayList<FormTableModel> list = new ArrayList<>();
+//                                    formModel.setDetais(list);
+//                                }
+//                                // Clear Resurvey DataBase
+//                              //  dataBaseHelper.clearResurveyDatabaseTable();
+//                                // Resurvey Form
+//                            //    dataBaseHelper.insertResurveyMapForm(Utility.getSavedData(mActivity,Utility.LOGGED_USERID),lat,lon,Utility.convertFormModelToString(formModel),"","");
+//                            }
+//                            // Clear Resurvey Map
+//                            mMap.clear();
+//                            // Show All Data
+//                          //  showAllResurveyForm();
+//                        }
+//                        dismissProgressBar();
+//                    }
+//                    else {
+//                        dismissProgressBar();
+//                        Utility.showToast(mActivity, Utility.ERROR_MESSAGE);
+//                    }
+//                } catch (JSONException e) {
+//                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//                    Log.e(TAG, e.getMessage());
+//                    dismissProgressBar();
+//                }
+//            }
+//            else{
+//                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//                Log.e(TAG, "Resurvey Response Empty");
+//                dismissProgressBar();
+//            }
+//        }
+//        // Sync Form
+//        if(responseCode == URL_Utility.ResponseCode.WS_FORM_SYNC){
+//            if(!response.equals("")){
+//                try {
+//                    JSONObject mObj = new JSONObject(response);
+//                    String status = mObj.optString(URL_Utility.STATUS);
+//                    Log.e(TAG, "Sync Form Status : " + status);
+//                    // Status -> Success
+//                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+//                        if (formDBModel != null && formDBModel.getId() != null) {
+//                            // then
+//                            if (dataBaseHelper.getMapFormLocalDataList().size() > 0) {
+//                                dataBaseHelper.deleteMapFormLocalData(formDBModel.getId());
+//                                dataBaseHelper.updateMapData(formDBModel.getToken(),"f");
+//                            }
+//                            SyncFormDetails();
+//                        }
+//                    }
+//                    // Status -> Fail
+//                    else{
+//                        dismissProgressBar();
+//                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//                    }
+//                }
+//                catch (JSONException e){
+//                    dismissProgressBar();
+//                    Log.e(TAG,"Sync Json Error: "+ e.getMessage());
+//                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//                }
+//            }
+//            else{
+//                dismissProgressBar();
+//                Log.e(TAG, "Sync Response Empty");
+//                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+//            }
+//        }
 
     }
 
@@ -651,53 +646,53 @@ public class ResurveyActivity extends AppCompatActivity implements OnMapReadyCal
         Log.e(TAG, "Logout Error Message: "+error.getMessage());
     }
 
-
-//------------------------------------------------------- Sync ------------------------------------------------------------------------------------------------------------------------------------------------
-
-    private void Sync(){
-        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
-        if(formDBModels.size() == 0){
-            dismissProgressBar();
-            Log.e(TAG, "Sync Local Database Contain no Data");
-            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
-        }
-        else{
-            if(SystemPermission.isInternetConnected(mActivity)){
-                //baseApplication.startSyncService();
-                showProgressBar("Sync...");
-                Log.e(TAG, "Sync Database Contain some Data");
-                if(formDBModels.size() > 0){
-                    Log.e(TAG, "Sync Service Form On");
-                    formSyncList = dataBaseHelper.getMapFormLocalDataList();
-                    Log.e(TAG, "Sync Form Size: "+ formSyncList.size());
-                    SyncFormDetails();
-                }
-            }
-
-        }
-    }
-
-
-    private void SyncFormDetails(){
-        if(formSyncList != null && formSyncList.size() > 0){
-            formDBModel = formSyncList.get(0);
-            formSyncList.remove(0);
-            SyncFormDataToServer(formDBModel);
-        }
-        else{
-            Log.e(TAG, "Sync Service Form Off");
-            Log.e(TAG,  "Data Sync Successfully");
-            dismissProgressBar();
-            Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
-        }
-    }
-
-    private void SyncFormDataToServer(FormDBModel formDBModel){
-        Log.e(TAG, "Upload to Server.........!");
-        Map<String, String> params = new HashMap<>();
-        params.put("data", formDBModel.getFormData());
-        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
-    }
+//
+////------------------------------------------------------- Sync ------------------------------------------------------------------------------------------------------------------------------------------------
+//
+//    private void Sync(){
+//        ArrayList<FormDBModel> formDBModels = dataBaseHelper.getMapFormLocalDataList();
+//        if(formDBModels.size() == 0){
+//            dismissProgressBar();
+//            Log.e(TAG, "Sync Local Database Contain no Data");
+//            Utility.showOKDialogBox(this, "Sync", "Data Already Sync", DialogInterface::dismiss);
+//        }
+//        else{
+//            if(SystemPermission.isInternetConnected(mActivity)){
+//                //baseApplication.startSyncService();
+//                showProgressBar("Sync...");
+//                Log.e(TAG, "Sync Database Contain some Data");
+//                if(formDBModels.size() > 0){
+//                    Log.e(TAG, "Sync Service Form On");
+//                    formSyncList = dataBaseHelper.getMapFormLocalDataList();
+//                    Log.e(TAG, "Sync Form Size: "+ formSyncList.size());
+//                    SyncFormDetails();
+//                }
+//            }
+//
+//        }
+//    }
+//
+//
+//    private void SyncFormDetails(){
+//        if(formSyncList != null && formSyncList.size() > 0){
+//            formDBModel = formSyncList.get(0);
+//            formSyncList.remove(0);
+//            SyncFormDataToServer(formDBModel);
+//        }
+//        else{
+//            Log.e(TAG, "Sync Service Form Off");
+//            Log.e(TAG,  "Data Sync Successfully");
+//            dismissProgressBar();
+//            Utility.showOKDialogBox(this, "Sync", "Data Sync Successfully", DialogInterface::dismiss);
+//        }
+//    }
+//
+//    private void SyncFormDataToServer(FormDBModel formDBModel){
+//        Log.e(TAG, "Upload to Server.........!");
+//        Map<String, String> params = new HashMap<>();
+//        params.put("data", formDBModel.getFormData());
+//        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
+//    }
 
 
 //------------------------------------------------------- ProgressBar Show/ Dismiss ------------------------------------------------------------------------------------------------------

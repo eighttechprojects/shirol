@@ -1,13 +1,27 @@
 package com.eighttechprojects.propertytaxshirol.Activity.Form;
 
+import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,11 +31,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import com.android.volley.VolleyError;
-import com.bumptech.glide.util.Util;
+import com.bumptech.glide.Glide;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
+import com.eighttechprojects.propertytaxshirol.Adapter.FileUploadResurveyAdapter;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
+import com.eighttechprojects.propertytaxshirol.Model.FileUploadViewModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormDBModel;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
 import com.eighttechprojects.propertytaxshirol.Model.FormModel;
@@ -34,14 +51,28 @@ import com.eighttechprojects.propertytaxshirol.databinding.ActivityResurveyFormB
 import com.eighttechprojects.propertytaxshirol.volly.BaseApplication;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.Task;
+import com.mikelau.croperino.CroperinoConfig;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class ResurveyFormActivity extends AppCompatActivity implements View.OnClickListener,WSResponseInterface {
 
@@ -55,6 +86,11 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     private DataBaseHelper dataBaseHelper;
     // progress Dialog
     private static ProgressDialog progressDialog;
+    // Location
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private LocationCallback locationCallback;
+    private LocationRequest mRequest;
+    private Location mCurrentLocation = null;
     final String selectYesOption = "होय";
     final String selectNoOption  = "नाही";
     // Form Spinner Selected
@@ -81,6 +117,8 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     // Form model
     FormFields bin;
     FormModel formModel;
+    // Form DB Model
+    FormDBModel formDBModel;
     private String formID = "";
     private String latitude  = "";
     private String longitude = "";
@@ -89,7 +127,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     String db_form_sp_building_type     = "";
     String db_form_sp_building_use_type = "";
 
-    private String polygonID = "";
 
     // Camera
     private File cameraDestFileTemp;
@@ -97,9 +134,11 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
 
     StringBuilder sbCameraImagePathLocal = new StringBuilder();
     StringBuilder sbCameraImagePath = new StringBuilder();
+    StringBuilder sbCameraImageName = new StringBuilder();
 
     // File
     StringBuilder sbFilePath = new StringBuilder();
+    StringBuilder sbFileName = new StringBuilder();
     StringBuilder sbFilePathLocal = new StringBuilder();
 
     public static final String TYPE_FILE   = "file";
@@ -107,6 +146,18 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     public static boolean isFileUpload   = true;
     public static boolean isCameraUpload = true;
 
+
+    public int lastKey;
+    private String polygonID = "";
+    public String gisID     = "";
+    private String unique_number ="";
+    private String datetime = "";
+
+    private boolean isSurveyComplete = false;
+    public boolean isMultipleForm = false;
+
+    FileUploadResurveyAdapter fileUploadResurveyAdapter;
+    ArrayList<FileUploadViewModel> fileUploadList = new ArrayList<>();
 
 //------------------------------------------------------- onCreate ----------------------------------------------------------------------------------------------------------------------
 
@@ -120,6 +171,10 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         // Activity
         mActivity = this;
+        // FusedLocationProviderClient
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(mActivity);
+        // ImageFileUtils
+        imageFileUtils = new ImageFileUtils();
         // Adapter
         adapterFormTable = new AdapterFormTable(mActivity, formTableModels);
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mActivity, DividerItemDecoration.VERTICAL);
@@ -137,6 +192,26 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         initSpinner();
         // init Form Table Recycle View
         initFormTable();
+        // Update PreviewUI
+        updatePreviewUI(false);
+        // init Camera
+        initFormCameraImage();
+        // init File
+        initFormFile();
+        // Location Call Back
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                for (Location loc : locationResult.getLocations()) {
+                    mCurrentLocation = loc;
+                    if(mCurrentLocation != null){
+                        latitude = String.valueOf(mCurrentLocation.getLatitude());
+                        longitude = String.valueOf(mCurrentLocation.getLongitude());
+                    }
+                }
+            }
+        };
+        LocationPermission();
 
     }
 
@@ -145,33 +220,29 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     private void initExtra(){
         Intent intent = getIntent();
 
-//        // Latitude Contain or not
-//        if(intent.getExtras().containsKey(Utility.PASS_LAT)){
-//            latitude = intent.getStringExtra(Utility.PASS_LAT);
-//            Log.e(TAG,"Resurvey Form DB Lat:  "+latitude);
-//        }
-//        // Longitude Contains or not
-//        if(intent.getExtras().containsKey(Utility.PASS_LONG)) {
-//            longitude = intent.getStringExtra(Utility.PASS_LONG);
-//            Log.e(TAG, "Resurvey Form DB Long: "+longitude);
-//        }
-
         // Polygon ID Contains or not
         if(intent.getExtras().containsKey(Utility.PASS_POLYGON_ID)) {
-            polygonID = intent.getStringExtra(Utility.PASS_LONG);
-            Log.e(TAG, "Resurvey Form DB Polygon ID: "+polygonID);
+            polygonID = intent.getStringExtra(Utility.PASS_POLYGON_ID);
+            Log.e(TAG, "Resurvey From Polygon ID: "+polygonID);
+        }
+        // GIS ID Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_GIS_ID)) {
+            gisID = intent.getStringExtra(Utility.PASS_ID);
+            Log.e(TAG, "Resurvey From GIS ID: "+gisID);
         }
 
         // Id
         if(intent.getExtras().containsKey(Utility.PASS_ID)) {
-            resurveyID = intent.getStringExtra(Utility.PASS_ID);
-            Log.e(TAG, "Resurvey Form DB ID: " + resurveyID);
-            FormDBModel formDBModel = dataBaseHelper.getResurveyMapFormByID(resurveyID);
+            String id = intent.getStringExtra(Utility.PASS_ID);
+            Log.e(TAG, "Resurvey Form DB ID: " + id);
+            // Form DB Model
+            formDBModel = dataBaseHelper.getFormByPolygonIDAndID(id);
+            // Form Model
             formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
+            // Form Fields
             bin = formModel.getForm();
-            formID = bin.getForm_id();
-            Log.e(TAG,"Resurvey Form ID: "+formID);
         }
+
     }
 
 //------------------------------------------------------- initFormValue/Data ----------------------------------------------------------------------------------------------------------------------
@@ -198,14 +269,12 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             binding.formNoOfFloors.setText(Utility.getStringValue(bin.getNo_of_floor()));
             // 32
             binding.formPlotArea.setText(Utility.getStringValue(bin.getPlot_area()));
-            //33
+            // 33
             binding.formPropertyArea.setText(Utility.getStringValue(bin.getProperty_area()));
             // 34
             binding.formTotalArea.setText(Utility.getStringValue(bin.getTotal_area()));
             // 27.1
             binding.formTotalWaterLine1.setText(Utility.getStringValue(bin.getTotal_water_line1()));
-            // 27.2
-        //    binding.formTotalWaterLine2.setText(Utility.getStringValue(bin.getTotal_water_line2()));
         }
     }
 
@@ -689,9 +758,320 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         if(formModel != null){
             if(formModel.getDetais().size() > 0){
                 formTableModels.addAll(formModel.getDetais());
+                adapterFormTable.notifyDataSetChanged();
             }
         }
     }
+
+//------------------------------------------------------- init Form Camera Image ----------------------------------------------------------------------------------------------------------------------
+    private void initFormCameraImage(){
+
+        if(formDBModel != null){
+            if(!Utility.isEmptyString(formDBModel.getCameraPath())){
+                String imagePath = formDBModel.getCameraPath().split("#")[1];
+                if (formDBModel.getCameraPath().split("#")[0].startsWith("local")) {
+                    Glide.with(mActivity).load(imagePath).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+                } else {
+                    Uri uri = Uri.parse(imagePath);
+                    Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+                }
+            }
+            else{
+                Glide.with(mActivity).load(R.drawable.ic_no_image).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+            }
+        }
+
+        // Image Captured Click
+        binding.imgCaptured.setOnClickListener(view -> {
+            // Camera Image View
+            Utility.showResurveyImageViewBox(mActivity, (item, dialogBox) -> {
+
+                switch (item){
+
+                    case Utility.ITEM_SELECTED.EDIT:
+                        dialogBox.dismiss();
+                        openCamera();
+                        break;
+
+                    case Utility.ITEM_SELECTED.VIEW:
+                        dialogBox.dismiss();
+                        if(!Utility.isEmptyString(formDBModel.getCameraPath())){
+                            viewCameraImage(formDBModel);
+                        }
+                        else{
+                            Utility.showToast(mActivity,"No Image Upload");
+                        }
+                        break;
+                }});
+
+        });
+
+    }
+    private void viewCameraImage(FormDBModel formDBModel){
+        try{
+            String imagePath = formDBModel.getCameraPath().split("#")[1];
+            Dialog dialog = new Dialog(mActivity);
+            dialog.setContentView(R.layout.image_zoom_view_layout);
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            // ImageView
+            ImageView imageView = dialog.findViewById(R.id.dialogbox_image);
+            PhotoViewAttacher photoViewAttacher = new PhotoViewAttacher(imageView);
+            // Image Load!
+            if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
+                Glide.with(mActivity).load(imagePath).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                photoViewAttacher.update();
+            }
+            else{
+                Uri uri = Uri.parse(imagePath);
+                Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                photoViewAttacher.update();
+            }
+            // DialogBox Show
+            dialog.show();
+        }
+        catch (Exception e){
+            Log.e(TAG, e.getMessage());
+            binding.imgCaptured.setImageResource(R.drawable.ic_no_image);
+        }
+    }
+    private void updatePreviewUI(boolean isUpdate) {
+        binding.llMain.setVisibility(isUpdate ? View.GONE : View.VISIBLE);
+        binding.llPreview.setVisibility(isUpdate ? View.VISIBLE : View.GONE);
+    }
+    private void openCamera(){
+        // Camera
+        try{
+            Utility.openCamera(mActivity, imageFileUtils, path -> {
+                if(path != null){
+                    cameraDestFileTemp = new File(path);
+                }
+            });
+        }
+        catch (Exception e){
+            Log.e(TAG, e.getMessage());
+        }
+    }
+    private StringBuilder getGeoTagData() {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)) {
+            stringBuilder.append("Latitude : " + "").append(latitude);
+            stringBuilder.append("\n");
+            stringBuilder.append("Longitude : " + "").append(longitude);
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Date: ").append(Utility.getRecordDate());
+        return stringBuilder;
+    }
+
+//------------------------------------------------------- init Form File ----------------------------------------------------------------------------------------------------------------------
+
+    private void initFormFile() {
+
+        if (formDBModel != null) {
+            if(!Utility.isEmptyString(formDBModel.getFilePath())){
+                binding.tvFileViewName.setText("File Found");
+                int n = formDBModel.getFilePath().split(",").length;
+                for(int i=0; i<n; i++){
+                    if(formDBModel.getFilePath().split(",")[i].split("#")[0].startsWith("local%")) {
+                        String filePath = formDBModel.getFilePath().split(",")[i].split("#")[1];
+                        File file = new File(filePath);
+                        String fileName = file.getName();
+                        fileUploadList.add(new FileUploadViewModel(fileName, filePath, false));
+                    }
+                    else {
+                        String filename = formDBModel.getFilePath().split(",")[i].split("#")[0];
+                        String filepath = formDBModel.getFilePath().split(",")[i].split("#")[1];
+                        fileUploadList.add(new FileUploadViewModel(filename, filepath, true));
+                    }
+                }
+            }
+            else{
+                binding.tvFileViewName.setText("No File Upload");
+            }
+        }
+
+        // File View Click
+        binding.btFileView.setOnClickListener(view -> {
+            // DialogBox
+            Dialog dialog = new Dialog(mActivity);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setCancelable(false);
+            dialog.setContentView(R.layout.custom_resurvey_file_view);
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            // RecycleView
+            RecyclerView recyclerView = dialog.findViewById(R.id.rvResurveyFileUpload);
+            // Cancel Button
+            Button btFileCancel = dialog.findViewById(R.id.btFileCancel);
+            btFileCancel.setOnClickListener(view1 -> {
+                if(fileUploadList.size() == 0){
+                    binding.tvFileViewName.setText("No File Upload");
+                }
+                else{
+                    binding.tvFileViewName.setText("File Upload");
+                }
+                dialog.dismiss();
+            });
+            // Add Button
+            Button btFileAdd = dialog.findViewById(R.id.btFileAdd);
+
+            // Adapter
+            fileUploadResurveyAdapter = new FileUploadResurveyAdapter(mActivity,fileUploadList);
+            // Set Adapter
+            recyclerView.setAdapter(fileUploadResurveyAdapter);
+            // Set Layout
+            recyclerView.setLayoutManager(new LinearLayoutManager(mActivity));
+            // Notify Data Set Change!
+            fileUploadResurveyAdapter.notifyDataSetChanged();
+
+            // Add new File
+            btFileAdd.setOnClickListener(view12 -> {
+                openFilePicker();
+            });
+            // Dialog box Show
+            dialog.show();
+        });
+    }
+
+    private void openFilePicker(){
+        try{
+            Utility.openMultipleFilePicker(mActivity);
+        }catch (Exception e){
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+//------------------------------------------------------- onActivity Result ----------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Camera Photo/Image Request
+        if(requestCode == Utility.REQUEST_TAKE_PHOTO){
+            if(resultCode == Activity.RESULT_OK){
+                try{
+                    sbCameraImagePath      = new StringBuilder();
+                    sbCameraImagePathLocal = new StringBuilder();
+                    sbCameraImageName      = new StringBuilder();
+                    binding.txtGeoTag.setText(getGeoTagData());
+                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(cameraDestFileTemp));
+                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
+                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
+                    binding.imgPreview.setImageBitmap(bitmapPreview);
+                    updatePreviewUI(true);
+
+                    new Handler().postDelayed(() -> {
+                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
+                            Log.e("Picture", "screenshot capture success");
+                        } else {
+                            destFile = destFileTemp2;
+                            Log.e("Picture", "screenshot capture failed");
+                        }
+                        sbCameraImagePath.append(destFile.getPath());
+                        sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
+                        sbCameraImageName.append(destFile.getName());
+                        updatePreviewUI(false);
+                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
+                        // Set Image
+                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
+                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+                    }, 400);
+                }
+                catch (Exception e){
+                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        }
+
+        // File Request
+        if(requestCode == Utility.PICK_FILE_RESULT_CODE){
+            if(resultCode == Activity.RESULT_OK){
+                assert data != null;
+                Uri uri = data.getData();
+                // Multiple Files Selected
+                if(null != data.getClipData()){
+                    Log.e(TAG,"Multiple File Selected");
+                    ArrayList<Uri> multipleFileList = new ArrayList<>();
+                    int n = data.getClipData().getItemCount(); // size
+                    for(int i=0; i<n; i++){
+                        Uri multipleUri = data.getClipData().getItemAt(i).getUri();
+                        multipleFileList.add(multipleUri);
+                    }
+                    sbFileName = new StringBuilder();
+                    sbFilePath = new StringBuilder();
+                    sbFilePathLocal = new StringBuilder();
+                    for(int i=0; i<multipleFileList.size(); i++){
+                        File sourceFile = new File(imageFileUtils.getPathUri(mActivity, multipleFileList.get(i)));
+                        File destFile = imageFileUtils.getDestinationFileDoc(imageFileUtils.getRootDirFileDoc(mActivity), ImageFileUtils.getExtFromUri(this, multipleFileList.get(i)));
+                        try{
+                            imageFileUtils.copyFile(sourceFile, destFile);
+                        }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        if(destFile != null){
+                            sbFileName.append(destFile.getName());
+                            sbFilePath.append(destFile.getPath());
+                            sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
+                            if(i < multipleFileList.size() - 1){
+                                sbFilePath.append(",");
+                                sbFileName.append(",");
+                                sbFilePathLocal.append(",");
+                            }
+                        }
+                    }
+
+                    int multipleFileSize = sbFilePathLocal.toString().split(",").length;
+                    for(int i=0; i < multipleFileSize; i++){
+                        String filePath = sbFilePathLocal.toString().split(",")[i].split("#")[1];
+                        File file = new File(filePath);
+                        String fileName = file.getName();
+                        fileUploadList.add(new FileUploadViewModel(fileName, filePath, false));
+                    }
+                    fileUploadResurveyAdapter.notifyDataSetChanged();
+                    binding.tvFileViewName.setText("File Upload");
+
+                }
+                // Single File Selected
+                else{
+                    Log.e(TAG,"Single File Selected");
+                    File sourceFile = new File(imageFileUtils.getPathUri(mActivity, uri));
+                    File destFile = imageFileUtils.getDestinationFileDoc(imageFileUtils.getRootDirFileDoc(mActivity), ImageFileUtils.getExtFromUri(this, uri));
+                    try{
+                        imageFileUtils.copyFile(sourceFile, destFile);
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+
+                    if(destFile != null){
+                        sbFileName = new StringBuilder();
+                        sbFilePath = new StringBuilder();
+                        sbFilePathLocal = new StringBuilder();
+                        sbFilePath.append(destFile.getPath());
+                        sbFileName.append(destFile.getName());
+                        sbFilePathLocal.append("local").append("%").append(destFile.getName()).append("#").append(destFile.getPath());
+                        binding.tvFileViewName.setText("File Upload");
+
+                        String filePath = sbFilePathLocal.toString().split("#")[1];
+                        File file = new File(filePath);
+                        String fileName = file.getName();
+                        fileUploadList.add(new FileUploadViewModel(fileName, filePath, false));
+                        fileUploadResurveyAdapter.notifyDataSetChanged();
+                    }
+                }
+
+                Log.e(TAG, "File Path: "+sbFilePath.toString());
+            }
+
+        }
+    }
+
+
 
 //------------------------------------------------------- initDatabase ----------------------------------------------------------------------------------------------------------------------
 
@@ -742,6 +1122,22 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
+//------------------------------------------------------- Generate Property ID ----------------------------------------------------------------------------------------------------------------------
+
+    private String generatePropertyID(String polygonID,boolean isMultipleForm,int lastKey){
+
+        String key = "";
+        // Single Form then
+        if(!isMultipleForm){
+            key = polygonID + "/"+ 1;
+        }
+        // Multiple Form then
+        else{
+            key = polygonID + "/"+ (lastKey + 1);
+        }
+        return key;
+    }
+
 //------------------------------------------------------- Add Form Table ----------------------------------------------------------------------------------------------------------------------
 
     private void addFormTable(){
@@ -756,7 +1152,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         // Init Edit Text
         EditText sr_no            = fDB.findViewById(R.id.form_table_sr_no);
         EditText floor            = fDB.findViewById(R.id.form_table_floor);
-        EditText length          = fDB.findViewById(R.id.form_table_length);
+        EditText length           = fDB.findViewById(R.id.form_table_length);
         EditText height           = fDB.findViewById(R.id.form_table_height);
         EditText area             = fDB.findViewById(R.id.form_table_area);
         EditText building_age     = fDB.findViewById(R.id.form_table_building_age);
@@ -822,15 +1218,25 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     private void onFormSubmit(){
         // Geom Array not Null
         if(!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)){
+
+            unique_number = String.valueOf(Utility.getToken());
+            datetime      = Utility.getDateTime();
+
             // 1 -----------------------------
             FormFields bin = new FormFields();
+
             // Default Fields
+            bin.setForm_number(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
+            bin.setFid(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()).split("/")[1]);
+            bin.setPolygon_id(polygonID);
+            bin.setUnique_number(unique_number);
             bin.setForm_id(Utility.getStringValue(formID));
             bin.setUser_id(Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
             bin.setLatitude(latitude);
             bin.setLongitude(longitude);
             bin.setCreated_on(Utility.getDateTime());
-            // Form Fields
+
+            // Form Fields ---------------------------
             bin.setOwner_name(Utility.getEditTextValue(binding.formOwnerName));
             bin.setOld_property_no(Utility.getEditTextValue(binding.formOldPropertyNo));
             // 3
@@ -952,26 +1358,24 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                         Log.e(TAG,"Form Upload to Server SuccessFully");
                         dismissProgressBar();
                         if(formModel != null){
-                            dataBaseHelper.insertMapForm(
-                                    Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-                                    polygonID,
-                                    formID,
-                                    latitude,
-                                    longitude,
-                                    Utility.convertFormModelToString(formModel),
-                                    "f",
-                                    String.valueOf(Utility.getToken()),
-                                    "",
-                                    ""
-                            );
+//                            dataBaseHelper.insertMapForm(
+//                                    Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
+//                                    polygonID,
+//                                    formID,
+//                                    latitude,
+//                                    longitude,
+//                                    Utility.convertFormModelToString(formModel),
+//                                    "f",
+//                                    String.valueOf(Utility.getToken()),
+//                                    "",
+//                                    ""
+//                            );
                         }
                         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
                             okDialogBox.dismiss();
                             setResult(RESULT_OK);
                             finish();
                         });
-                        // Delete Resurvey Form Data by ID
-                        dataBaseHelper.deleteResurveyMapFormData(resurveyID);
                     }
                     // Status -> Fail
                     else{
@@ -1035,5 +1439,63 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     public void onBackPressed() {
         finish();
     }
+
+
+//---------------------------------------------- Location Permission ------------------------------------------------------------------------------------------------------------------------
+
+    private void LocationPermission() {
+        if(SystemPermission.isLocation(mActivity)) {
+            location();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void location() {
+        //now for receiving constant location updates:
+        mRequest = LocationRequest.create();
+        mRequest.setInterval(2000);//time in ms; every ~2 seconds
+        mRequest.setFastestInterval(1000);
+        mRequest.setPriority(PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mRequest);
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+        task.addOnFailureListener(e -> {
+            if (e instanceof ResolvableApiException) {
+                try {
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(this, 500);
+                }
+                catch (IntentSender.SendIntentException sendEx) {
+                    // Ignore the error.
+                }
+            }
+        });
+    }
+
+    @SuppressLint("MissingPermission")
+    protected void startLocationUpdates() {
+        fusedLocationProviderClient.requestLocationUpdates(mRequest, locationCallback, null);
+    }
+
+    protected void stopLocationUpdates(){
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+    }
+
+//---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+//---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startLocationUpdates();
+    }
+
 
 }

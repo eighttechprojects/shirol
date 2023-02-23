@@ -1,12 +1,7 @@
 package com.eighttechprojects.propertytaxshirol.volly;
 
-import static com.eighttechprojects.propertytaxshirol.Service.SyncService.START_SYNC;
-import static com.eighttechprojects.propertytaxshirol.Service.SyncService.STOP_SYNC;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
 import android.util.Log;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ProcessLifecycleOwner;
@@ -17,7 +12,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.RetryPolicy;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.eighttechprojects.propertytaxshirol.Service.SyncService;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility.ResponseCode;
 import java.util.HashMap;
 import java.util.Map;
@@ -174,30 +168,5 @@ public class BaseApplication extends MultiDexApplication {
 	}
 
 
-//------------------------------------------------------- Sync Service ----------------------------------------------------------------------------------------------------------------
-
-	public boolean isMyServiceRunning(Class<?> serviceClass) {
-		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer
-				.MAX_VALUE)) {
-			if (service != null && serviceClass.getName().equals(service.service.getClassName())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void startSyncService() {
-		if(!isMyServiceRunning(SyncService.class)) {
-			Intent intent = new Intent(this, SyncService.class);
-			intent.setAction(START_SYNC);
-
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				startForegroundService(intent);
-			} else {
-				startService(intent);
-			}
-		}
-	}
 
 }

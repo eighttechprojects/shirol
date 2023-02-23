@@ -39,6 +39,7 @@ import android.widget.Toast;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
 import com.eighttechprojects.propertytaxshirol.Activity.Form.FormActivity;
+import com.eighttechprojects.propertytaxshirol.Activity.Form.ResurveyFormActivity;
 import com.eighttechprojects.propertytaxshirol.Activity.SplashActivity;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormListView;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
@@ -178,23 +179,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
-        // Location Call Back
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
-                for (Location loc : locationResult.getLocations()) {
-                    mCurrentLocation = loc;
-                    if(mCurrentLocation != null){
-                        if(isGoToCurrentLocation){
-                            isGoToCurrentLocation = false;
-                            // Current LatLon
-                            LatLng latLng = new LatLng(16.751075235,74.587887456);
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
+
+
+            // Location Call Back
+            locationCallback = new LocationCallback() {
+                @Override
+                public void onLocationResult(@NonNull LocationResult locationResult) {
+                    for (Location loc : locationResult.getLocations()) {
+                        mCurrentLocation = loc;
+                        if(mCurrentLocation != null){
+                            if(isGoToCurrentLocation){
+                                isGoToCurrentLocation = false;
+                                // Current LatLon
+                                LatLng latLng = new LatLng(16.751075235,74.587887456);
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,DEFAULT_ZOOM));
+                            }
                         }
                     }
                 }
-            }
-        };
+            };
+
         LocationPermission();
 
     }
@@ -217,7 +221,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         mMap.setMyLocationEnabled(true);
         // set Map
-        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
         // Map Click Listener
         mMap.setOnMapClickListener(this);
         // Polygon Click Listener
@@ -230,7 +234,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Utility.addMapFormMarker(mMap, latLng, BitmapDescriptorFactory.HUE_GREEN);
         // logout 24hr
         LogoutAfter24hr();
-
 
         //------------------------------------------------------- On Camera Idle ------------------------------------------------------------
 
@@ -280,7 +283,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 //------------------------------------------------------- setOnClickListener ------------------------------------------------------------------------------------------------------------------------------------------------
 
     private void setOnClickListener(){
-        binding.imgMyLocation.setOnClickListener(this);
+        binding.rlCurrentLocation.setOnClickListener(this);
         binding.rlMapType.setOnClickListener(this);
     }
 
@@ -308,15 +311,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 break;
 
-            case R.id.menuResurvey:
-                ArrayList<FormDBModel> dbModels = dataBaseHelper.getResurveyMapFormDataList();
-                if(dbModels.size() > 0){
-                    Utility.reDirectTo(mActivity, ResurveyActivity.class);
-                }
-                else{
-                    Utility.showOKDialogBox(mActivity, "Alert", "No Data Found", DialogInterface::dismiss);
-                }
-                break;
 
             case R.id.menuLogout:
                 if(SystemPermission.isInternetConnected(mActivity)){
@@ -344,7 +338,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         alertDialog.setCancelable(false);
         alertDialog.show();
     }
-
     private void LogoutSync(){
         ArrayList<FormDBModel> formDBModels = dataBaseHelper.getAllForms();
         ArrayList<LastKeyModel> lastKeys    = dataBaseHelper.getAllGenerateID();
@@ -375,7 +368,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
     }
-
     private void LogoutSyncFormDetails(){
         if(formDBModelList != null && formDBModelList.size() > 0){
             isFormUpload = false;
@@ -397,13 +389,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
     }
-
     private void LogoutSyncLastKeyDetails(){
         if(lastKeysList != null && lastKeysList.size() > 0){
             isLastKeyUpload = false;
             lastKeyModel = lastKeysList.get(0);
             lastKeysList.remove(0);
-            SyncLastKeyToServer(lastKeyModel);
+            LogoutSyncLastKeyToServer(lastKeyModel);
         }
         else{
             isLastKeyUpload = true;
@@ -416,13 +407,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
     }
-
+    private void LogoutSyncLastKeyToServer(LastKeyModel lastKeyModel){
+        Map<String, String> params = new HashMap<>();
+        params.put("data",Utility.convertlastKeyModelToString(lastKeyModel));
+        Log.e(TAG, "Last key  Uploaded -> " + params.toString());
+        BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_SET_COUNTER1, URL_Utility.WS_SET_COUNTER1, params, false, false);
+    }
     private void LogoutSyncFormDataToServer(FormDBModel formDBModel){
         Map<String, String> params = new HashMap<>();
         params.put("data", formDBModel.getFormData());
         BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM, URL_Utility.WS_FORM, params, false, false);
     }
-
     private void LogoutAfter24hr(){
         @SuppressLint("SimpleDateFormat") String currentDate = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
         String date = Utility.getSavedData(mActivity,Utility.OLD_DATE);
@@ -489,7 +484,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void Sync() {
         ArrayList<FormDBModel> formDBModels = dataBaseHelper.getAllForms();
         ArrayList<LastKeyModel> lastKeys    = dataBaseHelper.getAllGenerateID();
-
+        Log.e(TAG, "Sync Last Keys Size -> "+lastKeys.size());
         if(formDBModels.size() == 0 && lastKeys.size() == 0){
             dismissProgressBar();
             Log.e(TAG, "Sync Local Database Contain no Data");
@@ -499,7 +494,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(SystemPermission.isInternetConnected(mActivity)){
                 showProgressBar("Sync...");
                 Log.e(TAG, "Sync Database Contain some Data");
-
                 if(formDBModels.size() > 0){
                     Log.e(TAG, "Sync Service Form On");
                     formSyncList = dataBaseHelper.getAllForms();
@@ -522,7 +516,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
     }
-
     private void SyncLastKeyDetails(){
         if(lastKeysList != null && lastKeysList.size() > 0){
             isLastKeyUpload = false;
@@ -541,15 +534,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
            }
         }
     }
-
     private void SyncLastKeyToServer(LastKeyModel lastKeyModel){
         Map<String, String> params = new HashMap<>();
-//        //poly_id, counter
         params.put("data",Utility.convertlastKeyModelToString(lastKeyModel));
         Log.e(TAG, "Last key  Uploaded -> " + params.toString());
         BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_SET_COUNTER, URL_Utility.WS_SET_COUNTER, params, false, false);
     }
-
     private void SyncFormDetails(){
         if(formSyncList != null && formSyncList.size() > 0){
             isFormUpload = false;
@@ -572,14 +562,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
     }
-
     private void SyncFormDataToServer(FormDBModel formDBModel){
         Log.e(TAG, "Upload to Server.........!");
         Map<String, String> params = new HashMap<>();
         params.put("data", formDBModel.getFormData());
         BaseApplication.getInstance().makeHttpPostRequest(this, URL_Utility.ResponseCode.WS_FORM_SYNC, URL_Utility.WS_FORM_SYNC, params, false, false);
     }
-
     private boolean isFormDataNotSync(){
         ArrayList<FormDBModel> formDBModels = dataBaseHelper.getAllForms();
         return formDBModels.size() > 0;
@@ -709,7 +697,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             else{
                                 // Only Form Contains
                                 Log.e(TAG,"User Upload only Form not Camera File or File");
-                                Log.e(TAG,"Form Upload to Server SuccessFully");
                                 if (formDBModel != null && formDBModel.getId() != null) {
                                     // then
                                     if (dataBaseHelper.getAllForms().size() > 0) {
@@ -750,7 +737,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (lastKeyModel != null && lastKeyModel.getId() != null) {
                             // then
                             if (dataBaseHelper.getAllGenerateID().size() > 0) {
-                                dataBaseHelper.deleteGenerateID(lastKeyModel.getId());
+                                dataBaseHelper.deleteGenerateIDLocal(lastKeyModel.getId());
                             }
                             SyncLastKeyDetails();
                         }
@@ -773,6 +760,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
+
+        if(responseCode == URL_Utility.ResponseCode.WS_SET_COUNTER1){
+            if(!response.equals("")){
+                try {
+                    JSONObject mObj = new JSONObject(response);
+                    String status = mObj.optString(URL_Utility.STATUS);
+                    Log.e(TAG, "Logout SET Counter Status : " + status);
+                    // Status -> Success
+                    if(status.equalsIgnoreCase(URL_Utility.STATUS_SUCCESS)){
+                        if (lastKeyModel != null && lastKeyModel.getId() != null) {
+                            // then
+                            if (dataBaseHelper.getAllGenerateID().size() > 0) {
+                                dataBaseHelper.deleteGenerateIDLocal(lastKeyModel.getId());
+                            }
+                            LogoutSyncLastKeyDetails();
+                        }
+                    }
+                    // Status -> Fail
+                    else{
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+                }
+                catch (JSONException e){
+                    Log.e(TAG,"Json Error: "+ e.getMessage());
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    dismissProgressBar();
+                }
+            }
+            else{
+                Log.e(TAG, "SET Counter Response Empty");
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+        }
+
     }
 
 //------------------------------------------------------- onErrorResponse -----------------------------------------------------------------------------------------------------------------------------------------
@@ -793,9 +816,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         switch (view.getId()){
 
-            case R.id.imgMyLocation:
+            case R.id.rlCurrentLocation:
                 if (mCurrentLocation != null) {
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()),DEFAULT_ZOOM));
+                }
+                else{
+                    Log.e(TAG, "Location null");
                 }
                 break;
 
@@ -823,8 +849,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             FormModel formModel = Utility.convertStringToFormModel(formDBModel.getFormData());
             // Form Fields
             FormFields bin = formModel.getForm();
-           // formDBModel.setFilePath(Utility.getStringValue(bin.getPlan_attachment()));
-         //   formDBModel.setCameraPath(Utility.getStringValue(bin.getProperty_images()));
+           // if(formDBModel.isOnlineSave()){
+                Log.e(TAG, "Image - > "+formModel.getForm().getProperty_images());
+                Log.e(TAG, "File -> "+formModel.getForm().getPlan_attachment());
+           //     formDBModel.setCameraPath(formModel.getForm().getProperty_images());
+           //     formDBModel.setFilePath(formModel.getForm().getPlan_attachment());
+           // }
 
             // Dialog Box
             Dialog fDB = new Dialog(this);
@@ -1022,7 +1052,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Camera Image Upload View -----------------------
             if(!Utility.isEmptyString(formDBModel.getCameraPath())){
-                try{
+               // try{
                     String imagePath = formDBModel.getCameraPath().split("#")[1];
                     if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
                         Glide.with(mActivity).load(imagePath).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imgCaptured);
@@ -1031,46 +1061,45 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Uri uri = Uri.parse(imagePath);
                         Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imgCaptured);
                     }
-
-                    // Click on Camera Image
-                    imgCaptured.setOnClickListener(view -> {
-                        Dialog dialog = new Dialog(mActivity);
-                        dialog.setContentView(R.layout.image_zoom_view_layout);
-                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                        ImageView imageView = dialog.findViewById(R.id.dialogbox_image);
-
-                        PhotoViewAttacher photoViewAttacher = new PhotoViewAttacher(imageView);
-                        // Image Load!
-                        try{
-                            // String imagePath = formDBModel.getCameraPath().split("#")[1];
-                            if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
-                                Glide.with(mActivity).load(imagePath).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
-                               photoViewAttacher.update();
-                            }
-                            else{
-                                Uri uri = Uri.parse(imagePath);
-                                Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
-                                photoViewAttacher.update();
-
-                            }
-                        }
-                        catch (Exception e){
-                            Log.e(TAG, e.getMessage());
-                            imageView.setImageResource(R.drawable.ic_no_image);
-                        }
-                        dialog.show();
-                    });
-
-                }
-                catch (Exception e){
-                    Log.e(TAG, e.getMessage());
-                    imgCaptured.setImageResource(R.drawable.ic_no_image);
-                }
+//                }
+//                catch (Exception e){
+//                    Log.e(TAG, e.getMessage());
+//                    imgCaptured.setImageResource(R.drawable.ic_no_image);
+//                }
             }
             else{
                 // When No Image Found
                 imgCaptured.setImageResource(R.drawable.ic_no_image);
             }
+
+
+            // Click on Camera Image
+            imgCaptured.setOnClickListener(view -> {
+                Dialog dialog = new Dialog(mActivity);
+                dialog.setContentView(R.layout.image_zoom_view_layout);
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                ImageView imageView = dialog.findViewById(R.id.dialogbox_image);
+
+              //  PhotoViewAttacher photoViewAttacher = new PhotoViewAttacher(imageView);
+                // Image Load!
+                //  try{
+                // String imagePath = formDBModel.getCameraPath().split("#")[1];
+                if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
+                    Glide.with(mActivity).load(formDBModel.getCameraPath().split("#")[1]).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                }
+                else{
+                    Uri uri = Uri.parse(formDBModel.getCameraPath().split("#")[1]);
+                    Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                }
+            //    photoViewAttacher.update();
+
+//                        }
+//                        catch (Exception e){
+//                            Log.e(TAG, e.getMessage());
+//                            imageView.setImageResource(R.drawable.ic_no_image);
+//                        }
+                dialog.show();
+            });
 
 
             // File Upload View -------------------------
@@ -1117,12 +1146,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void viewAllFormDialogBox(String polygonID){
         ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
 
-        Dialog vfBox = new Dialog(this);
+            Dialog vfBox = new Dialog(mActivity);
             vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
             vfBox.setCancelable(false);
             vfBox.setContentView(R.layout.dialogbox_formlist_view);
             vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
-
+            vfBox.show();
             // Button Exit
             Button btExit = vfBox.findViewById(R.id.btExit);
             btExit.setOnClickListener(view -> vfBox.dismiss());
@@ -1138,7 +1167,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             });
             Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
 
-            vfBox.show();
 
     }
 
@@ -1156,7 +1184,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             btAddForm.setOnClickListener(view -> {
                     String key = dataBaseHelper.getGenerateID(polygonID);
-                    try{
+                    String key1 = dataBaseHelper.getGenerateIDLocal(polygonID);
+                    Log.e(TAG,"Key - > " + key);
+                    Log.e(TAG,"Key1 - > " + key1);
+
+
+                try{
                         if(!Utility.isEmptyString(key)){
                             reDirectToMultipleFormFunction(gisID,polygonID,Integer.parseInt(key));
                         }
@@ -1213,20 +1246,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void showSelectedDialogBox(GeoJsonModel geoJsonModel){
         ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(geoJsonModel.getPolygonID());
+        Log.e(TAG,"Form Size -> " + formList.size());
         isMultipleForm = formList.size() > 0;
+        Log.e(TAG,"is Multiple -> " + isMultipleForm);
+
         boolean isFormStatusCompleted = false;
 
-        if(formList.size() > 0){
-            for(int i=0; i<formList.size(); i++){
-                FormModel formModel = formList.get(i).getFormModel();
-                String status = formModel.getForm().getForm_status();
-                if(!Utility.isEmptyString(status) && status.equalsIgnoreCase(Utility.SurveyCompleted)){
+        if(formList.size() > 0)
+        {
+                GeoJsonModel geoJsonModel1 = dataBaseHelper.getPolygonByPolygonId(geoJsonModel.getPolygonID());
+
+                if(!Utility.isEmptyString(geoJsonModel1.getPolygonStatus()) && geoJsonModel1.getPolygonStatus().equalsIgnoreCase(Utility.PolygonStatusCompleted)){
                     isFormStatusCompleted = true;
-                    break;
                 }
-            }
         }
 
+
+        Log.e(TAG,"is FormStatus Completed -> " + isFormStatusCompleted);
         Utility.showSelectBox(mActivity, (item, dialogBox) -> {
             switch (item){
 
@@ -1280,15 +1316,59 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         startActivityForResult(intentMultipleForm,FORM_REQUEST_CODE);
     }
 
-
-
 //------------------------------------------------------- Resurvey Form ----------------------------------------------------------------------------------------------------------------------
 
 
 //------------------------------------------------------- Resurvey Form Dialog Box ----------------------------------------------------------------------------------------------------------------------
 
+    private void showEditDialogBox(GeoJsonModel geoJsonModel){
 
+        Utility.showEditBox(mActivity, (item, dialogBox) -> {
+            if (Utility.ITEM_SELECTED.EDIT.equals(item)){
+                dialogBox.dismiss();
+                if (geoJsonModel != null) {
+                    if (!Utility.isEmptyString(geoJsonModel.getPolygonID())) {
+                        viewAllResurveyForms(geoJsonModel);
+                    } else {
+                        Log.e(TAG, "Resurvey Polygon ID Empty");
+                    }
+                }
+            }
+        });
+    }
 
+    private void viewAllResurveyForms(GeoJsonModel geoJsonModel){
+        ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(geoJsonModel.getPolygonID());
+        Dialog vfBox = new Dialog(this);
+        vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        vfBox.setCancelable(false);
+        vfBox.setContentView(R.layout.dialogbox_formlist_view);
+        vfBox.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT);
+        // Button Exit
+        Button btExit = vfBox.findViewById(R.id.btExit);
+        btExit.setOnClickListener(view -> vfBox.dismiss());
+        // RecycleView
+        RecyclerView rvFormListView = vfBox.findViewById(R.id.rvFormListView);
+        // Adapter View
+        AdapterFormListView adapterFormListView = new AdapterFormListView(mActivity, formList, formListModel -> {
+
+            if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
+                vfBox.dismiss();
+                reDirectToResurveyForm(formListModel.getId(),geoJsonModel);
+            }
+
+        });
+        Utility.setToVerticalRecycleView(mActivity,rvFormListView,adapterFormListView);
+        vfBox.show();
+    }
+
+    private void reDirectToResurveyForm(String ID,GeoJsonModel geoJsonModel){
+        Intent intentResurveyForm = new Intent(MapsActivity.this, ResurveyFormActivity.class);
+        intentResurveyForm.putExtra(Utility.PASS_GIS_ID,geoJsonModel.getGisID());
+        intentResurveyForm.putExtra(Utility.PASS_POLYGON_ID,geoJsonModel.getPolygonID());
+        intentResurveyForm.putExtra(Utility.PASS_ID, ID);
+        startActivityForResult(intentResurveyForm,FORM_REQUEST_CODE);
+    }
 
 //------------------------------------------------------- onActivityResult ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1307,10 +1387,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if(!Utility.isEmptyString(geoJsonModel.getPolygonStatus())){
                             String status = geoJsonModel.getPolygonStatus();
                             Log.e(TAG,"Polygon Status -> " + status);
-                            if(status.equalsIgnoreCase(Utility.SurveyCompleted)){
+                            if(status.equalsIgnoreCase(Utility.PolygonStatusCompleted)){
                                 polygon.setStrokeColor(Color.parseColor(Utility.COLOR_CODE.GREEN));
                             }
-                            else if(status.equalsIgnoreCase(Utility.SurveyNotComplete)){
+                            else if(status.equalsIgnoreCase(Utility.PolygonStatusNotComplete)){
                                 polygon.setStrokeColor(Color.parseColor(Utility.COLOR_CODE.RED));
                             }
                             else{
@@ -1320,6 +1400,119 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }
             }
+        }
+    }
+
+//------------------------------------------------------- Fetch GeoJson File ----------------------------------------------------------------------------------------------------------------------
+
+    private void showAllGeoJsonPolygon(){
+
+        showProgressBar("Loading Polygons.....");
+
+        ArrayList<ArrayList<LatLng>> geoJsonLatLonLists = new ArrayList<>();
+        ArrayList<GeoJsonModel> geoJsonModelLists = new ArrayList<>();
+
+        try{
+            ExecutorService service = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+
+            service.execute(() -> {
+
+                // To Do In Background
+                ArrayList<GeoJsonModel> geoJsonModels = dataBaseHelper.getAllGeoJsonPolygon();
+                //Log.e(TAG,"Geo-Json Polygon Size: "+ geoJsonModels.size());
+                try{
+                    if(geoJsonModels.size() > 0){
+                        for(int i=0; i<geoJsonModels.size(); i++){
+                            GeoJsonModel geoJsonModel = geoJsonModels.get(i);
+                            if(!Utility.isEmptyString(geoJsonModel.getLatLon())){
+                                ArrayList<ArrayList<LatLng>> geoJsonLatLonList = Utility.convertStringToListOfPolygon(geoJsonModel.getLatLon());
+                                if(geoJsonLatLonList.size() > 0){
+                                    for(int j=0; j<geoJsonLatLonList.size(); j++){
+                                        ArrayList<LatLng> latLngs = geoJsonLatLonList.get(j);
+                                        if(latLngs.size() > 0){
+                                            geoJsonLatLonLists.add(latLngs);
+                                            geoJsonModelLists.add(geoJsonModel);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG, "Geo-Json Polygon Empty");
+                        dismissProgressBar();
+                    }
+                }
+                catch (Exception e){
+                    dismissProgressBar();
+                    Log.e(TAG, "Error: "+e.getMessage());
+                }
+
+                // Post ----------------------------------------
+                handler.post(() -> {
+                    if(geoJsonMarkerList.size() > 0){
+                        for(Marker m : geoJsonMarkerList){
+                            if(m != null){
+                                m.remove();
+                            }
+                        }
+                        geoJsonModelLists.clear();
+                    }
+                    if(geoJsonLatLonLists.size() > 0){
+                        for(int i=0; i<geoJsonLatLonLists.size(); i++){
+                            PolygonOptions polygonOptions = new PolygonOptions();
+                            polygonOptions.clickable(true);
+                            polygonOptions.addAll(geoJsonLatLonLists.get(i));
+                            polygonOptions.strokeWidth(4);
+                            polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
+
+                            if(!Utility.isEmptyString(geoJsonModelLists.get(i).getPolygonStatus())){
+                                String status  = geoJsonModelLists.get(i).getPolygonStatus();
+                                String counter = dataBaseHelper.getGenerateID(geoJsonModelLists.get(i).getPolygonID());
+                                //    Log.e(TAG,"Polygon Status -> " + status);
+                                if(counter.equalsIgnoreCase("0")){
+                                 //   Log.e(TAG,"Counter ID ->" + geoJsonModelLists.get(i).getPolygonID());
+                                    polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
+                                }
+                                else{
+                                    if(status.equalsIgnoreCase(Utility.PolygonStatusCompleted)){
+                                        polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.GREEN));
+                                    }
+                                    else if(status.equalsIgnoreCase(Utility.PolygonStatusNotComplete)){
+                                        polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.RED));
+                                    }
+                                }
+
+
+
+                            }
+                            Marker marker = Utility.addGeoJsonPolygonMarker(mActivity,mMap,Utility.getPolygonCenterPoint(geoJsonLatLonLists.get(i)),geoJsonModelLists.get(i).getPolygonID(),1);
+                            marker.setFlat(true);
+                            marker.setTag(geoJsonModelLists.get(i));
+
+                            Polygon polygon = mMap.addPolygon(polygonOptions);
+                            polygon.setTag(geoJsonModelLists.get(i));
+                            polygon.setVisible(true);
+                            polygon.setZIndex(3);
+                            geoJsonPolygonLists.put(geoJsonModelLists.get(i).getPolygonID(),polygon);
+                            geoJsonMarkerList.add(marker);
+                        }
+                    }
+                    dismissProgressBar();
+                    // Database Contains Some Data or not
+                    if(isFormDataNotSync()){
+                        Utility.showSyncYourDataAlert(this);
+                    }
+                    isGoToCurrentLocation = true;
+                    isMarkerVisible = true;
+
+                });
+            });
+
+        }
+        catch (Exception e){
+            Log.e(TAG, e.getMessage());
         }
     }
 
@@ -1335,6 +1528,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
                 Log.e(TAG, "Polygon ID: -> "+Utility.getStringValue(geoJsonModel.getPolygonID()));
                 showSelectedDialogBox(geoJsonModel);
+               // showEditDialogBox(geoJsonModel);
             }
             else{
                 Log.e(TAG,"Polygon ID is Empty");
@@ -1344,112 +1538,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.e(TAG,"Polygon not instance of GeoJsonModel");
         }
 
-    }
-
-//------------------------------------------------------- Fetch GeoJson File ----------------------------------------------------------------------------------------------------------------------
-
-    private void showAllGeoJsonPolygon(){
-
-        showProgressBar("Loading Polygons.....");
-
-        ArrayList<ArrayList<LatLng>> geoJsonLatLonLists = new ArrayList<>();
-        ArrayList<GeoJsonModel> geoJsonModelLists = new ArrayList<>();
-
-        try{
-        ExecutorService service = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-
-        service.execute(() -> {
-
-            // To Do In Background
-            ArrayList<GeoJsonModel> geoJsonModels = dataBaseHelper.getAllGeoJsonPolygon();
-            //Log.e(TAG,"Geo-Json Polygon Size: "+ geoJsonModels.size());
-            try{
-                if(geoJsonModels.size() > 0){
-                    for(int i=0; i<geoJsonModels.size(); i++){
-                        GeoJsonModel geoJsonModel = geoJsonModels.get(i);
-                        if(!Utility.isEmptyString(geoJsonModel.getLatLon())){
-                            ArrayList<ArrayList<LatLng>> geoJsonLatLonList = Utility.convertStringToListOfPolygon(geoJsonModel.getLatLon());
-                            if(geoJsonLatLonList.size() > 0){
-                                for(int j=0; j<geoJsonLatLonList.size(); j++){
-                                    ArrayList<LatLng> latLngs = geoJsonLatLonList.get(j);
-                                    if(latLngs.size() > 0){
-                                        geoJsonLatLonLists.add(latLngs);
-                                        geoJsonModelLists.add(geoJsonModel);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                else{
-                    Log.e(TAG, "Geo-Json Polygon Empty");
-                    dismissProgressBar();
-                }
-            }
-            catch (Exception e){
-                dismissProgressBar();
-                Log.e(TAG, "Error: "+e.getMessage());
-            }
-
-            // Post ----------------------------------------
-            handler.post(() -> {
-                if(geoJsonMarkerList.size() > 0){
-                    for(Marker m : geoJsonMarkerList){
-                        if(m != null){
-                            m.remove();
-                        }
-                    }
-                    geoJsonModelLists.clear();
-                }
-                if(geoJsonLatLonLists.size() > 0){
-                    for(int i=0; i<geoJsonLatLonLists.size(); i++){
-                        PolygonOptions polygonOptions = new PolygonOptions();
-                        polygonOptions.clickable(true);
-                        polygonOptions.addAll(geoJsonLatLonLists.get(i));
-                        polygonOptions.strokeWidth(4);
-                        polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
-
-                        if(!Utility.isEmptyString(geoJsonModelLists.get(i).getPolygonStatus())){
-                            String status = geoJsonModelLists.get(i).getPolygonStatus();
-                            Log.e(TAG,"Polygon Status -> " + status);
-                            if(status.equalsIgnoreCase(Utility.SurveyCompleted)){
-                                polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.GREEN));
-                            }
-                            else if(status.equalsIgnoreCase(Utility.SurveyNotComplete)){
-                                polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.RED));
-                            }
-                            else{
-                                polygonOptions.strokeColor(Color.parseColor(Utility.COLOR_CODE.DEFAULT_COLOR));
-                            }
-                        }
-                        Marker marker = Utility.addGeoJsonPolygonMarker(mActivity,mMap,Utility.getPolygonCenterPoint(geoJsonLatLonLists.get(i)),geoJsonModelLists.get(i).getPolygonID(),1);
-                        marker.setFlat(true);
-                        marker.setTag(geoJsonModelLists.get(i));
-
-                        Polygon polygon = mMap.addPolygon(polygonOptions);
-                        polygon.setTag(geoJsonModelLists.get(i));
-                        polygon.setVisible(true);
-                        polygon.setZIndex(3);
-                        geoJsonPolygonLists.put(geoJsonModelLists.get(i).getPolygonID(),polygon);
-                        geoJsonMarkerList.add(marker);
-                    }
-                }
-                dismissProgressBar();
-                // Database Contains Some Data or not
-                if(isFormDataNotSync()){
-                    Utility.showSyncYourDataAlert(this);
-                }
-                isGoToCurrentLocation = true;
-                isMarkerVisible = true;
-
-            });
-        });
-
-        }
-        catch (Exception e){
-            Log.e(TAG, e.getMessage());
-        }
     }
 
 //------------------------------------------------------- onMarkerClick ----------------------------------------------------------------------------------------------------------------------
@@ -1464,6 +1552,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(!Utility.isEmptyString(geoJsonModel.getPolygonID())){
                 Log.e(TAG, "Polygon ID: -> "+Utility.getStringValue(geoJsonModel.getPolygonID()));
                 showSelectedDialogBox(geoJsonModel);
+                //showEditDialogBox(geoJsonModel);
             }
             else{
                 Log.e(TAG,"Polygon ID is Empty");
@@ -1508,8 +1597,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         @Override
-        protected void onProgressUpdate(Integer... progress) {
-        }
+        protected void onProgressUpdate(Integer... progress) {}
         @Override
         protected String doInBackground(Void... params) {
             return uploadFile();
@@ -1858,6 +1946,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
+        dismissProgressBar();
     }
 
     //---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
