@@ -356,8 +356,7 @@ public class ImageFileUtils {
         return ThumbnailUtils.createVideoThumbnail(filePath, MediaStore.Images.Thumbnails.MINI_KIND);
     }
 
-    public static Bitmap handleSamplingAndRotationBitmap(Context context, Uri selectedImage)
-            throws IOException {
+    public static Bitmap handleSamplingAndRotationBitmap(Context context, Uri selectedImage) throws IOException {
         int MAX_WIDTH = 1980;
         int MAX_HEIGHT = 1980;
 

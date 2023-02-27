@@ -25,7 +25,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	// DataBase Name
 	public static final String DATABASE_NAME = "PropertyTaxShirol3.db";
 	// DataBase Version
-	public static final int DATABASE_VERSION = 12;
+	public static final int DATABASE_VERSION = 13;
 
 	// param
 	public static final String keyParamID           = "id";

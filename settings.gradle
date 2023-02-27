@@ -1,21 +1,21 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-        jcenter()
-        maven { url 'https://jitpack.io' }
-        maven { url "https://maven.google.com" }
-        flatDir {dirs 'libs'}
-    }
-}
+//pluginManagement {
+//    repositories {
+//        gradlePluginPortal()
+//        google()
+//        mavenCentral()
+//    }
+//}
+//dependencyResolutionManagement {
+//    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+//    repositories {
+//        gradlePluginPortal()
+//        google()
+//        mavenCentral()
+//        jcenter()
+//        maven { url 'https://jitpack.io' }
+//        maven { url "https://maven.google.com" }
+//        flatDir {dirs 'libs'}
+//    }
+//}
 rootProject.name = "Property Tax Shirol"
 include ':app'

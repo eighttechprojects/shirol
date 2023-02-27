@@ -12,6 +12,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -30,6 +31,8 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
+import com.dsphotoeditor.sdk.activity.DsPhotoEditorActivity;
+import com.dsphotoeditor.sdk.utils.DsPhotoEditorConstants;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
@@ -158,6 +161,8 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     private boolean isSurveyComplete = false;
 
+    // Image Edit ResponseCode
+    private static final int IMAGE_EDITOR_RESULT_CODE = 101;
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
 
     @Override
@@ -249,8 +254,29 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
             Log.e(TAG, "Form last key: "+ lastKey);
         }
 
+        // Lat Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_LAT)) {
+            latitude = intent.getStringExtra(Utility.PASS_LAT);
+            Log.e(TAG, "Form current Lat: "+ latitude);
+        }
+
+        // Lon Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_LONG)) {
+            longitude = intent.getStringExtra(Utility.PASS_LONG);
+            Log.e(TAG, "Form current Long: "+ longitude);
+        }
+
+
+
         // Generate Property ID
-        binding.formNewPropertyNo.setText(Utility.getStringValue(generatePropertyID(polygonID,isMultipleForm,lastKey)));
+        // Single Form then
+        if(!isMultipleForm){
+            binding.formNewPropertyNo.setText(Utility.getStringValue(generatePropertyID(polygonID,isMultipleForm,lastKey).toString().split("/")[0]));
+        }
+        // Multiple Form then
+        else{
+            binding.formNewPropertyNo.setText(Utility.getStringValue(generatePropertyID(polygonID,isMultipleForm,lastKey)));
+        }
 
     }
 
@@ -259,7 +285,7 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
         String key = "";
         // Single Form then
         if(!isMultipleForm){
-            key = polygonID + "/"+ 1;
+            key = polygonID  + "/"+ 1;
         }
         // Multiple Form then
         else{
@@ -683,12 +709,12 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
     private StringBuilder getGeoTagData() {
         StringBuilder stringBuilder = new StringBuilder();
-        if (!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)) {
+      //  if (!Utility.isEmptyString(latitude) && !Utility.isEmptyString(longitude)) {
             stringBuilder.append("Latitude : " + "" + latitude);
             stringBuilder.append("\n");
             stringBuilder.append("Longitude : " + "" + longitude);
             stringBuilder.append("\n");
-        }
+       // }
         stringBuilder.append("Date: " + Utility.getRecordDate());
         return stringBuilder;
     }
@@ -791,8 +817,23 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
 
             bin.setUnique_number(unique_number);
             bin.setForm_number(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
-            bin.setFid(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()).split("/")[1]);
+//            if(!isMultipleForm){
+//                bin.setFid(Utility.getStringValue(binding.formNewPropertyNo.getText().toString()));
+//            }
+//            else{         binding.formNewPropertyNo.setText(Utility.getStringValue(generatePropertyID(polygonID,isMultipleForm,lastKey)));
+//
+                bin.setFid(Utility.getStringValue(generatePropertyID(polygonID,isMultipleForm,lastKey)).split("/")[1]);
+//            }
         //    bin.setLastKey(dataBaseHelper.getGenerateID(polygonID));
+
+            // Single Mode
+            if(!isMultipleForm){
+                bin.setForm_mode(Utility.isSingleMode);
+            }
+            // Multiple Mode
+            else{
+                bin.setForm_mode(Utility.isMultipleMode);
+            }
             bin.setPolygon_id(polygonID);
             bin.setForm_id(formID);
             bin.setUser_id(Utility.getSavedData(mActivity,Utility.LOGGED_USERID));
@@ -1159,22 +1200,30 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         // Camera Photo/Image Request
         if(requestCode == Utility.REQUEST_TAKE_PHOTO){
             if(resultCode == Activity.RESULT_OK){
                 //Croperino.runCropImage(cameraDestFileTemp, mActivity, true, 1, 1, R.color.colorAccent, R.color.colorPrimary);
+
                 try{
+//                    assert data != null;
+//                    Uri uri = data.getData();
+//                    File sourceFile = new File(imageFileUtils.getPathUri(mActivity, uri));
+//                    File destFileTemp = imageFileUtils.getDestinationFile(imageFileUtils.getRootDirFile(mActivity));
+//                    imageFileUtils.copyFile(sourceFile, destFileTemp);
+
                     sbCameraImagePath = new StringBuilder();
                     sbCameraImagePathLocal = new StringBuilder();
                     sbCameraImageName = new StringBuilder();
-//                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
-//                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
 
                     binding.txtGeoTag.setText(getGeoTagData());
+
                     Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(cameraDestFileTemp));
                     File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
                     ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
                     binding.imgPreview.setImageBitmap(bitmapPreview);
+
                     updatePreviewUI(true);
 
                     new Handler().postDelayed(() -> {
@@ -1199,54 +1248,113 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                     Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
                     Log.e(TAG, e.getMessage());
                 }
+
+//                // Initialize Intent
+//                Intent intent = new Intent(FormActivity.this, DsPhotoEditorActivity.class);
+//                // Set Data
+//                intent.setData(Uri.fromFile(cameraDestFileTemp));
+//                // Set Output Directory Name
+//                intent.putExtra(DsPhotoEditorConstants.DS_PHOTO_EDITOR_OUTPUT_DIRECTORY,"Images");
+//                // Set ToolBar Color
+//                intent.putExtra(DsPhotoEditorConstants.DS_TOOL_BAR_BACKGROUND_COLOR, Color.parseColor("#3D7AA9"));
+//                // Hide Tools
+//                intent.putExtra(DsPhotoEditorConstants.DS_PHOTO_EDITOR_TOOLS_TO_HIDE, new int[]{DsPhotoEditorActivity.TOOL_WARMTH, DsPhotoEditorActivity.TOOL_PIXELATE});
+//                // Start Activity
+//                startActivityForResult(intent,IMAGE_EDITOR_RESULT_CODE);
+
             }
         }
-        // Crop Camera Photo/Image Request
-        else if(requestCode == CroperinoConfig.REQUEST_CROP_PHOTO){
-            //try {
-//                try{
-//                    sbCameraImagePath = new StringBuilder();
-//                    sbCameraImagePathLocal = new StringBuilder();
-//                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
-//                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
-//
-//                    binding.txtGeoTag.setText(getGeoTagData());
-//                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(destFile1));
-//                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
-//                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
-//                    binding.imgPreview.setImageBitmap(bitmapPreview);
-//                    updatePreviewUI(true);
-//
-//                    new Handler().postDelayed(() -> {
-//                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
-//                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
-//                            Log.e("Picture", "screenshot capture success");
-//                        } else {
-//                            destFile = destFileTemp2;
-//                            Log.e("Picture", "screenshot capture failed");
-//                        }
-//                        sbCameraImagePath.append(destFile.getPath());
-//                        sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
-//                        if(formModel != null){
-//                            formModel.getForm().setProperty_images(destFile.getName());
-//                        }
-//                        updatePreviewUI(false);
-//                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
-//                        // Set Image
-//                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
-//                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
-//                    }, 400);
-//                }
-//                catch (Exception e){
-//                    formModel.getForm().setProperty_images("");
-//                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
-//                    Log.e(TAG, e.getMessage());
-//                }
-                //listFormDetailsData.get(positionCaptureImagePojo).setValue(destFile.getAbsolutePath());
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
+
+        else if(requestCode == IMAGE_EDITOR_RESULT_CODE){
+            try{
+                assert data != null;
+                Uri uri = data.getData();
+                File sourceFile = new File(imageFileUtils.getPathUri(mActivity, uri));
+                File destFileTemp = imageFileUtils.getDestinationFile(imageFileUtils.getRootDirFile(mActivity));
+                imageFileUtils.copyFile(sourceFile, destFileTemp);
+
+                sbCameraImagePath = new StringBuilder();
+                sbCameraImagePathLocal = new StringBuilder();
+                sbCameraImageName = new StringBuilder();
+
+                binding.txtGeoTag.setText(getGeoTagData());
+
+                Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(destFileTemp));
+                File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
+                ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
+                binding.imgPreview.setImageBitmap(bitmapPreview);
+
+                updatePreviewUI(true);
+
+                new Handler().postDelayed(() -> {
+                    File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+                    if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
+                        Log.e("Picture", "screenshot capture success");
+                    } else {
+                        destFile = destFileTemp2;
+                        Log.e("Picture", "screenshot capture failed");
+                    }
+                    sbCameraImagePath.append(destFile.getPath());
+                    sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
+                    sbCameraImageName.append(destFile.getName());
+                    updatePreviewUI(false);
+                    Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
+                    // Set Image
+                    Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
+                    Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+                }, 400);
+            }
+            catch (Exception e){
+                Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
+                Log.e(TAG, e.getMessage());
+            }
         }
+//        // Crop Camera Photo/Image Request
+//        else if(requestCode == CroperinoConfig.REQUEST_CROP_PHOTO){
+//            //try {
+////                try{
+////                    sbCameraImagePath = new StringBuilder();
+////                    sbCameraImagePathLocal = new StringBuilder();
+////                    File destFile1 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+////                    imageFileUtils.copyFile(cameraDestFileTemp, destFile1);
+////
+////                    binding.txtGeoTag.setText(getGeoTagData());
+////                    Bitmap bitmapPreview = ImageFileUtils.handleSamplingAndRotationBitmap(mActivity, Uri.fromFile(destFile1));
+////                    File destFileTemp2 = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity) );
+////                    ImageFileUtils.saveBitmapToFile(bitmapPreview, destFileTemp2);
+////                    binding.imgPreview.setImageBitmap(bitmapPreview);
+////                    updatePreviewUI(true);
+////
+////                    new Handler().postDelayed(() -> {
+////                        File destFile = imageFileUtils.getDestinationFileImageInput(imageFileUtils.getRootDirFile(mActivity));
+////                        if (ImageFileUtils.takeScreenshot(binding.llPreview, destFile)) {
+////                            Log.e("Picture", "screenshot capture success");
+////                        } else {
+////                            destFile = destFileTemp2;
+////                            Log.e("Picture", "screenshot capture failed");
+////                        }
+////                        sbCameraImagePath.append(destFile.getPath());
+////                        sbCameraImagePathLocal.append("local").append("#").append(destFile.getAbsolutePath());
+////                        if(formModel != null){
+////                            formModel.getForm().setProperty_images(destFile.getName());
+////                        }
+////                        updatePreviewUI(false);
+////                        Log.e(TAG,"Camera Image Path: " + destFile.getAbsolutePath());
+////                        // Set Image
+////                        Bitmap bitmap =  (ImageFileUtils.getBitmapFromFilePath(destFile.getAbsolutePath()));
+////                        Glide.with(mActivity).load(bitmap).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(binding.imgCaptured);
+////                    }, 400);
+////                }
+////                catch (Exception e){
+////                    formModel.getForm().setProperty_images("");
+////                    Glide.with(mActivity).load(R.drawable.ic_no_image).into(binding.imgCaptured);
+////                    Log.e(TAG, e.getMessage());
+////                }
+//                //listFormDetailsData.get(positionCaptureImagePojo).setValue(destFile.getAbsolutePath());
+////            } catch (Exception e) {
+////                e.printStackTrace();
+////            }
+//        }
         // File Request
         else if(requestCode == Utility.PICK_FILE_RESULT_CODE){
             if(resultCode == Activity.RESULT_OK){

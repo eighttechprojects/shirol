@@ -66,9 +66,10 @@ import java.util.Random;
 
 public class Utility {
 
+    public static final String isSingleMode = "singleMode";
+    public static final String isMultipleMode = "multipleMode";
     public static final String SurveyCompleted = "Completed";
     public static final String SurveyNotComplete = "Not Completed";
-
 
     public static final String PolygonStatusCompleted = "Completed";
     public static final String PolygonStatusNotComplete = "Not Completed";
@@ -80,7 +81,7 @@ public class Utility {
     public static final int GeoJsonPolygonFillColor   = Color.parseColor("#4DFFEA00");
     public static final String  SyncServiceOn = "com.eighttechprojects.propertytaxshirol.syncserviceon";
     // Pref key
-    private final static String PREF_KEY = "EShop";
+    private final static String PREF_KEY = "ShirolApp";
     public static final String ERROR_MESSAGE = "something is wrong";
     // Internet Connection Constants
     public static final String NO_NETWORK_CONNECTED = "No Network Connected";
@@ -547,7 +548,7 @@ public class Utility {
 
 
     public static void openMultipleFilePicker(Activity context) {
-        if (SystemPermission.isExternalStorage(context)) {
+        if (SystemPermission.isInternalStorage(context)) {
             Intent chooseFile = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
             chooseFile.setType("*/*");
@@ -643,7 +644,7 @@ public class Utility {
                 (dialogInterface, item) -> {
                     switch (items[item]) {
                         case PHOTO_SELECTION.TAKE_PHOTO:
-                            if (SystemPermission.isExternalStorage(context)) {
+                            if (SystemPermission.isInternalStorage(context)) {
                                 if (SystemPermission.isCamera(context)) {
                                     takePhoto(context, imageFileUtils, onPhotoUpload);
                                 }

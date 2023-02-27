@@ -37,11 +37,9 @@ public class PermissionActivity extends AppCompatActivity {
         permissionApproveButton.setOnClickListener(view -> {
             // permission
             ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_NETWORK_STATE,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION,
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_NETWORK_STATE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.CAMERA
             }, RequestPermissionCode);
         });
@@ -51,10 +49,14 @@ public class PermissionActivity extends AppCompatActivity {
 //------------------------------------------------------- isAllPermissionGranted ---------------------------------------------------------------------------------------------------------------------------
 
     private boolean isPermissionGranted(){
-        boolean isStorage  = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        boolean isCamera   = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-        boolean isLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-        return isLocation && isStorage && isCamera;
+      //  if(SystemPermission.isInternalStorage(this)){
+            boolean isStorage  = PermissionUtils.isInternalStorage(this);
+            boolean isCamera   = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+            boolean isLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+            return isLocation && isStorage && isCamera;
+       // }
+        //boolean isStorage  = PermissionUtils.isInternalStorage(this);//ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        //return false;
     }
 
 //------------------------------------------------------- Re Direct ---------------------------------------------------------------------------------------------------------------------------
@@ -90,9 +92,10 @@ public class PermissionActivity extends AppCompatActivity {
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED
                     && grantResults[2] == PackageManager.PERMISSION_GRANTED
                     && grantResults[3] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[4] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[5] == PackageManager.PERMISSION_GRANTED){
-                reDirectToScreen();
+            ){
+                if(SystemPermission.isInternalStorage(this)){
+                    reDirectToScreen();
+                }
             }
             else {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();

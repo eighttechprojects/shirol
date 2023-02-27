@@ -10,6 +10,8 @@ public class FormFields {
     private String fid;
     private String polygon_id;
 
+    private String form_mode;
+
     private String lastKey;
     private String unique_number;
     private String form_id;
@@ -69,6 +71,10 @@ public class FormFields {
 
 //------------------------------------------------------- Getter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public String getForm_mode() {
+        return form_mode;
+    }
 
     public String getPolygon_status() {
         return polygon_status;
@@ -284,6 +290,10 @@ public class FormFields {
 
 //------------------------------------------------------- Setter ---------------------------------------------------------------------------------------------------------------------------
 
+
+    public void setForm_mode(String form_mode) {
+        this.form_mode = form_mode;
+    }
 
     public void setPolygon_status(String polygon_status) {
         this.polygon_status = polygon_status;

@@ -73,7 +73,19 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         // Form Name
-        holder.formName.setText(Utility.getStringValue(formList.get(position).getFormModel().getForm().getNew_property_no()));
+        FormModel bin = formList.get(position).getFormModel();
+
+        if(!Utility.isEmptyString(bin.getForm().getForm_mode())){
+            if(bin.getForm().getForm_mode().equals(Utility.isSingleMode)){
+                holder.formName.setText(Utility.getStringValue(formList.get(position).getFormModel().getForm().getNew_property_no().split("/")[0]));
+            }
+            else{
+                holder.formName.setText(Utility.getStringValue(formList.get(position).getFormModel().getForm().getNew_property_no()));
+            }
+        }
+        else{
+            holder.formName.setText(Utility.getStringValue(formList.get(position).getFormModel().getForm().getNew_property_no()));
+        }
 
         // Name Click
         holder.formName.setOnClickListener(view -> {
@@ -124,7 +136,16 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
 //------------------------------------ PDF Generate --------------------------------------------------------------------------------------------------------------------------------
 
     private File generatePDFFolder(String PDFName){
-        File pdfFile = new File(Environment.getExternalStorageDirectory() + "/PropertyTaxShirol" + "/PDF/" + PDFName.split("-")[0], PDFName + ".pdf");
+
+        File pdfFile;
+
+        if((PDFName.split("-")[1]).equals("a")){
+             pdfFile = new File(Environment.getExternalStorageDirectory() + "/PropertyTaxShirol" + "/PDF/" + PDFName.split("-")[0], PDFName.split("-")[0] + ".pdf");
+        }
+        else{
+             pdfFile = new File(Environment.getExternalStorageDirectory() + "/PropertyTaxShirol" + "/PDF/" + PDFName.split("-")[0], PDFName + ".pdf");
+        }
+
         if (!pdfFile.exists()) {
             File bl = new File(Environment.getExternalStorageDirectory() + "/PropertyTaxShirol/" + "/PDF/" + "/"+PDFName.split("-")[0]+"/");
             boolean dirs = bl.mkdirs();
@@ -132,6 +153,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
         else{
             boolean file_delete = pdfFile.delete();
         }
+
         return pdfFile;
     }
 
@@ -155,8 +177,20 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                     if(!Utility.isEmptyString(formModel.getForm().getNew_property_no())){
                         FormFields bin = formModel.getForm();
                         ArrayList<FormTableModel> details = formModel.getDetais();
-                        String[] str = formModel.getForm().getNew_property_no().split("/");
-                        String PDFName = str[0] + "-"+str[1];
+                        String PDFName;
+                        if(!Utility.isEmptyString(bin.getForm_mode())){
+                            if(bin.getForm_mode().equals(Utility.isSingleMode)){
+                                PDFName = formModel.getForm().getNew_property_no() +"-" + "a";
+                            }
+                            else{
+                                String[] str = formModel.getForm().getNew_property_no().split("/");
+                                PDFName = str[0] + "-"+str[1];
+                            }
+                        }
+                        else{
+                            String[] str = formModel.getForm().getNew_property_no().split("/");
+                            PDFName = str[0] + "-"+str[1];
+                        }
 
                         //  Created PDF Document -----------
                         PdfDocument pdfDocument = new PdfDocument();
@@ -927,7 +961,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
                         int snoT11Start = rectLeft + 10;
                         p4.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
                         p4.setTextSize(12);
-                        c2.drawText("प्लॉटचे एकूण शेटफळ",snoT11Start, rectTopHeight + 30,p4);
+                        c2.drawText("प्लॉटचे एकूण क्षेत्रफळ",snoT11Start, rectTopHeight + 30,p4);
 
                         // Value 1
                         c2.drawText(Utility.getStringValue(bin.getPlot_area()),snoT11Start + 10 ,rectTopHeight + 80,p4);
@@ -939,7 +973,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
 
                         // Sno. 3
                         int snoT13Start = snoT12Start + 20;
-                        c2.drawText("तळ मजल्याचे बांधकाम शेटफळ",snoT13Start, rectTopHeight + 30 ,p4);
+                        c2.drawText("तळ मजल्याचे बांधकाम क्षेत्रफळ",snoT13Start, rectTopHeight + 30 ,p4);
 
                         // Value 3
                         c2.drawText(Utility.getStringValue(bin.getProperty_area()),snoT13Start + 10 ,rectTopHeight + 80,p4);

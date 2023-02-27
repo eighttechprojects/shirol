@@ -157,6 +157,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     boolean isMarkerVisible = false;
     private static final String droneLayer = "http://173.249.24.149:8080/geoserver/shirol/wms?service=WMS&version=1.1.0&request=GetMap&layers=shirol%3AShirol_Base&bbox=74.58111479319136%2C16.72872028532293%2C74.62853852632936%2C16.76589925517693&width=768&height=602&srs=EPSG%3A4326&styles=&format=application/openlayers";
 
+    private String currentLatitude  = "";
+    private String currentLongitude = "";
+
+
 //------------------------------------------------------- onCreate ---------------------------------------------------------------------------------------------------------------------------
 
     @Override
@@ -180,25 +184,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
-//
-//            // Location Call Back
-//            locationCallback = new LocationCallback() {
-//                @Override
-//                public void onLocationResult(@NonNull LocationResult locationResult) {
-//                    for (Location loc : locationResult.getLocations()) {
-//                        mCurrentLocation = loc;
-//                        if(mCurrentLocation != null){
-//                            if(isGoToCurrentLocation){
-//                                isGoToCurrentLocation = false;
-//                                // Current LatLon
-//
-//                            }
-//                        }
-//                    }
-//                }
-//            };
 
-      //  LocationPermission();
+            // Location Call Back
+            locationCallback = new LocationCallback() {
+                @Override
+                public void onLocationResult(@NonNull LocationResult locationResult) {
+                    for (Location loc : locationResult.getLocations()) {
+                        mCurrentLocation = loc;
+                        if(mCurrentLocation != null){
+                            currentLatitude  = String.valueOf(mCurrentLocation.getLatitude());
+                            currentLongitude = String.valueOf(mCurrentLocation.getLongitude());
+                        }
+                    }
+                }
+            };
+
+        LocationPermission();
 
     }
 
@@ -927,7 +928,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // 2
             tv_form_old_property_no.setText(Utility.getStringValue(bin.getOld_property_no()));
             // 3
-            tv_form_new_property_no.setText(Utility.getStringValue(bin.getNew_property_no()));
+            if(!Utility.isEmptyString(bin.getForm_mode())){
+                if(bin.getForm_mode().equals(Utility.isSingleMode)){
+                    tv_form_new_property_no.setText(Utility.getStringValue(bin.getNew_property_no().split("/")[0]));
+                }
+                else{
+                    tv_form_new_property_no.setText(Utility.getStringValue(bin.getNew_property_no()));
+                }
+            }
+            else{
+                tv_form_new_property_no.setText(Utility.getStringValue(bin.getNew_property_no()));
+            }
             // 4
             tv_form_property_name.setText(Utility.getStringValue(bin.getProperty_name()));
             // 5
@@ -1162,7 +1173,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void viewAllFormDialogBox(String polygonID){
         ArrayList<FormListModel> formList = dataBaseHelper.getFormIDByPolygonID(polygonID);
 
-            Dialog vfBox = new Dialog(mActivity);
+            Dialog vfBox = new Dialog(this);
             vfBox.requestWindowFeature(Window.FEATURE_NO_TITLE);
             vfBox.setCancelable(false);
             vfBox.setContentView(R.layout.dialogbox_formlist_view);
@@ -1234,7 +1245,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void ViewFileUploadDialogBox(ArrayList<FileUploadViewModel> fileUploadViewModelArrayList){
         // DialogBox
-        Dialog dialog = new Dialog(mActivity);
+        Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setCancelable(false);
         dialog.setContentView(R.layout.custom_fileuploadview_layout_dialogbox);
@@ -1321,6 +1332,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         intentSingleForm.putExtra(Utility.PASS_POLYGON_ID,geoJsonModel.getPolygonID());
         intentSingleForm.putExtra(Utility.PASS_WARD_NO,geoJsonModel.getWardNo());
         intentSingleForm.putExtra(Utility.PASS_IS_MULTIPLE, isMultipleForm);
+        intentSingleForm.putExtra(Utility.PASS_LAT, currentLatitude);
+        intentSingleForm.putExtra(Utility.PASS_LONG, currentLongitude);
         startActivityForResult(intentSingleForm,FORM_REQUEST_CODE);
     }
 
@@ -1331,6 +1344,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         intentMultipleForm.putExtra(Utility.PASS_WARD_NO,wardNo);
         intentMultipleForm.putExtra(Utility.PASS_IS_MULTIPLE, true);
         intentMultipleForm.putExtra(Utility.PASS_LAST_KEY,lastKey);
+        intentMultipleForm.putExtra(Utility.PASS_LAT, currentLatitude);
+        intentMultipleForm.putExtra(Utility.PASS_LONG, currentLongitude);
         startActivityForResult(intentMultipleForm,FORM_REQUEST_CODE);
     }
 
@@ -1954,11 +1969,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @SuppressLint("MissingPermission")
     protected void startLocationUpdates() {
-       // fusedLocationProviderClient.requestLocationUpdates(mRequest, locationCallback, null);
+        fusedLocationProviderClient.requestLocationUpdates(mRequest, locationCallback, null);
     }
 
     protected void stopLocationUpdates(){
-     //   fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 
     //---------------------------------------------- onPause ------------------------------------------------------------------------------------------------------------------------
