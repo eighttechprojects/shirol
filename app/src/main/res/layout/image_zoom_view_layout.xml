@@ -18,10 +18,10 @@
 
         <ImageView
             android:id="@+id/dialogbox_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="@dimen/_400sdp"
+            android:layout_height="@dimen/_500sdp"
             android:layout_margin="10dp"
-            android:scaleType="fitXY"
+
             android:contentDescription="@string/todo" />
 
 <!--    </LinearLayout>-->

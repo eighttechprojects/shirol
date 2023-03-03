@@ -50,10 +50,10 @@ public class PermissionActivity extends AppCompatActivity {
 
     private boolean isPermissionGranted(){
       //  if(SystemPermission.isInternalStorage(this)){
-            boolean isStorage  = PermissionUtils.isInternalStorage(this);
+           // boolean isStorage  = PermissionUtils.isInternalStorage(this);
             boolean isCamera   = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
             boolean isLocation = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-            return isLocation && isStorage && isCamera;
+            return isLocation && isCamera;
        // }
         //boolean isStorage  = PermissionUtils.isInternalStorage(this);//ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
         //return false;

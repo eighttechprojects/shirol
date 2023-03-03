@@ -12,7 +12,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
@@ -240,6 +239,17 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "Resurvey From Ward No: "+ward_no);
         }
 
+        // Lat Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_LAT)) {
+            latitude = intent.getStringExtra(Utility.PASS_LAT);
+            Log.e(TAG, "Resurvey From Lat: "+latitude);
+        }
+
+        // Long Contains or not
+        if(intent.getExtras().containsKey(Utility.PASS_LONG)) {
+            longitude = intent.getStringExtra(Utility.PASS_LONG);
+            Log.e(TAG, "Resurvey From Long: "+longitude);
+        }
 
         // Id
         if(intent.getExtras().containsKey(Utility.PASS_ID)) {
@@ -261,7 +271,19 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         if(bin != null){
             binding.formOwnerName.setText(Utility.getStringValue(bin.getOwner_name()));
             binding.formOldPropertyNo.setText(Utility.getStringValue(bin.getOld_property_no()));
-            binding.formNewPropertyNo.setText(Utility.getStringValue(bin.getNew_property_no()));
+
+            if(!Utility.isEmptyString(bin.getForm_mode())){
+                if(bin.getForm_mode().equals(Utility.isSingleMode)){
+                    binding.formNewPropertyNo.setText(Utility.getStringValue(bin.getNew_property_no().split("/")[0]));
+                }
+                else{
+                    binding.formNewPropertyNo.setText(Utility.getStringValue(bin.getNew_property_no()));
+                }
+            }
+            else{
+                binding.formNewPropertyNo.setText(Utility.getStringValue(bin.getNew_property_no()));
+            }
+
             binding.formPropertyName.setText(Utility.getStringValue(bin.getProperty_name()));
             binding.formPropertyAddress.setText(Utility.getStringValue(bin.getProperty_address()));
             binding.formPropertyUser.setText(Utility.getStringValue(bin.getProperty_user()));
@@ -325,7 +347,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                 if(selectedPropertyUserType.equalsIgnoreCase("भोगवटादार")){
                     binding.ll7.setVisibility(View.VISIBLE);
                 }
-                else if(selectedPropertyUserType.equalsIgnoreCase("भोगवटादार")){
+                else if(selectedPropertyUserType.equalsIgnoreCase("भाडेकरू")){
                     binding.ll7.setVisibility(View.GONE);
                     binding.formPropertyUser.setText("");
                 }
@@ -374,6 +396,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
                 }
                 else{
                     binding.ll171.setVisibility(View.GONE);
+
                 }
             }
             @Override
@@ -1096,8 +1119,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-
-
 //------------------------------------------------------- initDatabase ----------------------------------------------------------------------------------------------------------------------
 
     private void initDatabase() {
@@ -1478,7 +1499,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     public void onBackPressed() {
         finish();
     }
-
 
 //---------------------------------------------- Location Permission ------------------------------------------------------------------------------------------------------------------------
 

@@ -1111,12 +1111,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Image Load!
                 //  try{
                 // String imagePath = formDBModel.getCameraPath().split("#")[1];
-                if(formDBModel.getCameraPath().split("#")[0].startsWith("local")){
-                    Glide.with(mActivity).load(formDBModel.getCameraPath().split("#")[1]).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                if(!Utility.isEmptyString(formDBModel.getCameraPath())) {
+
+
+                    if (formDBModel.getCameraPath().split("#")[0].startsWith("local")) {
+                        Glide.with(mActivity).load(formDBModel.getCameraPath().split("#")[1]).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                    } else {
+                        Uri uri = Uri.parse(formDBModel.getCameraPath().split("#")[1]);
+                        Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                    }
                 }
                 else{
-                    Uri uri = Uri.parse(formDBModel.getCameraPath().split("#")[1]);
-                    Glide.with(mActivity).load(uri).placeholder(R.drawable.loading_bar).error(R.drawable.ic_no_image).into(imageView);
+                    // When No Image Found
+                    imageView.setImageResource(R.drawable.ic_no_image);
                 }
             //    photoViewAttacher.update();
 
@@ -1278,7 +1285,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.e(TAG,"is Multiple -> " + isMultipleForm);
 
         boolean isFormStatusCompleted = false;
-
         if(formList.size() > 0)
         {
                 GeoJsonModel geoJsonModel1 = dataBaseHelper.getPolygonByPolygonId(geoJsonModel.getPolygonID());
@@ -1401,6 +1407,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         intentResurveyForm.putExtra(Utility.PASS_POLYGON_ID,geoJsonModel.getPolygonID());
         intentResurveyForm.putExtra(Utility.PASS_WARD_NO,geoJsonModel.getWardNo());
         intentResurveyForm.putExtra(Utility.PASS_ID, ID);
+        intentResurveyForm.putExtra(Utility.PASS_LAT, currentLatitude);
+        intentResurveyForm.putExtra(Utility.PASS_LONG, currentLongitude);
         startActivityForResult(intentResurveyForm,FORM_REQUEST_CODE);
     }
 
@@ -1984,7 +1992,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         dismissProgressBar();
     }
 
-    //---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------- onResume ------------------------------------------------------------------------------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();

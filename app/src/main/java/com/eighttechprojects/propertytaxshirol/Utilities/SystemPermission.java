@@ -52,34 +52,37 @@ public class SystemPermission
         if(isInternalGranted(mActivity)){
             return true;
         }
-        else{
-            if (ActivityCompat.shouldShowRequestPermissionRationale(mActivity, Manifest.permission.MANAGE_EXTERNAL_STORAGE))
-            {
-                Utility.setPermissionDenied(mActivity, permission_int_storage, true);
-                AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-                builder.setTitle(R.string.permission_storage_title);
-                builder.setPositiveButton(android.R.string.ok, null);
-                builder.setMessage(R.string.permission_storage_description);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    builder.setOnDismissListener(dialog ->{
-                        requestPermissionForInternalStorage(mActivity);
-                    });
-                }
-                builder.show();
-            }
-            else
-            {
-                if((Utility.isPermissionDenied(mActivity, permission_int_storage)))
-                {
-                    // redirect to settings
-                    Utility.showToast(mActivity, mActivity.getString(R.string.permission_storage_description));
-                    redirectToPermissionSettings(mActivity);
-                }
-                else {
-                    requestPermissionForInternalStorage(mActivity);
-                }
-            }
+        else {
+            requestPermissionForInternalStorage(mActivity);
         }
+
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(mActivity, Manifest.permission.MANAGE_EXTERNAL_STORAGE))
+//            {
+//                Utility.setPermissionDenied(mActivity, permission_int_storage, true);
+//                AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+//                builder.setTitle(R.string.permission_storage_title);
+//                builder.setPositiveButton(android.R.string.ok, null);
+//                builder.setMessage(R.string.permission_storage_description);
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                    builder.setOnDismissListener(dialog ->{
+//                        requestPermissionForInternalStorage(mActivity);
+//                    });
+//                }
+//                builder.show();
+//            }
+//            else
+//            {
+//                if((Utility.isPermissionDenied(mActivity, permission_int_storage)))
+//                {
+//                    // redirect to settings
+//                    Utility.showToast(mActivity, mActivity.getString(R.string.permission_storage_description));
+//                    redirectToPermissionSettings(mActivity);
+//                }
+//                else {
+//                    requestPermissionForInternalStorage(mActivity);
+//                }
+//            }
+//        }
 
         return false;
     }

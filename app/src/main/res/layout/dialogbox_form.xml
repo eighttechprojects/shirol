@@ -1529,7 +1529,7 @@
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
                 <!-- value -->
-                <EditText
+                <TextView
                     android:id="@+id/db_form_plot_area"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1593,7 +1593,7 @@
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
                 <!-- value -->
-                <EditText
+                <TextView
                     android:id="@+id/db_form_property_area"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1657,7 +1657,7 @@
                         android:textColor="@color/formTextColor" />
                 </LinearLayout>
                 <!-- value -->
-                <EditText
+                <TextView
                     android:id="@+id/db_form_total_area"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
