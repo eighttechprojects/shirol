@@ -1007,7 +1007,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
 
 
                         // टिप :- [ इमारत प्रकार  : - अ  - आर . सी . सी . विटांचे   इमारत , ब - लोडबेरिंग , क - दगड  विनयचे चुना किंवा सिमेंट वापरून उभारलेली इमारत , ड - दगड विटांचे मातीची इमारत , इ - झोपडी किंवा मातीची इमारत , ई - खुली जागा , उ  - मनोरा तळ ]
-                        String a = "टिप :- [ इमारत प्रकार  : - अ- आर.सी.सी. विटांचे इमारत, ब - लोडबेरिंग, क - दगड विनयचे चुना किंवा सिमेंट वापरून \n उभारलेली इमारत, ड - दगड विटांचे मातीची इमारत, इ - झोपडी किंवा मातीची इमारत, ई - खुली जागा, उ - मनोरा तळ ]";
+                        String a = "टिप :- [ इमारत प्रकार  : - अ- आर.सी.सी. विटांचे इमारत, ब - लोडबेरिंग, क - दगड विनयचे चुना किंवा सिमेंट वापरून \n उभारलेली इमारत, ड - दगड विटांचे मातीची इमारत, इ - झोपडी किंवा मातीची इमारत, ई - खुली जागा, उ - मनोरा तळ, ऊ - पत्र्याची इमारत ]";
 
                         p4.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
                         int h1 = rectTopHeight + 130;
@@ -1042,7 +1042,7 @@ public class AdapterFormListView extends RecyclerView.Adapter<AdapterFormListVie
 
 
                         p4.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-                        c2.drawText("मेळकत धारक / प्रेतिनिधी नाव व सही",rectLeft + 10, h3 + 40,p4);
+                        c2.drawText("मिळकत धारक / प्रतिनिधी नाव व सही",rectLeft + 10, h3 + 40,p4);
                         c2.drawText("-----------------------------",rectLeft + 10, h3 + 100,p4);
 
                         c2.drawText("सर्वेक्षक अधिकाऱ्याचे नाव व सही",rectLeft + 10 + 180, h3 + 40,p4);

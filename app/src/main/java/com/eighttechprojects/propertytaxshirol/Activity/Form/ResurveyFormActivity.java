@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -19,6 +18,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -48,6 +48,7 @@ import com.eighttechprojects.propertytaxshirol.Utilities.ImageFileUtils;
 import com.eighttechprojects.propertytaxshirol.Utilities.SystemPermission;
 import com.eighttechprojects.propertytaxshirol.Utilities.Utility;
 import com.eighttechprojects.propertytaxshirol.databinding.ActivityResurveyFormBinding;
+import com.eighttechprojects.propertytaxshirol.volly.AndroidMultiPartEntity;
 import com.eighttechprojects.propertytaxshirol.volly.BaseApplication;
 import com.eighttechprojects.propertytaxshirol.volly.URL_Utility;
 import com.eighttechprojects.propertytaxshirol.volly.WSResponseInterface;
@@ -61,8 +62,15 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
-import com.mikelau.croperino.CroperinoConfig;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.File;
@@ -105,7 +113,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     private String selectedIsWaterLineAvailable   = "";
     private String selectedTotalWaterLine         = "";
     private String selectedTotalWaterLine2         = "";
-
     private String selectedWaterUseType           = "";
     private String selectedSolarPanelAvailable    = "";
     private String selectedSolarPanelType         = "";
@@ -131,7 +138,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     // Camera
     private File cameraDestFileTemp;
     ImageFileUtils imageFileUtils;
-
     StringBuilder sbCameraImagePathLocal = new StringBuilder();
     StringBuilder sbCameraImagePath = new StringBuilder();
     StringBuilder sbCameraImageName = new StringBuilder();
@@ -146,13 +152,13 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
     public static boolean isFileUpload   = true;
     public static boolean isCameraUpload = true;
 
-
     public int lastKey;
     private String polygonID = "";
     public String gisID     = "";
 
     public String ward_no   = "";
     private String unique_number ="";
+    public long totalSize = 0;
     private String datetime = "";
 
     private boolean isSurveyComplete = false;
@@ -811,6 +817,55 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
+//------------------------------------------------------- initDatabase ----------------------------------------------------------------------------------------------------------------------
+
+    private void initDatabase() {
+        dataBaseHelper = new DataBaseHelper(mActivity);
+    }
+
+//------------------------------------------------------- setOnClickListener ----------------------------------------------------------------------------------------------------------------------
+
+    private void setOnClickListener(){
+        binding.btSubmit.setOnClickListener(this);
+        binding.btExit.setOnClickListener(this);
+        binding.btAddFormTable.setOnClickListener(this);
+    }
+
+//------------------------------------------------------- Menu ----------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemID = item.getItemId();
+        if (itemID == android.R.id.home) {
+            setResult(RESULT_CANCELED);
+            finish();
+            return true;
+        }
+        return false;
+    }
+
+//------------------------------------------------------- onClickView ----------------------------------------------------------------------------------------------------------------------
+
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public void onClick(View view) {
+
+        switch (view.getId()){
+
+            case R.id.btSubmit:
+                onFormSubmit();
+                break;
+
+            case R.id.btExit:
+                onFormExit();
+                break;
+
+            case R.id.btAddFormTable:
+                addFormTable();
+                break;
+        }
+    }
+
 //------------------------------------------------------- init Form Camera Image ----------------------------------------------------------------------------------------------------------------------
     private void initFormCameraImage(){
 
@@ -1117,55 +1172,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             }
 
         }
-    }
 
-//------------------------------------------------------- initDatabase ----------------------------------------------------------------------------------------------------------------------
-
-    private void initDatabase() {
-        dataBaseHelper = new DataBaseHelper(mActivity);
-    }
-
-//------------------------------------------------------- setOnClickListener ----------------------------------------------------------------------------------------------------------------------
-
-    private void setOnClickListener(){
-        binding.btSubmit.setOnClickListener(this);
-        binding.btExit.setOnClickListener(this);
-        binding.btAddFormTable.setOnClickListener(this);
-    }
-
-//------------------------------------------------------- Menu ----------------------------------------------------------------------------------------------------------------------
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemID = item.getItemId();
-        if (itemID == android.R.id.home) {
-            setResult(RESULT_CANCELED);
-            finish();
-            return true;
-        }
-        return false;
-    }
-
-//------------------------------------------------------- onClickView ----------------------------------------------------------------------------------------------------------------------
-
-    @SuppressLint("NonConstantResourceId")
-    @Override
-    public void onClick(View view) {
-
-        switch (view.getId()){
-
-            case R.id.btSubmit:
-                onFormSubmit();
-                break;
-
-            case R.id.btExit:
-                onFormExit();
-                break;
-
-            case R.id.btAddFormTable:
-                addFormTable();
-                break;
-        }
     }
 
 //------------------------------------------------------- Generate Property ID ----------------------------------------------------------------------------------------------------------------------
@@ -1273,7 +1280,7 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         fDB.show();
     }
 
-//------------------------------------------------------- Submit ----------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------- Form Submit ----------------------------------------------------------------------------------------------------------------------
 
     private void onFormSubmit(){
         // Geom Array not Null
@@ -1357,6 +1364,13 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
+//------------------------------------------------------- Form Exit ----------------------------------------------------------------------------------------------------------------------
+
+    private void onFormExit(){
+        setResult(RESULT_CANCELED);
+        finish();
+    }
+
 //------------------------------------------------------- SaveFormToServe/Local ----------------------------------------------------------------------------------------------------------------------
 
     private void SaveFormToServe(FormModel formModel){
@@ -1371,28 +1385,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
 
         dataBaseHelper.insertGeoJsonPolygonForm(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
         dataBaseHelper.insertGeoJsonPolygonFormLocal(polygonID,Utility.convertFormModelToString(formModel),"f",sbFilePathLocal.toString(),sbCameraImagePathLocal.toString());
-
-//        dataBaseHelper.insertMapForm(
-//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-//                polygonID,
-//                formID,
-//                latitude,
-//                longitude,
-//                Utility.convertFormModelToString(formModel),
-//                "t",
-//                token,"",""
-//        );
-//
-//        dataBaseHelper.insertMapFormLocal(
-//                Utility.getSavedData(mActivity,Utility.LOGGED_USERID),
-//                latitude,
-//                longitude,
-//                Utility.convertFormModelToString(formModel),
-//                token,"",""
-//        );
-
-        // Delete Resurvey Form Data by ID
-//        dataBaseHelper.deleteResurveyMapFormData(resurveyID);
 
         Log.e(TAG,"Form Save To Local Database");
         Utility.showOKDialogBox(mActivity, URL_Utility.SAVE_SUCCESSFULLY, okDialogBox -> {
@@ -1467,13 +1459,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
     }
 
-//------------------------------------------------------- Exit ----------------------------------------------------------------------------------------------------------------------
-
-    private void onFormExit(){
-        setResult(RESULT_CANCELED);
-        finish();
-    }
-
 //------------------------------------------------------- progressBar ----------------------------------------------------------------------------------------------------------------------
 
     private void showProgressBar() {
@@ -1491,13 +1476,6 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
             progressDialog.dismiss();
             progressDialog = null;
         }
-    }
-
-//------------------------------------------------------- onBackPressed ----------------------------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onBackPressed() {
-        finish();
     }
 
 //---------------------------------------------- Location Permission ------------------------------------------------------------------------------------------------------------------------
@@ -1556,5 +1534,166 @@ public class ResurveyFormActivity extends AppCompatActivity implements View.OnCl
         startLocationUpdates();
     }
 
+//------------------------------------------------------- onBackPressed ----------------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
+
+//------------------------------------------------- File Upload ------------------------------------------------------------------------------------------------------------------------
+
+    private class FileUploadServer extends AsyncTask<Void, Integer, String> {
+        StringBuilder filePathData;
+        String form_id;
+        String unique_number;
+        String type;
+        boolean isCameraFileUpload = false;
+
+
+        public FileUploadServer(StringBuilder filePathData, String form_id, String unique_number,String type, boolean isCameraFileUpload) {
+            this.filePathData = filePathData;
+            this.form_id = form_id;
+            this.unique_number = unique_number;
+            this.type = type;
+            this.isCameraFileUpload = isCameraFileUpload;
+
+            if(type.equals(TYPE_FILE)){
+                Log.e(TAG, "File Type ");
+                isFileUpload = false;
+            }
+            else if(type.equals(TYPE_CAMERA) ){
+                Log.e(TAG, "Camera Type ");
+                isCameraUpload = false;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+        }
+        @Override
+        protected String doInBackground(Void... params) {
+            return uploadFile();
+        }
+        @SuppressWarnings("deprecation")
+        private String uploadFile(){
+            String responseString = null;
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost(URL_Utility.WS_FORM_FILE_UPLOAD);
+            Log.e(TAG,"File-Upload API -> " + URL_Utility.WS_FORM_FILE_UPLOAD);
+
+            try {
+                if(filePathData != null){
+                    if(!Utility.isEmptyString(filePathData.toString())){
+                        // File Path!
+                        String[] path = filePathData.toString().split(",");
+                        Log.e(TAG, "path: "+ filePathData.toString());
+                        for (String filepath : path) {
+                            File sourceFile = new File(filepath);
+                            String data = "";
+                            JSONObject params = new JSONObject();
+                            try {
+                                if(isCameraFileUpload){
+                                    params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PROPERTY_IMAGES);
+                                }
+                                else{
+                                    params.put(Utility.PASS_COLUMN_NUMBER, URL_Utility.PARAM_PLAN_ATTACHMENT);
+                                }
+                                params.put(Utility.PASS_UNIQUE_NUMBER, unique_number);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            // Encrypt Data!
+                            data = params.toString();
+                            AndroidMultiPartEntity entity = new AndroidMultiPartEntity(num -> publishProgress((int) ((num / (float) totalSize) * 100)));
+                            entity.addPart(URL_Utility.PARAM_FILE_UPLOAD, new FileBody(sourceFile));
+                            entity.addPart("data", new StringBody(data));
+                            Log.e(TAG, "File-Upload Data -> "+ data);
+
+                            totalSize = entity.getContentLength();
+                            httppost.setEntity(entity);
+                            HttpResponse response = httpclient.execute(httppost);
+                            HttpEntity r_entity = response.getEntity();
+                            int statusCode = response.getStatusLine().getStatusCode();
+
+                            if (statusCode == 200) {
+                                responseString = EntityUtils.toString(r_entity);
+                            } else {
+                                dismissProgressBar();
+                                responseString = "Error occurred! Http Status Code: " + statusCode;
+                                Log.e(TAG, responseString);
+                            }
+                        }
+                    }
+                    else{
+                        Log.e(TAG,"filePathData is Empty");
+                    }
+                }
+                else{
+                    Log.e(TAG,"filePathData null");
+                    dismissProgressBar();
+                }
+
+            } catch (IOException e) {
+                dismissProgressBar();
+                Log.e(TAG, e.getMessage());
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+                dismissProgressBar();
+            }
+            return responseString;
+        }
+        @Override
+        protected void onPostExecute(String result) {
+            String response = result;
+            Log.e(TAG, response);
+            if(!response.equals("")){
+                try {
+                    JSONObject mLoginObj = new JSONObject(response);
+                    String status = mLoginObj.optString("status");
+                    if (status.equalsIgnoreCase("Success")){
+
+                        switch (type) {
+                            case TYPE_FILE:
+                                Log.e(TAG, "File Upload Successfully");
+                                isFileUpload = true;
+                                break;
+
+                            case TYPE_CAMERA:
+                                Log.e(TAG, "Camera File Upload Successfully");
+                                isCameraUpload = true;
+                                break;
+                        }
+
+                        if((isCameraUpload && isFileUpload )){
+                            Log.e(TAG,"Save File Successfully");
+                          //  processUploadLastKeyToServer(polygonID,generatePropertyID(polygonID,isMultipleForm,lastKey).split("/")[1]);
+                        }
+                    }
+                    else{
+                        Log.e(TAG,status);
+                        dismissProgressBar();
+                        Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                    }
+
+                } catch (JSONException e) {
+                    Log.e(TAG,e.getMessage());
+                    dismissProgressBar();
+                    Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+                }
+            }
+            else{
+                Log.e(TAG, response);
+                dismissProgressBar();
+                Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
+            }
+            super.onPostExecute(result);
+        }
+    }
 
 }

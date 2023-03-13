@@ -12,7 +12,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -31,8 +30,6 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
-import com.dsphotoeditor.sdk.activity.DsPhotoEditorActivity;
-import com.dsphotoeditor.sdk.utils.DsPhotoEditorConstants;
 import com.eighttechprojects.propertytaxshirol.Adapter.AdapterFormTable;
 import com.eighttechprojects.propertytaxshirol.Database.DataBaseHelper;
 import com.eighttechprojects.propertytaxshirol.Model.FormFields;
@@ -58,7 +55,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
-import com.mikelau.croperino.CroperinoConfig;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -1111,7 +1107,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
-
         // Set Counter 1
         if(responseCode == URL_Utility.ResponseCode.WS_SET_COUNTER1){
             if(!response.equals("")){
@@ -1149,7 +1144,6 @@ public class FormActivity extends AppCompatActivity implements View.OnClickListe
                 Utility.showToast(mActivity,Utility.ERROR_MESSAGE);
             }
         }
-
     }
 
 //------------------------------------------------------- onErrorResponse ----------------------------------------------------------------------------------------------------------------------

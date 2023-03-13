@@ -127,6 +127,7 @@
         <item>झोपडी किंवा मातीची इमारत</item>
         <item>खुली जागा</item>
         <item>मनोरा तळ</item>
+        <item>पत्र्याची इमारत</item>
     </string-array>
 
     <string-array name="sp_building_use_type">
